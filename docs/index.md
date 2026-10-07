@@ -10,7 +10,7 @@ How much does copying a slice copy? Which allocator does deletion use? Why can a
 
 **The promise:** by the end, you will be able to reason about Odin packages, polymorphic procedures, allocators, byte layouts and foreign calls; design a CLI that composes with Unix; invoke FFmpeg tools without a shell; and explain the libav demux → packet → decoder → frame → filter/encoder → mux pipeline, its ownership rules and its send/receive state machine.
 
-This is a working learning text, not a language or FFmpeg specification. Examples target Linux and were checked with Odin `dev-2026-09-nightly:a2fb372` and FFmpeg 6.x libraries. Both projects evolve: use the headers, documentation and source matching the libraries actually installed on your machine.
+This is a working learning text, not a language or FFmpeg specification. Examples target Linux and were checked with Odin's official monthly `dev-2026-10` release (the compiler reports `dev-2026-10-nightly:84bc3fc`) and FFmpeg 6.x libraries. Both projects evolve: use the headers, documentation and source matching the libraries actually installed on your machine.
 
 **Offline reader:** open the repository’s prebuilt `html/index.html`, or [download and extract the reader ZIP](https://weima.github.io/odin-in-practice/odin-in-practice-offline.zip). The prose, local assets, diagrams, companions, and skill download need no internet connection. Search may require a local HTTP server; external references need the internet. Markdown remains the editable source.
 
@@ -22,7 +22,7 @@ This book assumes you can already program, read a shell command, and understand 
 
 Read in order for the complete path, or follow the chapter links to revisit a boundary. Before running an example, predict the result. When your prediction fails, find the assumption that failed. The exercise is not complete until you can explain the observation without relying on the output being familiar.
 
-**Reading the source without overclaiming:** implementation passages use the libraries shipped with this edition’s compiler, with links pinned to its [upstream commit](https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924). Language rules, API promises, and implementation observations are labeled separately. [Chapter 31](chapters/workbook.md#sources) maps questions to the exact source paths and symbols.
+**Reading the source without overclaiming:** implementation passages use the libraries shipped with this edition’s compiler, with links pinned to its [upstream commit](https://github.com/odin-lang/Odin/commit/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9). Language rules, API promises, and implementation observations are labeled separately. [Chapter 31](chapters/workbook.md#sources) maps questions to the exact source paths and symbols.
 
 The loop
 

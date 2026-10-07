@@ -20,6 +20,7 @@ jobs:
     env:
       # Installed Chrome uses Ubuntu's supported sandbox, unlike the cached test build.
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
+      ODIN_RELEASE: dev-2026-10
     steps:
       - uses: actions/checkout@v6
         with:
@@ -37,6 +38,41 @@ jobs:
         run: |
           python -m pip install --require-hashes -r requirements.txt
           npm ci
+      - name: Install pinned Odin release
+        run: |
+          archive="$RUNNER_TEMP/odin.tar.gz"
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            "https://github.com/odin-lang/Odin/releases/download/${ODIN_RELEASE}/odin-linux-amd64-${ODIN_RELEASE}.tar.gz"
+          printf '%s  %s\n' \
+            'c3c8b095621fd0c75f7f73e3a0829f1b4d45324225f20ba11ed8dc4da310a8ab' \
+            "$archive" | sha256sum --check -
+          mkdir "$RUNNER_TEMP/odin"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/odin"
+          odin="$(find "$RUNNER_TEMP/odin" -maxdepth 4 -type f -name odin -print -quit)"
+          test -x "$odin"
+          echo "$(dirname "$odin")" >> "$GITHUB_PATH"
+          "$odin" version
+      - name: Check book Odin packages
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' source; do
+            odin check "${source%/main.odin}"
+          done < <(find docs/examples -name main.odin -print0 | sort -z)
+      - name: Run book Odin tests
+        run: |
+          TZ=UTC odin test docs/examples/04-procedures
+          TZ=UTC odin test docs/examples/10-pointers/tests
+          TZ=UTC odin test docs/examples/11-memory-philosophy/tests
+          TZ=UTC odin test docs/examples/17-networking/http-client
+          TZ=UTC odin test docs/examples/18-containers
+          TZ=UTC odin test docs/examples/19-parallel
+          TZ=UTC odin test docs/examples/21-capstone/records
+      - name: Check and run Odin companion skill examples
+        run: |
+          test "$(odin run docs/skills/odin-companion/examples/cli -- Ada --loud)" = 'HELLO, Ada!'
+          test "$(odin run docs/skills/odin-companion/examples/cli -- Ada)" = 'Hello, Ada.'
+          test "$(timeout 10s odin run docs/skills/odin-companion/examples/network)" = 'TCP loopback: exact read, reply, and half-close checked'
       - name: Render Mermaid diagrams to offline SVGs
         run: |
           "$PUPPETEER_EXECUTABLE_PATH" --version

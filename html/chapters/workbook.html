@@ -1107,7 +1107,7 @@
 </table>
 <p><a id="sources"></a></p>
 <h2 id="31-official-references-and-source-trail">31. Official references and source trail<a class="headerlink" href="#31-official-references-and-source-trail" title="Permanent link">&para;</a></h2>
-<p>The source walkthroughs in this edition were read from the runtime and core libraries shipped with <code>dev-2026-09-nightly:a2fb372</code>. The corresponding upstream commit is <a href="https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924"><code>a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924</code></a>. Repository links below are pinned to it rather than to a moving branch.</p>
+<p>The source walkthroughs in this edition were read from the runtime and core libraries at the official monthly <code>dev-2026-10</code> release. Its compiler reports <code>dev-2026-10-nightly:84bc3fc</code>; the source commit is <a href="https://github.com/odin-lang/Odin/commit/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9"><code>84bc3fc2100b0f7880a3af37f71bccdcda41c6f9</code></a>. Repository links below are pinned to it rather than to a moving branch.</p>
 <p>This is library and runtime source evidence, not a claim to have audited the entire compiler. The installed distribution does not contain the compiler's complete C++ source. Where this book explains language semantics, use the official language guide and a small compiler experiment; where it explains a library mechanism, follow the named symbol in the pinned source.</p>
 <h3 id="a-source-trail-with-a-question-attached">A source trail with a question attached<a class="headerlink" href="#a-source-trail-with-a-question-attached" title="Permanent link">&para;</a></h3>
 <table>
@@ -1202,21 +1202,21 @@
 <li><a href="https://odin-lang.org/docs/">Official documentation index</a> — language guide, FAQ, tutorials, and articles.</li>
 <li><a href="https://pkg.odin-lang.org/core/flags/">Package docs: <code>core:flags</code></a> — parsing styles, tags, validation, help, and errors.</li>
 <li><a href="https://pkg.odin-lang.org/core/os/">Package docs: <code>core:os</code></a> — files, environment, standard streams, and processes.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/example/example.odin">Flags example source</a> — a complete annotated-options example.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/parsing.odin">Flags parser source</a> — parsing styles and the public parser contract.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env.odin">Environment source</a> — how lookup distinguishes an unset variable from an empty one.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">Process source</a> — process descriptors, execution, captured output, and wait state.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin">File utility source</a> — whole-file read helpers and allocation behavior.</li>
-<li><a href="https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/sys/linux">Linux system packages</a> — Linux-specific APIs in Odin's core library.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">Runtime representations and context</a> — raw headers, allocator modes, and scope policies.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin">Built-in operations</a> — allocator selection for deletion and the public append path.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin">Unix entry source</a> — initialization, application entry, and cleanup.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin">Flags boundary wrapper</a> — executable-argument removal, help, and exit status.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin">File operations</a> — read counts, EOF, and stream dispatch.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin">Testing source</a> — expectations, caller diagnostics, and cleanup.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/runner.odin">Test runner</a> and <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/logging.odin">test logging</a> — contexts, allocation tracking, and failure recording.</li>
-<li><a href="https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json">JSON source</a> — syntax policies, value trees, and cleanup.</li>
-<li><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin">String source</a> — clones, C-string termination, and borrowed views.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/example/example.odin">Flags example source</a> — a complete annotated-options example.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/parsing.odin">Flags parser source</a> — parsing styles and the public parser contract.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env.odin">Environment source</a> — how lookup distinguishes an unset variable from an empty one.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin">Process source</a> — process descriptors, execution, captured output, and wait state.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin">File utility source</a> — whole-file read helpers and allocation behavior.</li>
+<li><a href="https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/linux">Linux system packages</a> — Linux-specific APIs in Odin's core library.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin">Runtime representations and context</a> — raw headers, allocator modes, and scope policies.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core_builtin.odin">Built-in operations</a> — allocator selection for deletion and the public append path.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin">Unix entry source</a> — initialization, application entry, and cleanup.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/util.odin">Flags boundary wrapper</a> — executable-argument removal, help, and exit status.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin">File operations</a> — read counts, EOF, and stream dispatch.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin">Testing source</a> — expectations, caller diagnostics, and cleanup.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/runner.odin">Test runner</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/logging.odin">test logging</a> — contexts, allocation tracking, and failure recording.</li>
+<li><a href="https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json">JSON source</a> — syntax policies, value trees, and cleanup.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin">String source</a> — clones, C-string termination, and borrowed views.</li>
 <li><a href="https://forum.odin-lang.org/t/origin-of-the-name-odin/794">Creator’s explanation of the name</a> — a mythological project codename that stuck.</li>
 <li><a href="https://ffmpeg.org/documentation.html">FFmpeg documentation</a> — official user and developer documentation index.</li>
 <li><a href="https://ffmpeg.org/ffmpeg.html">ffmpeg command documentation</a> — options, stream selection, streamcopy, transcoding and filtering.</li>

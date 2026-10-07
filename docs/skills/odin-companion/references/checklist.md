@@ -2,7 +2,7 @@
 
 ## Find the right edition
 
-The book's baseline is Odin `dev-2026-09-nightly:a2fb372`, upstream revision `a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`. Record the reader's actual `odin version`; do not force a moving nightly or assume newer signatures match.
+The book's baseline is Odin's official monthly `dev-2026-10` release, source commit `84bc3fc2100b0f7880a3af37f71bccdcda41c6f9`. The compiler reports `dev-2026-10-nightly:84bc3fc`; this is a pinned release asset, not semver-style language stability. Record the reader's actual `odin version`; do not assume newer signatures match.
 
 Use `odin root` to locate installed `base/`, `core/` and `vendor/`. Search for the symbol and inspect its implementation, platform selection, error results and allocation behavior. Resolve renamed files from the installation rather than trusting a remembered filename. Check installed compiler help for available options.
 

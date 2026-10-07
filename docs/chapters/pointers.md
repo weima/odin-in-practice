@@ -10,7 +10,7 @@ Suppose a procedure changes a counter, but the caller still sees the old number.
 
 The useful mental model is not “pointers are complicated integers.” A pointer names a location where a suitably typed object must still exist when you use it. Its type describes how to interpret that location; it does not establish who owns the object, how long it survives, or whether another procedure is using it at the same time. Those missing facts form the rest of the contract.
 
-This chapter uses the language’s [pointer rules](https://odin-lang.org/docs/overview/#pointers) and the runtime shipped with `dev-2026-09-nightly:a2fb372`. Put each complete program below in its own directory as `main.odin`, then run `odin check .` and `odin run .`. Do not combine their `main` declarations. Deliberately invalid fragments are labeled separately; they are diagnostic exercises, not programs to execute.
+This chapter uses the language’s [pointer rules](https://odin-lang.org/docs/overview/#pointers) and the runtime shipped with Odin's official monthly `dev-2026-10` release (`dev-2026-10-nightly:84bc3fc`). Put each complete program below in its own directory as `main.odin`, then run `odin check .` and `odin run .`. Do not combine their `main` declarations. Deliberately invalid fragments are labeled separately; they are diagnostic exercises, not programs to execute.
 
 ### 1. A value, an address, and an object are three different things
 
@@ -137,7 +137,7 @@ The two `count` fields are independent. The `values` headers are independent too
 
 For a fixed array of these records, copying the array copies each record value, including its addresses and slice headers. It does not clone the pointed-to integers. “Arrays copy their elements” remains true; “all data reachable from those elements becomes independent” does not follow.
 
-Read [runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin): `Raw_Slice` stores a data pointer and length; `Raw_Dynamic_Array` additionally stores capacity and allocator. These implementation representations explain the sharing. They do not encode a borrow checker, reference count, or a recursively applied destructor.
+Read [runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin): `Raw_Slice` stores a data pointer and length; `Raw_Dynamic_Array` additionally stores capacity and allocator. These implementation representations explain the sharing. They do not encode a borrow checker, reference count, or a recursively applied destructor.
 
 ### 5. A slice checks an index, not the history of its storage
 
@@ -250,7 +250,7 @@ append(&items, 20) // May grow/reallocate; do not rely on old_element.
 // Reacquire &items[0] after operations that can move the storage.
 ```
 
-In [core\_builtin.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin), the append path checks capacity and asks the allocator to resize before copying elements. Whether a particular allocator grows in place is an implementation outcome, not a caller-side lifetime guarantee. Reserving enough capacity can avoid a particular growth, but deletion, later reservation changes, and reordering still need their own reasoning.
+In [core\_builtin.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core_builtin.odin), the append path checks capacity and asks the allocator to resize before copying elements. Whether a particular allocator grows in place is an implementation outcome, not a caller-side lifetime guarantee. Reserving enough capacity can avoid a particular growth, but deletion, later reservation changes, and reordering still need their own reasoning.
 
 Use indices when the container can move and an index remains a meaningful identity. An index is not automatically a stable handle either: removing or sorting elements changes what that position means. If the application needs identity across moves and deletion, design a handle with a checked validity rule rather than treating the old address as that rule.
 

@@ -8,7 +8,7 @@ Chapter 17 · Protocols, budgets, and trust boundaries
 
 A program writes four bytes once, and its peer reads two bytes twice. Which side is broken? With TCP, neither necessarily is. A connection supplies a byte stream, not the record boundaries of the application that wrote it. That single distinction affects parser state, buffering, timeouts, and every claim that an echo demo is a complete protocol implementation.
 
-This chapter uses the [pinned `core:net` source](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net), not guessed API names from another language. The companions perform TCP and UDP exchanges on `127.0.0.1`, using port zero to let the OS choose an available port. The HTTP client uses a maintained curl implementation rather than inventing HTTP parsing or TLS.
+This chapter uses the [pinned `core:net` source](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/net), not guessed API names from another language. The companions perform TCP and UDP exchanges on `127.0.0.1`, using port zero to let the OS choose an available port. The HTTP client uses a maintained curl implementation rather than inventing HTTP parsing or TLS.
 
 ### 1. An address is not a socket, and a socket is not a message
 
@@ -22,7 +22,7 @@ While reading these wrappers, a lone `return` does not necessarily mean “no re
 
 ### 2. A real receive wrapper has a smaller promise than an application
 
-The Linux implementation in [socket\_linux.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net/socket_linux.odin) delegates a receive to the kernel and translates its result. This short excerpt belongs inside that package:
+The Linux implementation in [socket\_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/net/socket_linux.odin) delegates a receive to the kernel and translates its result. This short excerpt belongs inside that package:
 
 ```odin
 bytes_read, errno := linux.recv(linux.Fd(tcp_sock), buf, {})
@@ -90,7 +90,7 @@ Ownership must remain clear on every failure path: the listener, client, accepte
 
 HTTP adds methods, status codes, headers, body framing, connection reuse, redirects, and version-specific rules. TLS adds peer authentication, certificate/hostname verification, cryptographic negotiation, and trust-store configuration. A hand-written `GET / HTTP/1.1` string followed by a receive loop is not a production HTTPS client.
 
-The distribution includes [libcurl bindings](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/vendor/curl). The binding’s C calling conventions, long option types, callbacks, and external library requirements need an ABI-aware integration. On the validation machine, the installed curl CLI is usable while the vendor binding’s development-library link requirements are not all present. The runnable companion therefore uses the existing CLI through an argument vector—no dependency installation or home-grown TLS.
+The distribution includes [libcurl bindings](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/vendor/curl). The binding’s C calling conventions, long option types, callbacks, and external library requirements need an ABI-aware integration. On the validation machine, the installed curl CLI is usable while the vendor binding’s development-library link requirements are not all present. The runnable companion therefore uses the existing CLI through an argument vector—no dependency installation or home-grown TLS.
 
 This is an HTTP client adapter, not just a shell command concatenation. It has an input contract, request limits, transport result, HTTP status, owned capture buffers, and a caller-facing policy. A subprocess per request is suitable for some small batch tools; connection reuse, cancellation, and throughput requirements can justify an in-process maintained client later.
 
