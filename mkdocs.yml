@@ -36,6 +36,8 @@ markdown_extensions:
       permalink: true
 extra_css:
   - assets/book.css
+extra_javascript:
+  - assets/font-size.js
 nav:
   - Book contents: index.md
   - Foundations: chapters/odin-foundations.md
