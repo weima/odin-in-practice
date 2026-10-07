@@ -39,6 +39,17 @@ Load for writing, debugging, reviewing or explaining Odin code alongside the boo
 
 Return changed paths, verified behavior and remaining limits. Label fragments, intentional compile failures and complete runnable programs distinctly.
 
+## Runnable starting points
+
+The [CLI example](examples/cli/main.odin) uses `core:flags` to parse a required positional name and a boolean option. The [network example](examples/network/main.odin) performs a bounded TCP round trip on loopback, checks the exact byte count, and defers socket cleanup. Both are complete programs, not production templates.
+
+```sh
+odin run examples/cli -- Ada --loud
+odin run examples/network
+```
+
+The network example binds only to loopback and uses operation timeouts. It is a local exercise, not an Internet-facing server. CI compiles and runs both examples with the book's pinned official monthly `dev-2026-10` release.
+
 ## References
 
 - [Source, ownership and verification checklist](references/checklist.md)

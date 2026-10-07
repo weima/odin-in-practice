@@ -560,9 +560,9 @@
 <p>Download <strong>this whole folder</strong>, including <code>references/</code>, alongside the book. It contains one portable, editable skill—not a plugin, runtime service or installer.</p>
 <h2 id="use-it">Use it<a class="headerlink" href="#use-it" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Read <code>SKILL.md</code> and <code>references/checklist.md</code>.</li>
+<li>Read <code>SKILL.md</code> and <code>references/checklist.md</code>; the <code>examples/</code> directory contains complete CLI and loopback TCP packages.</li>
 <li>Copy the folder into the skill directory supported by your coding agent, or explicitly ask the agent to read its <code>SKILL.md</code>.</li>
-<li>Supply your project and request. Let the agent inspect your installed compiler instead of assuming the book's nightly matches.</li>
+<li>Supply your project and request. Let the agent inspect your installed compiler instead of assuming the book's pinned release matches.</li>
 </ol>
 <p>Folder discovery and invocation depend on the chosen agent. This book does not automatically install the skill globally, modify agent configuration or register it in a project's <code>AGENTS.md</code>.</p>
 <h2 id="make-it-your-own">Make it your own<a class="headerlink" href="#make-it-your-own" title="Permanent link">&para;</a></h2>
@@ -571,7 +571,7 @@
 <p>Adapt this Odin companion skill to my project's compiler, target platforms and checks. Keep source-backed API verification and ownership/error boundaries. Put project-specific detail in local references and keep the main skill compact.</p>
 </blockquote>
 <p>Rename the skill and its folder together if you want both versions. Replace examples of commands with your actual project checks, add references for your targets, and remove branches you do not use. Validate the resulting frontmatter and local links with your agent's skill tooling.</p>
-<p>The checklist records the book's baseline for comparison; it does not pin or install the reader's compiler. There are no author-specific paths, credentials or dependencies on the rest of the book folder. The book and its runnable examples provide optional additional context.</p>
+<p>Run the examples from this skill folder with <code>odin run examples/cli -- Ada --loud</code> and <code>odin run examples/network</code>. The checklist records the book's baseline for comparison; it does not install the reader's compiler. There are no author-specific paths, credentials or dependencies on the rest of the book folder. The book and its runnable examples provide optional additional context.</p>
 
 
 

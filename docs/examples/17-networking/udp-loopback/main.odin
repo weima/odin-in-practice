@@ -1,4 +1,4 @@
-// Original companion; Linux truncation behavior is pinned to core/net/socket_linux.odin at a2fb372.
+// Original companion; Linux truncation behavior is pinned to core/net/socket_linux.odin at 84bc3fc.
 package main
 
 import "core:fmt"

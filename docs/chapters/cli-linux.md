@@ -32,7 +32,7 @@ These are interface decisions. Changing them can break scripts even if the new i
 
 ### The library makes a similar distinction
 
-Read [core/flags/util.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin). `print_errors` writes parsing and validation diagnostics to stderr, but sends explicitly requested usage to stdout. `parse_or_exit` selects exit status zero for a `Help_Request` and one for the other errors. No arguments plus a missing requirement gets usage on stderr.
+Read [core/flags/util.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/util.odin). `print_errors` writes parsing and validation diagnostics to stderr, but sends explicitly requested usage to stdout. `parse_or_exit` selects exit status zero for a `Help_Request` and one for the other errors. No arguments plus a missing requirement gets usage on stderr.
 
 That is not an arbitrary distinction between two print procedures. The same-looking usage text can answer a successful help request or explain a failed invocation. The context determines the channel and status. If you introduce your own convention of status two for invalid input, do not assume the library’s convenience wrapper follows it.
 
@@ -85,7 +85,7 @@ The compiler's `--` separates compiler options from the program arguments in the
 
 ### Where those strings came from
 
-Follow `get_args` in [core/os/process.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin). On the ordinary Unix route it makes a slice of Odin string headers from `runtime.args__`. The runtime entry code saved the C argument vector before invoking our application. This path allocates the slice of headers; converting each C string does not imply a separate clone of all its bytes.
+Follow `get_args` in [core/os/process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin). On the ordinary Unix route it makes a slice of Odin string headers from `runtime.args__`. The runtime entry code saved the C argument vector before invoking our application. This path allocates the slice of headers; converting each C string does not imply a separate clone of all its bytes.
 
 For this initial example `os.exit(2)` is safe to use before we acquire any resources. It exits the process directly; it is not a return from `main`. Later examples will keep work in a procedure that returns a status, allowing deferred cleanup to finish before the top-level exit. This small structural choice prevents a large class of misleading cleanup examples.
 
@@ -150,7 +150,7 @@ Additional positional arguments can be collected in the conventional `overflow` 
 
 ### Two parsers? No: a parser and its boundary wrapper
 
-Read [parsing.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/parsing.odin) alongside [util.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin). `parse` receives user arguments, normally `os.args[1:]`, and returns an error union. `parse_or_exit` receives the whole vector, extracts the program name, drops element zero, then invokes `parse`. Giving the wrapper an already-sliced vector makes the first user argument masquerade as the executable name.
+Read [parsing.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/parsing.odin) alongside [util.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/util.odin). `parse` receives user arguments, normally `os.args[1:]`, and returns an error union. `parse_or_exit` receives the whole vector, extracts the program name, drops element zero, then invokes `parse`. Giving the wrapper an already-sliced vector makes the first user argument masquerade as the executable name.
 
 Inside `parse`, the parser validates the struct, tracks supplied fields and positional slots in bit arrays, then dispatches to the selected parsing style. Unix parsing also tracks how many following arguments a flag consumes. After syntactic parsing, `validate_arguments` checks requirements if validation is enabled and no earlier error remains. This sequence explains why required fields are checked at the end, rather than being treated as a property of the initial zero-valued struct.
 
@@ -207,7 +207,7 @@ This fragment belongs in a procedure returning `int`; `path`, `fmt`, and `os` mu
 
 ### A return unwinds a scope; process exit does not
 
-Read [os.exit](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin). It calls the runtime’s direct process exit and explicitly warns that `@(fini)` procedures are not run. It also does not return through the active Odin scopes, so their deferred statements are not executed. This is why resource-owning examples should not call it in the middle of their work.
+Read [os.exit](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin). It calls the runtime’s direct process exit and explicitly warns that `@(fini)` procedures are not run. It also does not return through the active Odin scopes, so their deferred statements are not executed. This is why resource-owning examples should not call it in the middle of their work.
 
 ```odin
 // Structural fragment: work owns resources; main owns the process boundary.
@@ -223,7 +223,7 @@ main :: proc() {
 
 The distinction matters even when the OS eventually reclaims heap memory and descriptors. A deferred flush, removal of a temporary file, or publication of a finished output is application behavior, not something the kernel can infer.
 
-In [file\_util.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin), the path-based whole-file helper opens, defers close, and delegates to the file-based reader. A partial byte slice may survive a read error. This gives us two separate audits: who closes the handle, and who releases returned bytes? The answer is the helper for the first and the caller for the second.
+In [file\_util.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin), the path-based whole-file helper opens, defers close, and delegates to the file-based reader. A partial byte slice may survive a read error. This gives us two separate audits: who closes the handle, and who releases returned bytes? The answer is the helper for the first and the caller for the second.
 
 ### Report the right amount
 
@@ -261,13 +261,13 @@ Before allocating, ask three questions: who owns the result, how long is it need
 
 ### The allocator is a protocol represented by two fields
 
-In [runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin), `Allocator` contains a procedure and a data pointer. Its procedure receives an allocation mode, size, alignment, old memory and size, and source location. The modes include allocation, freeing, resizing, freeing everything, and feature queries. A request can fail with `Out_Of_Memory` or `Mode_Not_Implemented`; an allocator is not obliged to implement every strategy.
+In [runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin), `Allocator` contains a procedure and a data pointer. Its procedure receives an allocation mode, size, alignment, old memory and size, and source location. The modes include allocation, freeing, resizing, freeing everything, and feature queries. A request can fail with `Out_Of_Memory` or `Mode_Not_Implemented`; an allocator is not obliged to implement every strategy.
 
 This explains why an arena and a heap can share the interface without sharing individual-free behavior. It also explains why “I called delete” and “the allocator reclaimed these bytes immediately” are different claims.
 
 ### One container remembers; one view does not
 
-Compare `delete_dynamic_array` and `delete_slice` in [core\_builtin.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin). The dynamic-array overload uses the allocator stored in the array header and a capacity-based allocation size. The slice overload receives an allocator, defaulting to the current context, and uses the slice length. Changing the context between allocating a slice and deleting it can therefore select the wrong allocator. Save the chosen allocator or pass it explicitly.
+Compare `delete_dynamic_array` and `delete_slice` in [core\_builtin.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core_builtin.odin). The dynamic-array overload uses the allocator stored in the array header and a capacity-based allocation size. The slice overload receives an allocator, defaulting to the current context, and uses the slice length. Changing the context between allocating a slice and deleting it can therefore select the wrong allocator. Save the chosen allocator or pass it explicitly.
 
 The same file’s `_append_elems` grows capacity geometrically in this version, copies incoming elements, and returns an appended count plus an optional allocator error. Its growth formula is an observation, not a promised factor for all future releases. If allocation fails, partial progress is possible; code that requires every element must inspect both results rather than relying on the convenient form that omits the error.
 
@@ -347,7 +347,7 @@ Whole-file reading is simple, but uses memory proportional to file size. It fits
 
 ### The whole-file helper has two algorithms
 
-Read [read\_entire\_file\_from\_file](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin). It first asks for a size that fits in `int`. If the size is positive, it allocates that many bytes and reads until the slice is filled or a read reports an error. EOF becomes successful completion with the slice shortened to the bytes actually read.
+Read [read\_entire\_file\_from\_file](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin). It first asks for a size that fits in `int`. If the size is positive, it allocates that many bytes and reads until the slice is filled or a read reports an error. EOF becomes successful completion with the slice shortened to the bytes actually read.
 
 If no usable positive size exists, it reads with a 1024-byte local buffer and appends to a dynamic array until completion. This is how a zero-size-reporting procfs file can still produce data. But a small *read buffer* does not imply bounded *total memory*: the accumulating dynamic array can grow for as long as input arrives.
 
@@ -355,7 +355,7 @@ Now challenge the positive-size branch. What if the file grows after the size qu
 
 The fallback also treats `Broken_Pipe` as completion in this revision. Do not silently apply that normalization to every lower-level read loop. The abstraction boundary decides which events count as normal completion.
 
-`os.read` in [file.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin) returns a count and an error; ordinary file EOF is `0, .EOF`. Opening establishes handle ownership, and a successful open should be paired with close. The count describes this read, not the buffer’s capacity.
+`os.read` in [file.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin) returns a count and an error; ordinary file EOF is `0, .EOF`. Opening establishes handle ownership, and a successful open should be paired with close. The count describes this read, not the buffer’s capacity.
 
 **Exercise 12.1.** Compare the result for an empty file, a short text file, and a multi-megabyte file. Which approach should your real tool use, and what evidence supports that choice?
 
@@ -410,7 +410,7 @@ A byte counter need not interpret `buffer[:n]`. A parser must. Never inspect the
 
 ### What the OS wrapper actually does
 
-[os.read](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin) delegates through the file’s stream procedure. The POSIX implementation in [file\_posix.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_posix.odin) caps a request, calls `posix.read`, maps zero to EOF, and maps a negative result to an error. Its shown read branch does not supply an automatic retry loop for every interruption. Do not import assumptions about another language’s I/O library.
+[os.read](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin) delegates through the file’s stream procedure. The POSIX implementation in [file\_posix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin) caps a request, calls `posix.read`, maps zero to EOF, and maps a negative result to an error. Its shown read branch does not supply an automatic retry loop for every interruption. Do not import assumptions about another language’s I/O library.
 
 The count loop above adds bytes before interpreting the error. That structure also accommodates interfaces that can return useful bytes with a terminal condition. It is not an invitation to ignore the error; success is reported only on the completion condition we chose.
 
@@ -463,9 +463,9 @@ These commands let you test empty versus unset input. Do not infer trust from th
 
 ### Allocation is part of this overload
 
-[env.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env.odin) groups two `lookup_env` overloads. The allocating overload takes a key and allocator and returns a string plus `found`. The buffer overload instead takes a backing buffer and returns a string plus an error. Similar names do not imply identical failure shapes or ownership.
+[env.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env.odin) groups two `lookup_env` overloads. The allocating overload takes a key and allocator and returns a string plus `found`. The buffer overload instead takes a backing buffer and returns a string plus an error. Similar names do not imply identical failure shapes or ownership.
 
-For the no-CRT Linux implementation in [env\_linux.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env_linux.odin), the lookup scans stored key/value entries and uses an index of minus one to signal absence. An empty value can still have a valid index. The allocating path clones the found string; the buffer path copies into the supplied buffer or reports `Buffer_Full`. The returned buffer-backed string is a borrowed view, not an owner.
+For the no-CRT Linux implementation in [env\_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env_linux.odin), the lookup scans stored key/value entries and uses an index of minus one to signal absence. An empty value can still have a valid index. The allocating path clones the found string; the buffer path copies into the supplied buffer or reports `Buffer_Full`. The returned buffer-backed string is a borrowed view, not an owner.
 
 That file also contains a warning about synchronizing the no-CRT environment implementation with third-party code linked to libc. We should not turn one platform branch into a universal claim about environment mutation across all foreign libraries. Prefer stable startup configuration when possible, and isolate environment-changing tests from concurrent consumers.
 
@@ -522,7 +522,7 @@ Try running it and then change the command to a missing executable. A spawn erro
 
 ### Read the capture helper as a resource graph
 
-In [process\_exec](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin), two pipes are created, one per output channel. A nested scope installs their write ends in a copy of the descriptor and starts the child. The parent closes its write ends when that scope exits, including on failure. Why so early? An extra open write end can stop a reader from observing EOF even after the child is finished.
+In [process\_exec](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin), two pipes are created, one per output channel. A nested scope installs their write ends in a copy of the descriptor and starts the child. The parent closes its write ends when that scope exits, including on failure. Why so early? An extra open write end can stop a reader from observing EOF even after the child is finished.
 
 The helper alternates checking the two read ends and appends received bytes to two dynamic arrays. This avoids simply reading stdout to completion while ignoring a full stderr pipe, but it still accumulates both outputs without a built-in size budget. Its 1024-byte scratch buffer is not a cap on captured output. The final byte slices belong to the supplied allocator, including when an error is returned; register their deletion before interpreting the error.
 
@@ -530,7 +530,7 @@ The descriptor’s stdout and stderr must remain nil when using capture: the hel
 
 ### Finding the executable is another input boundary
 
-Read the Linux [\_process\_start](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process_linux.odin) path. In this revision, a name without a slash searches the parent’s PATH, then checks the current directory as a fallback. It converts each argument and environment entry into a C string before execution. A supplied environment replaces the child environment; it is not a patch. The executable search occurs using the parent’s environment, so a child-only PATH does not necessarily control that search.
+Read the Linux [\_process\_start](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin) path. In this revision, a name without a slash searches the parent’s PATH, then checks the current directory as a fallback. It converts each argument and environment entry into a C string before execution. A supplied environment replaces the child environment; it is not a patch. The executable search occurs using the parent’s environment, so a child-only PATH does not necessarily control that search.
 
 For a controlled service, an approved absolute executable path is clearer than relying on a mutable PATH and working directory. Reject embedded NUL bytes before crossing a C-string boundary. Also check both the API error and the child exit code; on Linux `success` reflects a zero normal exit, while its meaning is not identical on every platform.
 
@@ -576,11 +576,11 @@ Linux exposes useful interfaces through filesystems such as `/proc` and `/sys`, 
 
 ### Trace one abstraction boundary, not the entire kernel
 
-Follow `os.read` from [file.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin) into the selected stream procedure. Then compare [the POSIX implementation](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_posix.odin) with [core/sys/linux](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/sys/linux). A portable procedure can delegate to different target code. Its name alone does not establish which path you compiled.
+Follow `os.read` from [file.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin) into the selected stream procedure. Then compare [the POSIX implementation](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin) with [core/sys/linux](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/linux). A portable procedure can delegate to different target code. Its name alone does not establish which path you compiled.
 
 A useful trace records the handle representation, request buffer and length, platform call, and translated error. Notice what is lost at the translation boundary: the shown POSIX read path maps negative results to a general error rather than exposing every errno as a distinct language-level value. If an application genuinely needs to distinguish interruption from another event, first find an API that preserves the required information.
 
-[Runtime entry code](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin) supplies another concrete lesson: target branches contain different syscall numbers and startup forms. Copying an amd64 number into another architecture is not portable low-level programming. Read the selected declarations and test the actual target you claim to support.
+[Runtime entry code](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin) supplies another concrete lesson: target branches contain different syscall numbers and startup forms. Copying an amd64 number into another architecture is not portable low-level programming. Read the selected declarations and test the actual target you claim to support.
 
 A read from procfs is also not a whole-system snapshot. Values can change between reads, kernel versions add fields, and access permissions can differ in containers. When inspecting PID text, test your own parsing rule with a small fixture, then test the live path separately.
 
@@ -618,7 +618,7 @@ For a CLI, test the interface a caller sees: normal output, stderr on failure, e
 
 ### Build the experiment before choosing the explanation
 
-Read the startup sequence in [entry\_unix.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin) and the process boundary in [process.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin). A missing executable, a failed child, and a successfully executed program whose output violates our format are three different failures. A link failure occurs before any of those runtime paths. Make the classification before changing code.
+Read the startup sequence in [entry\_unix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin) and the process boundary in [process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin). A missing executable, a failed child, and a successfully executed program whose output violates our format are three different failures. A link failure occurs before any of those runtime paths. Make the classification before changing code.
 
 For an allocation suspicion, isolate a package-level operation and use the test runner’s allocator tracking. For a pipeline failure, build the executable and capture stdout, stderr, and status. For a library-loading failure, inspect the linked artifact with `ldd` only for executables you trust, and compare installed development libraries with runtime libraries. Debug information makes breakpoints and stack traces more useful, but it does not add a test oracle.
 
@@ -720,9 +720,9 @@ The length guard matters: expectations report failures but normally continue exe
 
 ### How an expectation becomes a failed test
 
-Read [testing.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin). `expect` logs an error when its condition is false, then returns that condition. `expect_value` compares suitable values and logs the expression, expected value, and observed value. Neither function directly increments `T.error_count` in its body.
+Read [testing.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin). `expect` logs an error when its condition is false, then returns that condition. `expect_value` compares suitable values and logs the expression, expected value, and observed value. Neither function directly increments `T.error_count` in its body.
 
-Follow the next boundary into [logging.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/logging.odin): `test_logger_proc` increments the test error count for error-level or higher messages, clones log text using a runner-owned allocator, and sends a reporting event. [runner.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/runner.odin) installs that logger in the test context before invoking the test procedure.
+Follow the next boundary into [logging.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/logging.odin): `test_logger_proc` increments the test error count for error-level or higher messages, clones log text using a runner-owned allocator, and sends a reporting event. [runner.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/runner.odin) installs that logger in the test context before invoking the test procedure.
 
 This is the context system doing useful work. It lets ordinary library calls report through a test-specific logger. It also explains why replacing `context.logger` casually inside a test can interfere with the failure-recording mechanism. An assertion is not magic simply because its function is named `expect`; the surrounding runner supplies part of its meaning.
 
@@ -794,7 +794,7 @@ Replace whole-file loading with a fixed-size buffer and streaming reads. Keep a 
 | Byte count | Sum of successful returned ranges. | The size reported before reading is an immutable snapshot. |
 | CLI success | Output channels and exit status tested together. | Printing the expected number establishes the whole contract. |
 
-Use the [whole-file helper](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin) as a deliberately simple Stage B baseline, then replace retention with Chapter 13’s streaming approach. Do not merely change its scratch-buffer size: the accumulating container is what makes whole-file memory proportional to input.
+Use the [whole-file helper](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin) as a deliberately simple Stage B baseline, then replace retention with Chapter 13’s streaming approach. Do not merely change its scratch-buffer size: the accumulating container is what makes whole-file memory proportional to input.
 
 The peak input-memory budget is the fixed buffer plus preview capacity, with small bookkeeping. Counting to EOF still performs work proportional to input and can wait forever on a producer that never closes. If you choose to stop after the preview is full, label the result as a preview, not a complete byte count.
 

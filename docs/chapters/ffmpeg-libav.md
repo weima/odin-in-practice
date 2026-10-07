@@ -54,7 +54,7 @@ A destination container may reject a codec, or a copied stream may require conta
 
 ### Odin’s boundary preserves arguments, not FFmpeg semantics
 
-[Process\_Desc](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin) makes each string a separate child argument. It does not know whether an FFmpeg option belongs before or after an input. Input options, output options, and stream specifiers remain FFmpeg’s language. First establish the exact command with a known fixture; only then translate its argument vector into Odin.
+[Process\_Desc](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) makes each string a separate child argument. It does not know whether an FFmpeg option belongs before or after an input. Input options, output options, and stream specifiers remain FFmpeg’s language. First establish the exact command with a known fixture; only then translate its argument vector into Odin.
 
 For repeatable unattended experiments, use explicit input and output paths, choose an overwrite policy, and prevent an unexpected terminal-input prompt. Never experiment by overwriting the only copy of a media file. The command interface is stable enough to compose, but its capabilities and available codecs still depend on the installed build.
 
@@ -97,7 +97,7 @@ This is a focused fragment; it assumes `os` is imported and `input_path` is a va
 
 ### The JSON parser also has a policy
 
-The installed [core:encoding/json source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/types.odin) sets `DEFAULT_SPECIFICATION` to JSON5. That is a useful default for some configuration files, but we are consuming ffprobe’s strict JSON. Pass `.JSON` rather than silently accepting a broader syntax. The parser’s integer handling is also selectable; choose it deliberately when stream indices must remain integer values.
+The installed [core:encoding/json source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/types.odin) sets `DEFAULT_SPECIFICATION` to JSON5. That is a useful default for some configuration files, but we are consuming ffprobe’s strict JSON. Pass `.JSON` rather than silently accepting a broader syntax. The parser’s integer handling is also selectable; choose it deliberately when stream indices must remain integer values.
 
 Here is a complete document-inspection example. It illustrates parsing and cleanup, not the full media schema:
 
@@ -132,9 +132,9 @@ The map lookup and the union assertion answer different questions: did a key exi
 
 ### Why recursive cleanup is needed
 
-`Value` in [types.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/types.odin) is a union of scalar values, strings, arrays, and objects. `destroy_value` walks arrays recursively; for objects it releases keys, recursively destroys values, then deletes the map. Deleting only the root map would not release every nested allocation. This is the same distinction we met with dynamic arrays of strings, now applied to a tree.
+`Value` in [types.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/types.odin) is a union of scalar values, strings, arrays, and objects. `destroy_value` walks arrays recursively; for objects it releases keys, recursively destroys values, then deletes the map. Deleting only the root map would not release every nested allocation. This is the same distinction we met with dynamic arrays of strings, now applied to a tree.
 
-If you choose typed unmarshalling instead, read [unmarshal.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/unmarshal.odin). Successful assignment into a struct still does not establish domain requirements such as “exactly one video stream.” Nested typed allocations require their own ownership plan; `destroy_value` is not a generic destructor for any user struct.
+If you choose typed unmarshalling instead, read [unmarshal.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/unmarshal.odin). Successful assignment into a struct still does not establish domain requirements such as “exactly one video stream.” Nested typed allocations require their own ownership plan; `destroy_value` is not a generic destructor for any user struct.
 
 ### Three outcomes, not one
 
@@ -196,7 +196,7 @@ These libraries are not a single “codec API.” A container can carry multiple
 
 An Odin allocation uses the allocator selected by its API or context. An FFmpeg object uses the allocation and reference-management rules of the FFmpeg API. They are not unified because the program has linked both libraries. Passing an `AVFrame` to Odin does not make `delete` its destructor; passing Odin bytes to C does not transfer ownership unless the C API says so.
 
-Compare the allocator protocol in [runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin) with the opaque pointers we will declare next. A raw pointer contains no allocator provenance, no release function, and no lifetime proof. Our application must supply those facts.
+Compare the allocator protocol in [runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin) with the opaque pointers we will declare next. A raw pointer contains no allocator provenance, no release function, and no lifetime proof. Our application must supply those facts.
 
 Native binding is not automatically faster or more maintainable. It removes a process boundary but moves ABI compatibility, lifetime, error translation, and threading obligations into our process. A C shim can keep version-sensitive structures on the side whose compiler already understands their headers. It is often less work than writing a large partial binding in Odin.
 
@@ -287,7 +287,7 @@ This example targets the FFmpeg 6.x library interface. The summary is written by
 
 ### One extra byte changes the contract
 
-[strings.clone\_to\_cstring](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin) allocates `len(s)+1` bytes, copies the input bytes, and writes a trailing zero. The error result is optional in the convenient syntax, but we inspect it here because a foreign call needs a valid URL buffer. Cloning supplies storage and termination; it does not reject an embedded NUL, which C would treat as an earlier end of the string.
+[strings.clone\_to\_cstring](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin) allocates `len(s)+1` bytes, copies the input bytes, and writes a trailing zero. The error result is optional in the convenient syntax, but we inspect it here because a foreign call needs a valid URL buffer. Cloning supplies storage and termination; it does not reject an embedded NUL, which C would treat as an earlier end of the string.
 
 A plain cast cannot invent the extra byte. A borrowed string-to-pointer conversion cannot extend the input’s lifetime. The clone makes our owner explicit, and its saved allocator ensures that cleanup uses the same policy even if the current context changes later.
 
@@ -348,7 +348,7 @@ Distinguish end-of-input draining from `avcodec_flush_buffers`. Draining asks fo
 
 ### The Odin parallel: headers are not the payload
 
-A slice can be copied while still sharing its bytes; an FFmpeg packet or frame can retain a reference-counted buffer while a wrapper is reused. The mechanisms differ, but both require us to identify the payload lifetime separately from the small value we pass around. Odin’s [Raw\_Slice representation](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin) helps explain the analogy; it does not turn FFmpeg reference counting into Odin allocator ownership.
+A slice can be copied while still sharing its bytes; an FFmpeg packet or frame can retain a reference-counted buffer while a wrapper is reused. The mechanisms differ, but both require us to identify the payload lifetime separately from the small value we pass around. Odin’s [Raw\_Slice representation](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin) helps explain the analogy; it does not turn FFmpeg reference counting into Odin allocator ownership.
 
 ![The decoder send and receive protocol](../assets/diagrams/decoder-state.svg)
 
@@ -408,7 +408,7 @@ After an output header is written, the muxer may have chosen an output stream ti
 
 A C shim can expose a procedure that returns copied width, height, and timestamp data without exporting a full `AVFrame` layout. If it returns a borrowed plane pointer instead, document how long it remains valid, its row stride, and how the caller retains or releases it. A view must not outlive a frame reuse operation that invalidates its buffers.
 
-Odin’s [string\_from\_ptr](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin) illustrates the same explicit borrowing rule: its comment says the view is valid only while the pointer and length are valid. An API returning a view must communicate that limit; naming it a string or slice is not sufficient.
+Odin’s [string\_from\_ptr](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin) illustrates the same explicit borrowing rule: its comment says the view is valid only while the pointer and length are valid. An API returning a view must communicate that limit; naming it a string or slice is not sufficient.
 
 For a robust output operation, write to a new temporary destination, finish the encoder drain and muxer trailer, close resources, and only then publish a completed result under an application-defined policy. A partially written file can exist and even be nonempty without representing a successfully completed task. Do not turn an error into success just because bytes were produced.
 

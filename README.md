@@ -29,7 +29,7 @@ Existing chapter page names and explicit anchors are retained. MkDocs uses `use_
 
 ## Build and preview
 
-The publishing tools are **MkDocs + Material**, with Mermaid CLI generating SVGs before the site build. Python dependencies are hash-locked in `requirements.txt`; Node dependencies are locked in `package-lock.json`. Use Node 24 and Python 3.12 or later.
+The publishing tools are **MkDocs + Material**, with Mermaid CLI generating SVGs before the site build. Python dependencies are hash-locked in `requirements.txt`; Node dependencies are locked in `package-lock.json`. Use Node 24 and Python 3.12 or later. The companion examples and CI use Odin's pinned official monthly `dev-2026-10` release.
 
 ```sh
 python3 -m venv .venv
@@ -56,7 +56,7 @@ One-time repository setup:
 4. If a protected `github-pages` environment requires approval, approve that deployment under your repository's policy.
 5. Check the deployment URL shown by the workflow and download the offline reader from the book.
 
-The build job installs the locked dependencies, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
+The build job installs the locked dependencies, downloads and SHA-256 verifies the pinned official Odin release, checks all 18 standalone book packages, runs the book's Odin tests and the companion-skill CLI/network examples, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
 
 Publishing dependencies currently report a low-severity transitive KaTeX advisory (GHSA-238p-pmpm-9mq7). The diagrams are trusted repository inputs with strict Mermaid security, and KaTeX is not shipped as a reader runtime. Do not use this build as an arbitrary untrusted-diagram rendering service; dependency updates need a fresh rendering check rather than a forced automatic downgrade.
 
@@ -64,7 +64,7 @@ The committed reader provides an immediately usable offline copy at each locally
 
 ## Run the Odin companions
 
-Reference compiler: **`dev-2026-09-nightly:a2fb372`**, corresponding to [`a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`](https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924). Inspect your installed compiler/library before copying implementation-specific APIs.
+Reference compiler: Odin's official monthly **`dev-2026-10`** release (compiler-reported version `dev-2026-10-nightly:84bc3fc`), source commit [`84bc3fc2100b0f7880a3af37f71bccdcda41c6f9`](https://github.com/odin-lang/Odin/commit/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9). This is a pinned monthly release, not a promise of semver-style language stability. Inspect your installed compiler/library before copying implementation-specific APIs.
 
 ```sh
 odin version
@@ -100,4 +100,4 @@ These results do not claim every exercise, codec, platform, Docker recipe, or ar
 
 The original SVG cover depicts the mythological Odin and two ravens beside a code page. It reflects the name's origin, not language-design symbolism. Ginger Bill describes Odin as [a mythological codename that stuck](https://forum.odin-lang.org/t/origin-of-the-name-odin/794).
 
-This is an independent learning book, not an official Odin/FFmpeg specification or endorsement. Upstream source retains its own license, including [Odin's zlib license](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/LICENSE).
+This is an independent learning book, not an official Odin/FFmpeg specification or endorsement. Upstream source retains its own license, including [Odin's zlib license](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/LICENSE).

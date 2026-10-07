@@ -1,4 +1,4 @@
-// Original teaching companion; core API baseline: a2fb372.
+// Original teaching companion; core API baseline: 84bc3fc.
 package main
 
 import "core:sync"

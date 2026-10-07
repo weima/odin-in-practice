@@ -8,7 +8,7 @@ Part I · The language
 
 Before learning a language, we need a way to tell whether our understanding is wrong. A working compiler is only the beginning: we also need to know which compiler it is, which libraries it ships, and how to repeat an experiment. Otherwise a change in the tools can look like a change in our program.
 
-This edition follows Odin `dev-2026-09-nightly:a2fb372`. That is a baseline, not a claim that newer versions are incompatible. If your version differs, first run the small example unchanged; investigate a difference before layering more code on top. Record these two pieces of evidence:
+This edition follows Odin's official monthly `dev-2026-10` release (reported by `odin version` as `dev-2026-10-nightly:84bc3fc`). This pins a released compiler build, not a semver-stable language ABI. If your version differs, first run the small example unchanged; investigate a difference before layering more code on top. Record these two pieces of evidence:
 
 ```sh
 odin version
@@ -47,7 +47,7 @@ odin version
 # core/testing/testing.odin
 ```
 
-The compiler distribution includes its runtime and library source. We will use that copy rather than assuming the current GitHub branch matches our installation. In [runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin), find `Context` and `Allocator`. You do not need to understand them yet. Their presence tells us something valuable: allocation policy is represented as ordinary data and procedures, not concealed behind a completely separate library mechanism.
+The compiler distribution includes its runtime and library source. We will use that copy rather than assuming the current GitHub branch matches our installation. In [runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin), find `Context` and `Allocator`. You do not need to understand them yet. Their presence tells us something valuable: allocation policy is represented as ordinary data and procedures, not concealed behind a completely separate library mechanism.
 
 Keep three labels in mind as you read: *language rule*, *API contract*, and *implementation observation*. A loop’s syntax is a language rule. A procedure’s documented return values form an API contract. The buffer size chosen inside that procedure is an implementation observation. Source makes the third visible, but does not turn it into a permanent promise.
 
@@ -81,7 +81,7 @@ The greeting hides a useful question: how did the operating system find an Odin 
 
 ### Following the entry path
 
-Read [base/runtime/entry\_unix.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin). In the ordinary non-test, CRT-enabled executable branch, a C-convention `main` receives `argc` and `argv`. It stores the argument slice, creates the default context, calls runtime startup, invokes the compiler’s application entry-point intrinsic, then runs runtime cleanup before returning zero. Tests, dynamic libraries, and no-CRT builds select different branches.
+Read [base/runtime/entry\_unix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin). In the ordinary non-test, CRT-enabled executable branch, a C-convention `main` receives `argc` and `argv`. It stores the argument slice, creates the default context, calls runtime startup, invokes the compiler’s application entry-point intrinsic, then runs runtime cleanup before returning zero. Tests, dynamic libraries, and no-CRT builds select different branches.
 
 That sequence explains why our procedure can use `context` without constructing it and why the process arguments exist before our first statement. It also explains why a test build is not simply a normal executable that happens to call some extra procedures. Its entry path is selected separately.
 
@@ -144,7 +144,7 @@ A dynamic array with no requested capacity need not allocate immediately. Growth
 
 ### Read a value’s representation before guessing its lifetime
 
-In [base/runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin), the raw representations give us a compact mental model:
+In [base/runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin), the raw representations give us a compact mental model:
 
 | Value | Representation in this runtime | Consequence of copying it |
 | --- | --- | --- |
@@ -299,7 +299,7 @@ divide_named :: proc(numerator, denominator: f64) -> (quotient: f64, ok: bool) {
 
 The named results are zero-initialized local result variables. In this example the final bare return has the same effect as `return quotient, ok`. A named-result procedure can also use explicit return expressions, as our original `divide` does. By contrast, `proc() -> (f64, bool)` has unnamed results and must supply their values explicitly; do not copy a bare return into it.
 
-Now inspect [`_listen_tcp`, including the bare return at line 195](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net/socket_linux.odin#L182-L224). Its result declaration is `-> (socket: TCP_Socket, err: Network_Error)`. This is an excerpt inside that implementation, not a standalone program:
+Now inspect [`_listen_tcp`, including the bare return at line 195](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/net/socket_linux.odin#L182-L224). Its result declaration is `-> (socket: TCP_Socket, err: Network_Error)`. This is an excerpt inside that implementation, not a standalone program:
 
 ```text
 os_sock, errno = linux.socket(ep_family, .STREAM, {.CLOEXEC}, .TCP)
@@ -321,7 +321,7 @@ After acquiring the socket, the source installs `defer if err != nil { close(soc
 
 ### Polymorphism in a real library procedure
 
-Our `minimum` requires that comparison makes sense for `T`. Specialization does not invent an ordering for arbitrary records. Read [testing.expect\_value](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin): its parameters are `value, expected: $T`, and a `where` clause requires a comparable type. The public signature tells us more than “generic equality helper”: the supplied values must share a suitable type.
+Our `minimum` requires that comparison makes sense for `T`. Specialization does not invent an ordering for arbitrary records. Read [testing.expect\_value](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin): its parameters are `value, expected: $T`, and a `where` clause requires a comparable type. The public signature tells us more than “generic equality helper”: the supplied values must share a suitable type.
 
 The same source uses `#caller_location` and `#caller_expression(value)` as default arguments. These capture information about the call site. A failed expectation can name your expression and your source location rather than only naming the library implementation. This is a good use of compile-time support: better diagnostics without asking every caller to manually supply a filename and line.
 
@@ -375,7 +375,7 @@ Predict the result for `{1, 0, 0, 0}` and `{0, 0, 0, 1}`. Then test a three-byte
 
 ### Compile-time branches leave a testing obligation
 
-The `when` branches in [entry\_unix.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin) select target-specific entry code and even different syscall numbers. Reading that source is enough to understand the selection mechanism; it is not enough to claim that our program works on every listed architecture. A successful Linux amd64 build gives no runtime evidence for the other branches.
+The `when` branches in [entry\_unix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin) select target-specific entry code and even different syscall numbers. Reading that source is enough to understand the selection mechanism; it is not enough to claim that our program works on every listed architecture. A successful Linux amd64 build gives no runtime evidence for the other branches.
 
 `size_of`, `align_of`, and field offsets are useful observations when investigating layout. Use `#assert` for a compile-time relationship you deliberately depend on. Do not infer a portable wire format from the layout printed by one machine. Endian-specific integer types express byte-order choices, but they do not remove the need to validate input length and alignment.
 
@@ -429,7 +429,7 @@ For example, an array of structures stores each particle’s position and veloci
 
 ### A source-level example: the map is not a bag of objects
 
-The comments beside `Raw_Map` in [core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin) describe one allocation containing key, value, and hash regions. They also describe using low bits of an aligned pointer to encode capacity information. That is a concrete representation choice made to serve the container’s operations, not a universal recipe for your application.
+The comments beside `Raw_Map` in [core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin) describe one allocation containing key, value, and hash regions. They also describe using low bits of an aligned pointer to encode capacity information. That is a concrete representation choice made to serve the container’s operations, not a universal recipe for your application.
 
 Why mention it here? Because “map” is an interface, while the work performed by a lookup depends on a representation. A language-level map does not mean one separately allocated object per entry. Conversely, this particular layout does not promise stable iteration order, serializable headers, or pointers that remain valid during mutation. Reading implementation should refine performance questions without quietly widening the public contract.
 

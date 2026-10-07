@@ -10,7 +10,7 @@ A file inspector can read input, allocate a preview, run a media probe, and prod
 
 Both descriptions contain some truth. Odin deliberately exposes resource policy and ordinary failure as parts of the program. That can make costs and recovery decisions easier to audit, but it moves obligations onto the programmer. This chapter explains the intended benefits without pretending that verbosity, leaks, or dangling pointers disappear merely because allocation is explicit.
 
-For intent, we can cite the creator’s [memory-allocation essay](https://www.gingerbill.org/article/2019/02/01/memory-allocation-strategies-001/), his [explanation of context](https://www.gingerbill.org/article/2025/12/15/odins-most-misunderstood-feature-context/), and the official [exception rationale](https://odin-lang.org/docs/faq/#why-does-odin-not-have-exceptions). For mechanics, we use the runtime and libraries at `a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`. An author’s preference is evidence of a design goal, not proof that every alternative is slower or less readable.
+For intent, we can cite the creator’s [memory-allocation essay](https://www.gingerbill.org/article/2019/02/01/memory-allocation-strategies-001/), his [explanation of context](https://www.gingerbill.org/article/2025/12/15/odins-most-misunderstood-feature-context/), and the official [exception rationale](https://odin-lang.org/docs/faq/#why-does-odin-not-have-exceptions). For mechanics, we use the runtime and libraries at `84bc3fc2100b0f7880a3af37f71bccdcda41c6f9`. An author’s preference is evidence of a design goal, not proof that every alternative is slower or less readable.
 
 ### 1. Begin with the system’s lifetime, not the allocator’s name
 
@@ -37,7 +37,7 @@ The language does not automatically walk a dynamic array of strings and free eve
 
 ### 3. The real allocator interface is deliberately ordinary data
 
-These declarations are a short excerpt from [base/runtime/core.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin); they are not a complete application:
+These declarations are a short excerpt from [base/runtime/core.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin); they are not a complete application:
 
 ```odin
 Allocator_Proc :: #type proc(allocator_data: rawptr, mode: Allocator_Mode,
@@ -71,7 +71,7 @@ The cost is real: a procedure’s printed argument list may not show all the pol
 
 A growing arena can allocate sequentially from blocks and release or reset storage in bulk. This can avoid managing each short-lived allocation separately. It also retains storage until the chosen boundary, may reserve more memory than an individual result needs, and can accumulate substantial memory when a supposed “short operation” is actually an unbounded loop.
 
-In the pinned [virtual arena implementation](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/mem/virtual/arena.odin), `arena_free_all` releases all but the first block of a growing arena and resets usage. `arena_destroy` releases its blocks. The allocator adapter returns `Mode_Not_Implemented` for individual `Free`. These are concrete implementation observations; not every arena implementation must make the same retention choices.
+In the pinned [virtual arena implementation](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/mem/virtual/arena.odin), `arena_free_all` releases all but the first block of a growing arena and resets usage. `arena_destroy` releases its blocks. The allocator adapter returns `Mode_Not_Implemented` for individual `Free`. These are concrete implementation observations; not every arena implementation must make the same retention choices.
 
 ![Copy a retained result across a scratch lifetime boundary](../assets/diagrams/memory-lifetimes.svg)
 
@@ -175,7 +175,7 @@ main :: proc() {
 }
 ```
 
-Now inspect [the real `new` body](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin). It requests bytes with the type’s size and alignment, uses `or_return` on failure, and casts the returned data address to `^T`. The source makes the nil/failure path concrete. You can swap policy without rewriting the client, but a client that ignores the failure can still dereference nil.
+Now inspect [the real `new` body](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core_builtin.odin). It requests bytes with the type’s size and alignment, uses `or_return` on failure, and casts the returned data address to `^T`. The source makes the nil/failure path concrete. You can swap policy without rewriting the client, but a client that ignores the failure can still dereference nil.
 
 On a virtual-memory OS, apparent allocation success may not guarantee all pages can later be committed under pressure. An allocator’s returned error is the contract visible at that call, not a promise that every future system-memory failure is recoverable. Choose a domain response: reject a request, lower a quality setting, use bounded preallocated storage, or terminate at the application boundary. Returning an error from one allocation does not automatically make every procedure in the program allocation-failure-safe.
 
@@ -251,7 +251,7 @@ Use the explicit branch when you need to translate an error, choose a fallback, 
 
 ### 12. A real file-reading helper shows where the responsibilities split
 
-This is the actual path-based helper from [core/os/file\_util.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin), with indentation normalized. It belongs to the `os` package, not a standalone program:
+This is the actual path-based helper from [core/os/file\_util.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin), with indentation normalized. It belongs to the `os` package, not a standalone program:
 
 ```odin
 @(require_results)

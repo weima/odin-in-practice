@@ -139,7 +139,7 @@ A glossary is useful when it keeps adjacent concepts apart. “String,” “own
 
 ## 31. Official references and source trail
 
-The source walkthroughs in this edition were read from the runtime and core libraries shipped with `dev-2026-09-nightly:a2fb372`. The corresponding upstream commit is [`a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`](https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924). Repository links below are pinned to it rather than to a moving branch.
+The source walkthroughs in this edition were read from the runtime and core libraries at the official monthly `dev-2026-10` release. Its compiler reports `dev-2026-10-nightly:84bc3fc`; the source commit is [`84bc3fc2100b0f7880a3af37f71bccdcda41c6f9`](https://github.com/odin-lang/Odin/commit/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9). Repository links below are pinned to it rather than to a moving branch.
 
 This is library and runtime source evidence, not a claim to have audited the entire compiler. The installed distribution does not contain the compiler's complete C++ source. Where this book explains language semantics, use the official language guide and a small compiler experiment; where it explains a library mechanism, follow the named symbol in the pinned source.
 
@@ -174,21 +174,21 @@ To reproduce a reading, run `odin root`, open the local path, find the symbol, a
 - [Official documentation index](https://odin-lang.org/docs/) — language guide, FAQ, tutorials, and articles.
 - [Package docs: `core:flags`](https://pkg.odin-lang.org/core/flags/) — parsing styles, tags, validation, help, and errors.
 - [Package docs: `core:os`](https://pkg.odin-lang.org/core/os/) — files, environment, standard streams, and processes.
-- [Flags example source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/example/example.odin) — a complete annotated-options example.
-- [Flags parser source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/parsing.odin) — parsing styles and the public parser contract.
-- [Environment source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env.odin) — how lookup distinguishes an unset variable from an empty one.
-- [Process source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin) — process descriptors, execution, captured output, and wait state.
-- [File utility source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin) — whole-file read helpers and allocation behavior.
-- [Linux system packages](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/sys/linux) — Linux-specific APIs in Odin's core library.
-- [Runtime representations and context](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin) — raw headers, allocator modes, and scope policies.
-- [Built-in operations](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin) — allocator selection for deletion and the public append path.
-- [Unix entry source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin) — initialization, application entry, and cleanup.
-- [Flags boundary wrapper](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin) — executable-argument removal, help, and exit status.
-- [File operations](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin) — read counts, EOF, and stream dispatch.
-- [Testing source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin) — expectations, caller diagnostics, and cleanup.
-- [Test runner](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/runner.odin) and [test logging](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/logging.odin) — contexts, allocation tracking, and failure recording.
-- [JSON source](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json) — syntax policies, value trees, and cleanup.
-- [String source](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin) — clones, C-string termination, and borrowed views.
+- [Flags example source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/example/example.odin) — a complete annotated-options example.
+- [Flags parser source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/parsing.odin) — parsing styles and the public parser contract.
+- [Environment source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env.odin) — how lookup distinguishes an unset variable from an empty one.
+- [Process source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) — process descriptors, execution, captured output, and wait state.
+- [File utility source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_util.odin) — whole-file read helpers and allocation behavior.
+- [Linux system packages](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/linux) — Linux-specific APIs in Odin's core library.
+- [Runtime representations and context](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core.odin) — raw headers, allocator modes, and scope policies.
+- [Built-in operations](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/core_builtin.odin) — allocator selection for deletion and the public append path.
+- [Unix entry source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/base/runtime/entry_unix.odin) — initialization, application entry, and cleanup.
+- [Flags boundary wrapper](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/flags/util.odin) — executable-argument removal, help, and exit status.
+- [File operations](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin) — read counts, EOF, and stream dispatch.
+- [Testing source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin) — expectations, caller diagnostics, and cleanup.
+- [Test runner](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/runner.odin) and [test logging](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/logging.odin) — contexts, allocation tracking, and failure recording.
+- [JSON source](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json) — syntax policies, value trees, and cleanup.
+- [String source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin) — clones, C-string termination, and borrowed views.
 - [Creator’s explanation of the name](https://forum.odin-lang.org/t/origin-of-the-name-odin/794) — a mythological project codename that stuck.
 - [FFmpeg documentation](https://ffmpeg.org/documentation.html) — official user and developer documentation index.
 - [ffmpeg command documentation](https://ffmpeg.org/ffmpeg.html) — options, stream selection, streamcopy, transcoding and filtering.
