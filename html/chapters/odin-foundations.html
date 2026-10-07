@@ -380,6 +380,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#grow-a-cli-without-growing-one-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grow a CLI without growing one file
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -952,6 +963,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#grow-a-cli-without-growing-one-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grow a CLI without growing one file
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1284,6 +1306,24 @@ odin<span class="w"> </span>version
 <p>The package line associates a source file with a package. Files in the same package directory can refer to each other without headers or forward declarations. Try moving the greeting text into a second file with the same package declaration. Nothing about the call needs to change. Moving that file into a subdirectory, however, creates a separate package boundary rather than continuing the original one. Imports refer to packages, not individual source files.</p>
 <p>One boundary remains file-local: an import name is not automatically available in every other file of the package. A test file using <code>os.pipe</code> needs its own <code>core:os</code> import even if the production file already imports it. Package declarations share definitions; files still declare the import names they use. Deliberately remove that import from a small test file and inspect the diagnostic.</p>
 <p>The <code>core:</code> prefix selects a library collection; it is not a network package download. Here <code>::</code> binds the procedure as a compile-time entity. Splitting the source can improve navigation, but does not create the isolation that a separate package provides.</p>
+<h3 id="grow-a-cli-without-growing-one-file">Grow a CLI without growing one file<a class="headerlink" href="#grow-a-cli-without-growing-one-file" title="Permanent link">&para;</a></h3>
+<p>An Odin package is a directory, not a project-wide module assembled from arbitrary source paths. The compiler compiles the <code>.odin</code> files in the selected directory together when they declare the same package. Start with a few focused files in one directory—such as <code>main.odin</code>, <code>args.odin</code>, and <code>output.odin</code>—when they implement one cohesive command and share internal declarations. This improves navigation without adding an import boundary.</p>
+<p>Create a subdirectory package when a piece of the program has a clear responsibility, can be named and tested independently, or should expose a small API while hiding implementation. Import its package by path; the imported source is compiled as a separate package. Do not split every file into a package: extra boundaries mean explicit imports and an API to maintain. Keep command parsing, orchestration, and CLI-specific errors near the entry point; move reusable domain operations out only when that separation pays for itself.</p>
+<p>Odin declarations are public by default. That includes procedures, types, constants, variables, and other declarations; use an explicit visibility attribute to narrow access. This is a visibility fragment; procedure bodies are placeholders:</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">I</span><span class="nc">n</span><span class="w"> </span><span class="nc">package</span><span class="w"> </span><span class="err">`</span><span class="nc">labels</span><span class="err">`:</span><span class="w"> </span><span class="nc">callers</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">other</span><span class="w"> </span><span class="nc">packages</span><span class="w"> </span><span class="nc">can</span><span class="w"> </span><span class="nc">use</span><span class="w"> </span><span class="nc">this</span><span class="w"> </span><span class="nc">procedure</span><span class="err">.</span>
+<span class="nc">greeting</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">name: string</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">string</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="p">/</span><span class="err">*</span><span class="w"> </span><span class="nc">implementation</span><span class="w"> </span><span class="err">*</span><span class="p">/</span><span class="w"> </span><span class="err">}</span>
+
+<span class="p">//</span><span class="w"> </span><span class="err">O</span><span class="nc">ther</span><span class="w"> </span><span class="nc">files</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="err">`</span><span class="nc">labels</span><span class="err">`</span><span class="w"> </span><span class="nc">can</span><span class="w"> </span><span class="nc">use</span><span class="w"> </span><span class="nc">this</span><span class="w"> </span><span class="nc">helper</span><span class="p">;</span><span class="w"> </span><span class="nc">importers</span><span class="w"> </span><span class="nc">cannot</span><span class="err">.</span>
+<span class="err">@</span><span class="p">(</span><span class="nc">private="package"</span><span class="p">)</span>
+<span class="nc">normalize_name</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">name: string</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">string</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="p">/</span><span class="err">*</span><span class="w"> </span><span class="nc">implementation</span><span class="w"> </span><span class="err">*</span><span class="p">/</span><span class="w"> </span><span class="err">}</span>
+
+<span class="p">//</span><span class="w"> </span><span class="err">O</span><span class="nc">nly</span><span class="w"> </span><span class="nc">this</span><span class="w"> </span><span class="nc">source</span><span class="w"> </span><span class="nc">file</span><span class="w"> </span><span class="nc">can</span><span class="w"> </span><span class="nc">refer</span><span class="w"> </span><span class="nc">to</span><span class="w"> </span><span class="nc">this</span><span class="w"> </span><span class="nc">declaration</span><span class="err">.</span>
+<span class="err">@</span><span class="p">(</span><span class="nc">private="file"</span><span class="p">)</span>
+<span class="err">PREFIX</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="s">"Hello, "</span>
+</code></pre></div>
+<p><code>@(private="package")</code> is useful for package-internal helpers shared by multiple files. <code>@(private="file")</code> keeps a declaration local to its source file. There is no <code>protected</code> inheritance visibility: Odin does not use class inheritance as a package organization mechanism. This is compile-time access control, not a security boundary.</p>
+<p>Keep imports explicit in each file that uses them. A package line identifies the package; it does not import sibling or standard-library packages. The built-in collections have paths such as <code>core:fmt</code>; local package imports use a package path relative to the importing package (see <code>../label</code> in the example). A test file also declares its own imports. The complete <a href="../examples/05-packages/index.html">multi-file CLI example</a> demonstrates the boundary, public API, hidden implementation, output ownership, and a focused test.</p>
+<p>Odin has no official package manager that resolves and pins third-party dependencies for you. For a small tool, prefer the standard library or a dependency already present in the project's controlled source tree. If you vendor third-party Odin source, record its upstream URL, exact release or commit, license, and local changes; keep the import path stable and update it deliberately. Do not depend on a moving branch, unrecorded machine-local checkout, or a downloaded dependency whose version cannot be reproduced. Review updates and run the compiler and tests against the pinned dependency source.</p>
 <p>That greeting is only a toolchain smoke test. For real work, ask which build target and configuration you are producing, which packages are included, and which platform assumptions the code makes. Use <code>odin help build</code> and <code>odin help run</code> for the installed compiler’s flags; do not copy a target or optimization switch from a different compiler release without checking it.</p>
 <table>
 <thead>

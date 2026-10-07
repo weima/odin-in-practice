@@ -4,6 +4,7 @@ Commands below run from the repository root, with the pinned Odin compiler on `P
 
 | Companion | Read or run | Focus |
 | --- | --- | --- |
+| [Packages and visibility](05-packages/README.md) | `odin run docs/examples/05-packages/cli -- Ada` | Multi-file CLI package, imported package API, private declarations, focused test |
 | [Procedures](04-procedures/main.odin) | `odin run docs/examples/04-procedures` | Bare returns, deferred cleanup, independent types |
 | [Pointers](10-pointers/aliases/main.odin) | Programs under `10-pointers/`; tests under `10-pointers/tests/` | Aliases, record views, multi-pointers, owned results |
 | [Memory](11-memory-philosophy/arena-snapshot/main.odin) | Programs under `11-memory-philosophy/`; tests under `11-memory-philosophy/tests/` | Scratch/result lifetime, allocation failure, explicit errors |
@@ -17,6 +18,7 @@ Commands below run from the repository root, with the pinned Odin compiler on `P
 ## Focused tests
 
 ```sh
+TZ=UTC odin test docs/examples/05-packages/label
 TZ=UTC odin test docs/examples/04-procedures
 TZ=UTC odin test docs/examples/10-pointers/tests
 TZ=UTC odin test docs/examples/11-memory-philosophy/tests

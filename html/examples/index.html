@@ -590,6 +590,11 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="05-packages/index.html">Packages and visibility</a></td>
+<td><code>odin run docs/examples/05-packages/cli -- Ada</code></td>
+<td>Multi-file CLI package, imported package API, private declarations, focused test</td>
+</tr>
+<tr>
 <td><a href="04-procedures/main.odin">Procedures</a></td>
 <td><code>odin run docs/examples/04-procedures</code></td>
 <td>Bare returns, deferred cleanup, independent types</td>
@@ -637,7 +642,8 @@
 </tbody>
 </table>
 <h2 id="focused-tests">Focused tests<a class="headerlink" href="#focused-tests" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/04-procedures
+<div class="highlight"><pre><span></span><code><span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/05-packages/label
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/04-procedures
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/10-pointers/tests
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/11-memory-philosophy/tests
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/17-networking/http-client

@@ -10,6 +10,7 @@ Read the relevant book chapter and companion when the book is available locally.
 
 ## Select only the relevant branch
 
+- **Packages, imports or visibility:** read [the package guide](packages.md) and inspect the directory layout. Keep same-responsibility files in one package; make a subpackage only for a deliberate API boundary. Imports are declared per file, declarations are public by default, and `@(private="package")` / `@(private="file")` narrow access. For a complete checked pattern, run the bundled [`05-packages` example](../examples/05-packages/README.md).
 - **Pointers and memory:** distinguish pointer binding from target mutation; copied slice/string/allocator headers can share storage. Trace the owner, allocation domain, lifetime and every cleanup/rollback path. Arena reset invalidates outstanding borrows.
 - **Errors:** inspect ordinary return types and required-result rules. Propagate errors without misclassifying partial output as success; keep cleanup separate from transactional rollback.
 - **Parallel work:** identify immutable input, disjoint writes or one synchronized invariant. Preserve stable descriptors and allocator state. Join before freeing borrowed memory, handle partial startup failure, and distinguish stop requests from completion. Threads/pools are not JavaScript Promises or compiler-supported await.

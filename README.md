@@ -37,6 +37,7 @@ python3 -m venv .venv
 python -m pip install --require-hashes -r requirements.txt
 npm ci
 npm run diagrams
+python tools/package-skill.py
 mkdocs build --strict
 python tools/check-book.py
 python tools/package-offline.py
@@ -68,13 +69,16 @@ Reference compiler: Odin's official monthly **`dev-2026-10`** release (compiler-
 
 ```sh
 odin version
+odin check docs/examples/05-packages/cli
+odin run docs/examples/05-packages/cli -- Ada
+TZ=UTC odin test docs/examples/05-packages/label
 odin run docs/examples/04-procedures
 TZ=UTC odin test docs/examples/04-procedures
 odin run docs/examples/19-parallel
 TZ=UTC odin test docs/examples/19-parallel
 ```
 
-Each complete program has its own package directory. Inline fragments, pseudocode, and intentional compiler-failure experiments are labeled. Tests and reusable helpers stay alongside the relevant program.
+Each complete program has its own package directory. Inline fragments, pseudocode, and intentional compiler-failure experiments are labeled. Tests and reusable helpers stay alongside the relevant program. The multi-file CLI example also ships inside the Odin companion skill folder and ZIP.
 
 The loopback/CLI integration lab builds the HTTP adapter and four CLI commands, then runs `python3 docs/examples/verify_systems.py`. The Docker recipes are explicit local exercises; no image pull, container launch, or daemon operation is implied by the book build. The read-only Odin Docker companion defaults to a dry run.
 

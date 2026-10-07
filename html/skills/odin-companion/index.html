@@ -560,9 +560,10 @@
 <p>Download <strong>this whole folder</strong>, including <code>references/</code>, alongside the book. It contains one portable, editable skill—not a plugin, runtime service or installer.</p>
 <h2 id="use-it">Use it<a class="headerlink" href="#use-it" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Read <code>SKILL.md</code> and <code>references/checklist.md</code>; the <code>examples/</code> directory contains complete CLI and loopback TCP packages.</li>
-<li>Copy the folder into the skill directory supported by your coding agent, or explicitly ask the agent to read its <code>SKILL.md</code>.</li>
+<li>Read <code>SKILL.md</code> and <code>references/checklist.md</code>; the <code>examples/</code> directory contains complete CLI, loopback TCP, and package examples. Package work also uses <code>references/packages.md</code>.</li>
+<li>Copy the whole folder—including <code>references/</code> and <code>examples/05-packages/</code>—into the skill directory supported by your coding agent, or explicitly ask the agent to read its <code>SKILL.md</code>.</li>
 <li>Supply your project and request. Let the agent inspect your installed compiler instead of assuming the book's pinned release matches.</li>
+<li>To run the bundled package example, change to the skill folder (the directory containing <code>examples/</code>) and follow <code>examples/05-packages/README.md</code>. From the book repository root, use the equivalent commands in <code>docs/examples/README.md</code>. The sources import only Odin's built-in <code>core:</code> collection.</li>
 </ol>
 <p>Folder discovery and invocation depend on the chosen agent. This book does not automatically install the skill globally, modify agent configuration or register it in a project's <code>AGENTS.md</code>.</p>
 <h2 id="make-it-your-own">Make it your own<a class="headerlink" href="#make-it-your-own" title="Permanent link">&para;</a></h2>
