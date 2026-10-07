@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Workbook and references · Odin in Practice</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>Workbook and references</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
+<main><section id="workbook" class="chapter">
+<h2>24. Workbook: exercises and solutions</h2>
+<p>Try each exercise before opening its suggested solution. The solutions are intentionally modest; they demonstrate the idea without building a framework around it.</p>
+<h3>Exercise A · Usage is part of the interface</h3>
+<p>Make the greeting program fail when no name is given. Print usage to stderr and return a non-zero status. Then redirect stdout and stderr to separate files. Which file contains the usage message?</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> test the exit code as well as the text. A usage line printed to stderr with exit status zero still tells a shell script that the command succeeded.</p>
+<details><summary>Solution sketch</summary><p>Check <code>len(os.args)</code> before reading <code>os.args[1]</code>. Call <code>fmt.eprintln</code> for the usage line, then <code>os.exit(2)</code>. The usage message should be in the stderr file.</p></details>
+<h3>Exercise B · Empty is not missing</h3>
+<p>Read the <code>HOME</code> environment variable. Test the program once with <code>HOME=</code> and once with <code>env -u HOME</code>. Make its output distinguish the two cases.</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> a truthiness check on the string confuses “present but empty” with “not set.” Use the separate found flag.</p>
+<details><summary>Solution sketch</summary><p>Use <code>os.lookup_env</code>. The boolean tells whether the variable exists; the returned string can still be empty when it does.</p></details>
+<h3>Exercise C · Spawn failure versus exit failure</h3>
+<p>Run a child program that exists but returns non-zero. Compare it with a nonexistent executable. Report both distinctly.</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> spawning successfully is not the same as the child succeeding. Check both the returned error and the child’s exit state; do not overwrite one with the other.</p>
+<details><summary>Solution sketch</summary><p>A missing executable produces an error from process execution. A child that starts and exits non-zero returns a process state whose exit code reports the child's result. Check both the error and the returned state.</p></details>
+<h3>Exercise D · Bound the input</h3>
+<p>Design the file inspector so it never keeps more than one fixed-size read buffer plus the requested preview in memory. State the maximum memory use in terms of the buffer size and limit.</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> if you continue reading after the preview is full, count bytes without appending them. A preview limit does not automatically limit total memory or total work.</p>
+<details><summary>Solution sketch</summary><p>Use a fixed byte buffer for each read and store at most <code>limit</code> preview bytes. Memory is bounded by the buffer plus the preview and small bookkeeping, rather than the full file size.</p></details>
+<h3>Exercise E · Challenge your API</h3>
+<p>Write a test matrix for the inspector. Include normal input, empty input, bad arguments, missing files, large input, and output redirection. For each case, specify expected stdout, stderr, and exit status before running the test.</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> avoid brittle assertions about OS-specific error wording. Assert stable behavior and your own diagnostic contract, not a kernel message that can change across systems.</p>
+<details><summary>Solution sketch</summary><p>Keep one row per observable behavior. A successful size report belongs on stdout with exit status zero; invalid input and failed reads produce a concise stderr diagnostic and non-zero status. Add exact output only when the output format is a deliberate contract.</p></details>
+</section>
+<section id="glossary" class="chapter">
+<h2>25. Pocket glossary</h2>
+<table><thead><tr><th>Term</th><th>Working meaning</th></tr></thead><tbody>
+<tr><td>Package</td><td>A directory-based unit of Odin source; files in it share a package name.</td></tr>
+<tr><td>Procedure</td><td>A typed callable unit of code, declared with <code>proc</code>.</td></tr>
+<tr><td>Allocator</td><td>A strategy for obtaining and releasing memory, passed explicitly to many core APIs.</td></tr>
+<tr><td>Slice</td><td>A view over a sequence of elements; it does not by itself say who owns the backing storage.</td></tr>
+<tr><td>Dynamic array</td><td>A resizable collection that owns backing storage and must be released according to its allocator contract.</td></tr>
+<tr><td>Defer</td><td>A statement scheduled to run when its surrounding scope exits; defers run in reverse declaration order.</td></tr>
+<tr><td>File descriptor</td><td>An operating-system handle commonly used for files, pipes, and standard streams.</td></tr>
+<tr><td>Process</td><td>A running program with its own arguments, environment, working directory, and exit status.</td></tr>
+<tr><td>EOF</td><td>End of a stream: no more bytes are available from that input. It is not the same as a delimiter between records.</td></tr>
+<tr><td>Syscall</td><td>A defined request from a program to the operating-system kernel.</td></tr>
+<tr><td>ABI</td><td>The binary-level conventions that let separately compiled code and the operating system communicate.</td></tr>
+<tr><td>Container</td><td>A media file format that stores streams, metadata and timing, such as MP4 or Matroska.</td></tr>
+<tr><td>Demuxer / muxer</td><td>A demuxer separates container input into streams and packets; a muxer packages output streams and packets.</td></tr>
+<tr><td>Packet / frame</td><td>A packet carries compressed stream data; a frame carries decoded audio samples or video pixels.</td></tr>
+<tr><td>Time base</td><td>A rational unit that gives meaning to integer media timestamps.</td></tr>
+<tr><td>Opaque handle</td><td>A pointer passed to a C API whose structure layout is intentionally not accessed by the caller.</td></tr>
+<tr><td>Data-oriented programming</td><td>A way of designing around the data being processed, its layout and access patterns, and the procedures that transform it.</td></tr>
+<tr><td>AoS / SoA</td><td>Array of structures keeps fields together per item; structure of arrays groups each field into its own sequence.</td></tr>
+</tbody></table>
+</section>
+<section id="sources" class="chapter">
+<h2>26. Official references and source trail</h2>
+<p>Use three layers of evidence: the language guide for rules, package documentation for API contracts, and source code for implementation details. The repository's <code>master</code> links change over time; compare them with the compiler version installed on your machine.</p>
+<ul>
+<li><a href="https://odin-lang.org/docs/overview/">Odin overview</a> — declarations, packages, control flow, types, polymorphism, foreign imports and examples.</li>
+<li><a href="https://odin-lang.org/docs/testing/">Running tests</a> — the <code>@(test)</code> attribute, test procedures, expectations and runner behavior.</li>
+<li><a href="https://pkg.odin-lang.org/core/testing/">Package docs: <code>core:testing</code></a> — test expectations, cleanup, and runner options.</li>
+<li><a href="https://odin-lang.org/docs/faq/">Odin FAQ</a> — the designers’ stated goals and rationale for language choices including data-oriented programming, allocators, context and error handling.</li>
+<li><a href="https://odin-lang.org/news/binding-to-c/">Odin: Binding to C</a> — foreign imports, ABI types, C strings, structs, unions and pointers.</li>
+<li><a href="https://odin-lang.org/docs/">Official documentation index</a> — language guide, FAQ, tutorials, and articles.</li>
+<li><a href="https://pkg.odin-lang.org/core/flags/">Package docs: <code>core:flags</code></a> — parsing styles, tags, validation, help, and errors.</li>
+<li><a href="https://pkg.odin-lang.org/core/os/">Package docs: <code>core:os</code></a> — files, environment, standard streams, and processes.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/master/core/flags/example/example.odin">Flags example source</a> — a complete annotated-options example.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/master/core/flags/parsing.odin">Flags parser source</a> — parsing styles and the public parser contract.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/master/core/os/env.odin">Environment source</a> — how lookup distinguishes an unset variable from an empty one.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/master/core/os/process.odin">Process source</a> — process descriptors, execution, captured output, and wait state.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/master/core/os/file_util.odin">File utility source</a> — whole-file read helpers and allocation behavior.</li>
+<li><a href="https://github.com/odin-lang/Odin/tree/master/core/sys/linux">Linux system packages</a> — Linux-specific APIs in Odin's core library.</li>
+<li><a href="https://ffmpeg.org/documentation.html">FFmpeg documentation</a> — official user and developer documentation index.</li>
+<li><a href="https://ffmpeg.org/ffmpeg.html">ffmpeg command documentation</a> — options, stream selection, streamcopy, transcoding and filtering.</li>
+<li><a href="https://ffmpeg.org/ffprobe.html">ffprobe command documentation</a> — stream/format inspection and machine-readable output.</li>
+<li><a href="https://ffmpeg.org/doxygen/trunk/group__lavf.html">libavformat API</a> — demuxing, muxing and format contexts.</li>
+<li><a href="https://ffmpeg.org/doxygen/trunk/group__lavc__encdec.html">libavcodec send/receive API</a> — decoder and encoder state-machine contract.</li>
+<li><a href="https://ffmpeg.org/doxygen/trunk/demuxing__decoding_8c.html">FFmpeg demuxing_decoding.c example</a> — a complete official packet-to-frame decode example.</li>
+<li><a href="https://ffmpeg.org/doxygen/trunk/group__lavu__error.html">libavutil error API</a> — error codes and <code>av_strerror</code>.</li>
+</ul>
+<div class="callout"><strong>A reading loop for API questions:</strong> predict the contract; read the package docs; inspect the relevant implementation; write a tiny experiment; compare the result with your prediction. If they differ, update your model before adding more code.</div>
+</section></main>
+<footer>
+<p><strong>The systems-programming checklist:</strong> Where did input come from? What does failure look like? Who owns each allocation and handle? Is work bounded? What reaches stdout, stderr, and the exit status? Which ABI, library version, media time base, and Linux assumptions does this code depend on?</p>
+<p class="small">End of this edition. Extend the labs one behavior at a time. The official Odin docs and FFmpeg docs/headers that match your installed versions remain the authority for version-specific details.</p>
+</footer>
+</body>
+</html>

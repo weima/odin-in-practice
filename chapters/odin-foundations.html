@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Odin foundations · Odin in Practice</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>Odin foundations</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
+<main><section id="setup" class="chapter">
+<p class="chapter-no">Part I · The language</p>
+<h2>1. Prepare your workshop</h2>
+<p>Odin is a compiled, statically typed language with explicit package boundaries and caller-visible allocation choices. Treat setup as a reproducible build contract, not a ceremonial first step. Verify the compiler and its command surface:</p>
+<pre><code>odin version
+odin help</code></pre>
+<p>Keep each lesson in its own directory. An Odin package is the set of source files in a directory that declare the same package name; the compiler normally compiles those files together. A directory is not merely a place to store unrelated files—it is one compilation unit and a useful boundary for tests and ownership.</p>
+<pre><code>mkdir -p ~/learn/odin/01-hello
+cd ~/learn/odin/01-hello
+$EDITOR main.odin</code></pre>
+<p>Use the editor you know. Later Linux labs also use ordinary command-line tools; the FFmpeg chapters require <code>ffmpeg</code>, <code>ffprobe</code>, and development libraries. Keep generated executables outside source directories or ignore them deliberately.</p>
+<h3>Build loop and evidence</h3>
+<pre><code>odin check .
+ODIN_DEBUG=true odin run .
+odin test .
+odin build . -out:./build/tool</code></pre>
+<p>Checking, running, testing, and building answer different questions. A successful type check does not prove runtime behavior; a unit test does not prove that an executable works in a shell pipeline; a successful link does not prove that the deployment machine can load every shared library. Keep those claims separate.</p>
+<div class="checkpoint"><strong>Checkpoint.</strong> <code>odin version</code> prints a version and exits successfully. If not, solve the installation or PATH issue before debugging Odin code.</div>
+</section>
+<section id="first-program" class="chapter">
+<p class="chapter-no">Chapter 2 · Compilation model</p>
+<h2>2. Packages, compilation, and targets</h2>
+<p>Write this into <code>main.odin</code>:</p>
+<pre><code>package main
+
+import "core:fmt"
+
+main :: proc() {
+    fmt.println("Hello, Odin")
+}</code></pre>
+<p>Run it from its directory:</p>
+<pre><code>odin run .</code></pre>
+<p>The first line assigns the file to a package. Imports are package dependencies, and the <code>main</code> procedure is the entry point of an executable package. Odin builds the package directory as a unit, so splitting files is an organizational choice rather than a separately compiled module boundary. <code>::</code> declares a constant entity; here the entity is a procedure.</p>
+<p>That greeting is only a toolchain smoke test. For real work, ask which build target and configuration you are producing, which packages are included, and which platform assumptions the code makes. Use <code>odin help build</code> and <code>odin help run</code> for the installed compiler’s flags; do not copy a target or optimization switch from a different compiler release without checking it.</p>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody>
+<tr><td><code>odin check .</code></td><td>Compile and type-check without running the program.</td></tr>
+<tr><td><code>odin run .</code></td><td>Compile the package and run its executable.</td></tr>
+<tr><td><code>odin build . -out:hello</code></td><td>Build an executable named <code>hello</code> in the current directory.</td></tr>
+<tr><td><code>./hello</code></td><td>Run the built executable directly through Linux.</td></tr>
+</tbody></table>
+<p>Odin also accepts a single source file as a complete package with <code>-file</code>, for example <code>odin run hello.odin -file</code>. That mode is useful for a compact experiment; a directory package is easier to extend and test. Keep source, test fixtures, and build output distinguishable.</p>
+<div class="checkpoint"><strong>Checkpoint.</strong> Explain why <code>odin check</code>, <code>odin test</code>, and <code>odin build</code> are different evidence. Then change the greeting and deliberately break an import to inspect a package-level compiler error.</div>
+</section>
+<section id="syntax" class="chapter">
+<p class="chapter-no">Chapter 3 · Declarations</p>
+<h2>3. Read Odin: declarations and types</h2>
+<p>Odin's declaration punctuation is worth learning early. It tells you whether a name is mutable, constant, or explicitly typed. Read the declaration before reading the expression on its right.</p>
+<pre><code>count := 3          // inferred, mutable variable
+limit :: 10         // constant
+name: string = "Ada" // explicitly typed variable
+ready: bool         // zero value: false</code></pre>
+<p>Odin is statically typed: the compiler checks values and calls before execution. Treat a type as part of the contract, not decoration. <code>int</code> is the language’s machine-sized signed integer; it is not a promise of C <code>int</code>. Use fixed-width integers such as <code>u8</code>, <code>u32</code>, and <code>i64</code> when a file format, protocol, or foreign ABI specifies a width. Common types also include <code>f32</code>, <code>f64</code>, <code>bool</code>, <code>rune</code>, and <code>string</code>.</p>
+<h3>Strings and bytes are related, but not identical</h3>
+<p>An Odin <code>string</code> is a length-carrying byte sequence, commonly UTF-8 text; it is not inherently NUL-terminated. One visible character may occupy multiple UTF-8 bytes, so a byte count is not a character count and an arbitrary byte offset may split a code point. A C <code>char *</code>, by contrast, is usually terminated by NUL and has no length field. This difference becomes a real ABI concern in the libav chapters.</p>
+<h3>Fixed and dynamic collections</h3>
+<p>An array has a size that is part of its type; a slice describes a view over elements; a dynamic array owns resizable storage. A map associates keys with values. These choices communicate both shape and storage behavior.</p>
+<pre><code>three: [3]int = {2, 4, 8}
+view := three[:]
+first := view[0]
+
+numbers := make([dynamic]int)
+defer delete(numbers)
+append(&amp;numbers, 2)
+append(&amp;numbers, 4)</code></pre>
+<p>In the dynamic-array example, <code>make</code> obtains storage, <code>append</code> can grow it, and <code>delete</code> releases it. <code>defer</code> schedules that release at the end of the surrounding scope. The owner should be clear: avoid freeing memory that another part of the program still expects to use.</p>
+<div class="exercise"><strong>Experiment.</strong> Change the array to contain four numbers. Try assigning a string to one of its integer elements and observe the compile-time diagnostic.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> a slice such as <code>three[:]</code> is a view, not a copy or owner. If the original storage goes out of scope or is resized, the slice may no longer be valid.</p>
+</section>
+<section id="procedures" class="chapter">
+<p class="chapter-no">Chapter 4 · Computation</p>
+<h2>4. Procedures, control flow, and data</h2>
+<p>A procedure declaration gives a name, typed parameters, and a result type. Its body uses ordinary control flow. A procedure can return several results; the common systems-programming pattern is a value and an error.</p>
+<pre><code>clamp :: proc(value, low, high: int) -&gt; int {
+    if value &lt; low {
+        return low
+    }
+    if value &gt; high {
+        return high
+    }
+    return value
+}
+
+main :: proc() {
+    result := clamp(14, 0, 10)
+    fmt.printfln("clamped value: %d", result)
+}</code></pre>
+<p>The example assumes <code>core:fmt</code> is imported. Odin has <code>if</code>, <code>switch</code>, and one loop form, <code>for</code>. A basic counting loop looks like this:</p>
+<pre><code>for i := 0; i &lt; 3; i += 1 {
+    fmt.printfln("item %d", i)
+}</code></pre>
+<p>A range loop can iterate over elements and indices:</p>
+<pre><code>names := [3]string{"Ada", "Grace", "Edsger"}
+for name, index in names {
+    fmt.printfln("%d: %s", index, name)
+}</code></pre>
+<p>Structs collect fields into a named record. Use them when values belong together or when a procedure would otherwise accept a long list of loosely related parameters.</p>
+<pre><code>Point :: struct {
+    x, y: f64,
+}
+
+origin := Point{0, 0}</code></pre>
+<p>Polymorphic procedures let a single implementation be specialized from argument types without erasing the type information:</p>
+<pre><code>minimum :: proc(a, b: $T) -&gt; T {
+    if a &lt; b {
+        return a
+    }
+    return b
+}
+
+small_int := minimum(3, 7)
+small_float := minimum(3.5, 1.25)</code></pre>
+<p>The <code>$T</code> parameter is inferred from the call. This example is intentionally small: standard-library containers use polymorphism extensively, but not every repeated operation deserves a generic abstraction. Keep a specialized function when its domain meaning is clearer.</p>
+<p>Procedures can return a tuple of results:</p>
+<pre><code>divide :: proc(numerator, denominator: f64) -&gt; (quotient: f64, ok: bool) {
+    if denominator == 0 {
+        return 0, false
+    }
+    return numerator / denominator, true
+}</code></pre>
+<p>This is plain control flow, not an exception. The caller sees that a result can be absent and must decide what to do.</p>
+<div class="checkpoint"><strong>Checkpoint.</strong> Explain the difference between <code>:=</code> and <code>::</code>. Name the type of every parameter in <code>clamp</code>. Predict all three return paths before running it.</div>
+</section>
+<section id="advanced-odin" class="chapter">
+<p class="chapter-no">Part I · An advanced foundation</p>
+<h2>Interlude. Compile-time choices, data layout, and the C boundary</h2>
+<p>The following ideas appear in production tools early, so learn to recognize them before building a large CLI.</p>
+<h3>Compile-time is not runtime configuration</h3>
+<p>Odin has compile-time values and directives. Use them for facts known while compiling—such as a target-specific implementation or a fixed type relationship—not for values that should be selected by a user while the program runs. A runtime flag belongs in the CLI contract; a compile-time branch belongs in the build design. Start with the installed compiler’s overview and examples because directive syntax and target names are version-sensitive.</p>
+<h3>Struct layout and binary data</h3>
+<p>Do not serialize an Odin struct by dumping its memory. Padding, endianness, field widths, and compiler layout are not a portable file format. Decode fields explicitly from a byte slice, check that every requested range fits before reading it, and state whether integers are little-endian or big-endian. A packed struct can model a particular ABI layout, but it is not a replacement for validating untrusted input.</p>
+<pre><code>// A parser should establish this before reading bytes 4 through 7:
+if len(data) &lt; 8 {
+    return 0, false
+}
+// Decode the format's specified byte order explicitly.</code></pre>
+<p>The fragment is pseudocode for the bounds rule, not an Odin byte-order helper. Choose a documented helper from the core packages or write and test a tiny decoder for the format at hand.</p>
+<h3>Allocator strategy follows lifetime</h3>
+<p>Odin passes an implicit <code>context</code> containing the current allocator. APIs that accept allocators let a caller decide where results live. A long-lived result, per-request scratch, and a whole-command arena have different lifetimes. Pick the narrowest lifetime that satisfies the use, and do not return memory from a temporary allocator after its scope ends. First make ownership correct; profile before choosing a more specialized allocator.</p>
+<h3>Foreign calls are ABI contracts</h3>
+<p>Odin’s <code>foreign import</code> links a library and a <code>foreign</code> block declares C-compatible symbols. This is not automatic header translation: the declaration must match the installed C header’s widths, calling convention, pointer levels, and ownership rules. Import <code>core:c</code> for C types—especially <code>c.int</code> and <code>c.size_t</code>—rather than assuming Odin’s <code>int</code> means C <code>int</code>. Use <code>cstring</code> for NUL-terminated strings and keep opaque C objects opaque unless you have a verified layout.</p>
+<figure class="diagram">
+<svg viewBox="0 0 960 300" role="img" aria-labelledby="ffi-title ffi-desc">
+<title id="ffi-title">An Odin foreign call crosses a declared C ABI</title>
+<desc id="ffi-desc">Odin values are represented with C-compatible types in a foreign declaration, linked to a shared library, and passed to its exported C functions. An opaque handle returns to Odin and is released by the library.</desc>
+<defs><marker id="ffi-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect class="box" x="12" y="34" width="210" height="100" rx="12"/><text class="label" x="34" y="70">Odin caller</text><text class="note" x="34" y="99">string · int · rawptr</text>
+<rect class="box" x="260" y="34" width="210" height="100" rx="12"/><text class="label" x="281" y="70">foreign block</text><text class="note" x="281" y="99">cstring · c.int · ^rawptr</text>
+<rect class="box" x="508" y="34" width="210" height="100" rx="12"/><text class="label" x="529" y="70">linker + loader</text><text class="note" x="529" y="99">resolve library symbol</text>
+<rect class="box" x="756" y="34" width="192" height="100" rx="12"/><text class="label" x="775" y="70">libavformat</text><text class="note" x="775" y="99">C implementation</text>
+<path class="flow" d="M226 84 H248" marker-end="url(#ffi-arrow)"/><path class="flow" d="M474 84 H496" marker-end="url(#ffi-arrow)"/><path class="flow" d="M722 84 H744" marker-end="url(#ffi-arrow)"/>
+<rect class="box" x="64" y="177" width="832" height="86" rx="12"/><text class="warning" x="88" y="208">Return path: an opaque AVFormatContext* comes back as a pointer-sized handle.</text><text class="note" x="88" y="237">Pass it back to libavformat; do not read guessed fields. Close it with the matching library API.</text>
+<path class="flow" d="M850 145 C850 164 110 164 110 145" marker-end="url(#ffi-arrow)"/>
+</svg>
+<figcaption>The declaration is the contract between two compiled components. Linking proves a symbol was found; it does not prove the declaration’s types, ownership, or library version are correct.</figcaption>
+</figure>
+<div class="checkpoint"><strong>Design test.</strong> For every foreign function, write down the matching C prototype, which side allocates each object, how it is released, and which library version supplies the symbol. If any answer is unknown, do not guess a struct layout.</div>
+</section>
+<section id="design-decisions" class="chapter">
+<p class="chapter-no">Part I · Why the language looks this way</p>
+<h2>Design decisions: data first, explicit flow</h2>
+<p>Odin’s designers describe the language as emphasizing simplicity, readability, explicitness, orthogonality and performance. Those are goals, not guarantees that every Odin program is simple or fast. A useful way to learn the language is to connect a feature to the problem it tries to make easier—and then notice the trade-off it creates.</p>
+<h3>What data-oriented programming means</h3>
+<p><strong>Data-oriented programming (DOP)</strong> starts by asking what data a program processes, how that data is laid out, and in what order the program transforms it. Instead of beginning with a hierarchy of objects that own behavior, begin with the records and arrays that move through the work. Then choose procedures and memory layout that make the important transformations straightforward and, when needed, efficient.</p>
+<p>For example, an array of structures stores each particle’s position and velocity together. That is convenient when each operation uses all fields of one particle. A structure of arrays stores all positions together and all velocities together; that can be convenient when a loop updates one field across many particles, because the loop reads a compact field range. Neither layout is always faster: cache behavior, vectorization, access patterns, and the cost of converting between layouts matter. Measure the real workload.</p>
+<div class="callout"><strong>DOP is not:</strong> “never use abstractions,” “make every struct flat,” “optimize every loop,” or “you must use an entity-component-system.” It is a habit of making data flow and representation deliberate. A good domain model and clear procedures still matter.</div>
+<h3>Language choices as trade-offs</h3>
+<table><thead><tr><th>Choice</th><th>Design intent</th><th>Subtle cost / watch-out</th></tr></thead><tbody>
+<tr><td>Plain data and procedures rather than classes and inheritance</td><td>Keep data representation separate from algorithms and make calls visible as ordinary procedures.</td><td>There is no inherited method lookup to find behavior; choose clear package/procedure boundaries and pass the data or its pointer explicitly.</td></tr>
+<tr><td>Multiple return values and explicit error checks rather than exceptions</td><td>Keep failure visible at the call site and make ordinary control flow easy to follow.</td><td>A caller can still ignore an error result. Explicit syntax is not proof that every failure was handled.</td></tr>
+<tr><td>Manual memory management with custom allocators</td><td>Let a program match storage strategy to lifetime—arena, pool, scratch, or longer-lived allocation.</td><td>Allocator choice affects ownership and validity. A slice does not own its backing memory; returning scratch-backed data is a lifetime bug.</td></tr>
+<tr><td>Implicit scope <code>context</code></td><td>Pass cross-cutting choices such as the current allocator and logger through Odin calls without adding the same plumbing parameter to every procedure.</td><td>Because context is implicit, a procedure can depend on behavior not obvious in its parameter list. Inspect allocation and logging calls when reviewing a function.</td></tr>
+<tr><td>Polymorphic procedures</td><td>Reuse algorithms across types while keeping type information and ordinary procedure calls.</td><td>Generic code still needs meaningful constraints and tests for each important type. Do not turn one domain operation into a generic framework just because the syntax permits it.</td></tr>
+<tr><td>Explicit numeric conversions</td><td>Make width, signedness and precision changes visible instead of relying on architecture-sensitive implicit rules.</td><td>A conversion can still lose data or overflow. The cast makes the decision visible; it does not prove the value fits.</td></tr>
+<tr><td>Explicit overload sets</td><td>Show which procedures share an overload name rather than searching an implicit candidate set across nested scopes.</td><td>The overload group needs maintenance as new supported cases are added; a generic procedure may be clearer when the algorithm truly is the same.</td></tr>
+<tr><td>Compile-time <code>when</code></td><td>Select platform or type-specific code using compiler-understood conditions instead of textual preprocessor substitution.</td><td>Only the selected branch is semantically checked for a particular target. Build and test every target you claim to support.</td></tr>
+<tr><td><code>defer</code> for lexical cleanup</td><td>Place cleanup near successful acquisition and keep early-return paths tidy.</td><td>It runs at the end of its lexical scope, in reverse declaration order—not necessarily at the end of the whole procedure. If per-item work is not inside its own scope, defers can accumulate until the outer scope exits.</td></tr>
+</tbody></table>
+<h3>When layout becomes a performance decision</h3>
+<p>Start with a representation that makes invariants clear. If profiling shows a hot loop is limited by memory traffic, compare array-of-structures and structure-of-arrays layouts using representative input. Record the compiler version, build mode, input size, and measurement. A benchmark on tiny data can measure startup noise rather than the workload.</p>
+<div class="exercise"><strong>Exercise · Choose a layout.</strong> Model ten million audio samples with left/right channels. Compare an array of stereo structs with separate left and right arrays. Which operation—mixing both channels sample by sample, or scanning only the left channel—fits each layout better? Write both access patterns and explain the expected memory traffic.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> an SoA layout may help one loop and hurt another that needs all fields together. Do not declare a winner from the diagram; measure with realistic data and include conversion costs.</p>
+<div class="checkpoint"><strong>Design checkpoint.</strong> For a procedure, identify its input data, output data, allocation lifetime, error path, and hot loop. Then say which language choices make those facts visible and which remain implicit.</div>
+<p>For primary explanations of these choices, see the official <a href="workbook.html#sources">Odin FAQ and language overview</a>. The table paraphrases the designers’ stated intent; the watch-outs are practical consequences, not claims that every trade-off is right for every program.</p>
+</section></main>
+<footer>
+<p><strong>The systems-programming checklist:</strong> Where did input come from? What does failure look like? Who owns each allocation and handle? Is work bounded? What reaches stdout, stderr, and the exit status? Which ABI, library version, media time base, and Linux assumptions does this code depend on?</p>
+<p class="small">End of this edition. Extend the labs one behavior at a time. The official Odin docs and FFmpeg docs/headers that match your installed versions remain the authority for version-specific details.</p>
+</footer>
+</body>
+</html>

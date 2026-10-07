@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>FFmpeg and libav · Odin in Practice</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>FFmpeg and libav</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
+<main><section id="ffmpeg-cli" class="chapter">
+<p class="chapter-no">Part VIII · Media tools</p>
+<h2>18. FFmpeg and ffprobe from the command line</h2>
+<p>Begin with the installed tools before binding a library. <code>ffprobe</code> answers questions about a media input; <code>ffmpeg</code> builds a processing pipeline. Both are useful from scripts and Odin programs, and both expose much of FFmpeg’s capability without making your application own codec structures.</p>
+<div class="callout"><strong>Name check.</strong> In this book, “libav” means FFmpeg’s libraries whose names start with <code>libav</code>—not the separate historical Libav fork. FFmpeg’s command-line programs and libraries are related but distinct interfaces.</div>
+<h3>Media is several nested things</h3>
+<ul><li>A <strong>container</strong> such as MP4 or Matroska stores one or more streams plus metadata and timing.</li><li>A <strong>stream</strong> is an audio, video, subtitle, data, or attachment track.</li><li>A <strong>codec</strong> describes how a stream is represented, such as H.264 video or AAC audio.</li><li>A <strong>packet</strong> is compressed stream data as demuxed from a container.</li><li>A <strong>frame</strong> is decoded media data—pixels or audio samples.</li></ul>
+<pre><code>ffprobe -v error -show_format -show_streams -of json input.mp4
+ffmpeg -hide_banner -i input.mp4 -f null -</code></pre>
+<p>The first command emits machine-readable JSON for container and stream properties; metadata strings are still untrusted input. The second prints a readable summary while decoding to FFmpeg’s null output, so it reads the media rather than merely probing it and may take as long as a real decode. FFmpeg’s option ordering is meaningful.</p>
+<h3>Copy packets or transcode?</h3>
+<pre><code># Repackage selected streams without decoding or re-encoding:
+ffmpeg -i input.mkv -map 0:v:0 -map 0:a:0 -c copy output.mp4
+
+# Decode, resize, and encode video; copy audio packets:
+ffmpeg -i input.mkv -map 0:v:0 -map 0:a:0 \\
+  -vf scale=1280:-2 -c:v libx264 -crf 23 -c:a copy output.mp4</code></pre>
+<p><code>-map</code> makes stream selection explicit. <code>-c copy</code> is streamcopy: packets bypass decoders and encoders, so it is fast and does not reduce quality, but filters cannot be applied and the destination container may not accept the source codec. Transcoding decodes to frames, optionally filters them, then encodes new packets; it costs CPU and often loses quality. Choose streamcopy when it satisfies the task.</p>
+<figure class="diagram">
+<svg viewBox="0 0 1100 330" role="img" aria-labelledby="media-path-title media-path-desc">
+<title id="media-path-title">Streamcopy and transcoding paths</title>
+<desc id="media-path-desc">Streamcopy demuxes selected compressed packets and muxes them into an output container without decoding or encoding. Transcoding decodes packets into frames, may filter them, then encodes new packets for the output container.</desc>
+<defs><marker id="media-path-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<text class="warning" x="20" y="26">STREAMCOPY · keep selected packets compressed</text>
+<rect class="box" x="20" y="42" width="170" height="76" rx="12"/><text class="label" x="38" y="72">Input container</text><text class="note" x="38" y="98">demux streams</text>
+<rect class="box" x="230" y="42" width="170" height="76" rx="12"/><text class="label" x="248" y="72">Select packets</text><text class="note" x="248" y="98">with -map</text>
+<rect class="box" x="440" y="42" width="170" height="76" rx="12"/><text class="label" x="458" y="72">Copy packets</text><text class="note" x="458" y="98">no decode / encode</text>
+<rect class="box" x="650" y="42" width="170" height="76" rx="12"/><text class="label" x="668" y="72">Mux packets</text><text class="note" x="668" y="98">write container</text>
+<rect class="box" x="860" y="42" width="170" height="76" rx="12"/><text class="label" x="878" y="72">Output container</text><text class="note" x="878" y="98">codec must fit</text>
+<path class="flow" d="M194 80 H218" marker-end="url(#media-path-arrow)"/><path class="flow" d="M404 80 H428" marker-end="url(#media-path-arrow)"/><path class="flow" d="M614 80 H638" marker-end="url(#media-path-arrow)"/><path class="flow" d="M824 80 H848" marker-end="url(#media-path-arrow)"/>
+<text class="warning" x="20" y="174">TRANSCODE · decode, optionally transform, then encode</text>
+<rect class="box" x="20" y="190" width="136" height="76" rx="12"/><text class="label" x="32" y="220">Input</text><text class="note" x="32" y="246">container</text>
+<rect class="box" x="174" y="190" width="136" height="76" rx="12"/><text class="label" x="186" y="220">Demux</text><text class="note" x="186" y="246">packets</text>
+<rect class="box" x="328" y="190" width="136" height="76" rx="12"/><text class="label" x="340" y="220">Decoder</text><text class="note" x="340" y="246">compressed → raw</text>
+<rect class="box" x="482" y="190" width="136" height="76" rx="12"/><text class="label" x="494" y="220">Frames</text><text class="note" x="494" y="246">optional filter</text>
+<rect class="box" x="636" y="190" width="136" height="76" rx="12"/><text class="label" x="648" y="220">Encoder</text><text class="note" x="648" y="246">new packets</text>
+<rect class="box" x="790" y="190" width="136" height="76" rx="12"/><text class="label" x="802" y="220">Muxer</text><text class="note" x="802" y="246">write output</text>
+<rect class="box" x="944" y="190" width="136" height="76" rx="12"/><text class="label" x="956" y="220">Output</text><text class="note" x="956" y="246">container</text>
+<path class="flow" d="M160 228 H168" marker-end="url(#media-path-arrow)"/><path class="flow" d="M314 228 H322" marker-end="url(#media-path-arrow)"/><path class="flow" d="M468 228 H476" marker-end="url(#media-path-arrow)"/><path class="flow" d="M622 228 H630" marker-end="url(#media-path-arrow)"/><path class="flow" d="M776 228 H784" marker-end="url(#media-path-arrow)"/><path class="flow" d="M930 228 H938" marker-end="url(#media-path-arrow)"/>
+</svg>
+<figcaption>Streamcopy avoids codec work but cannot filter. Transcoding creates new encoded packets and can change quality, timestamps, and metadata.</figcaption>
+</figure>
+<h3>Make command output a contract</h3>
+<p>For a script, use <code>-v error</code> when you need quiet machine output, check the process exit status, keep diagnostics on stderr, and request JSON with <code>ffprobe -of json</code>. Do not parse FFmpeg’s human progress lines as a stable API. For long-running jobs, use the documented <code>-progress</code> option or consume stderr deliberately; always test cancellation and partial output behavior.</p>
+<div class="exercise"><strong>Lab 18.1.</strong> Probe a file with JSON output. List every stream index, type, codec, dimensions or sample rate, and time base. Then use <code>-map</code> and <code>-c copy</code> to copy just one stream. Compare duration and stream properties with the source.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> stream indices are zero-based and <code>-map</code> selectors refer to input/stream indices, not “audio first” assumptions. Streamcopy cannot apply filters or guarantee that every target container accepts the copied codec.</p>
+</section>
+<section id="odin-ffprobe" class="chapter">
+<h2>19. Compose ffprobe with Odin</h2>
+<p>When an existing program already does the hard media work, process composition is often the simplest integration. Pass the executable and each argument separately; do not build a shell command by concatenating a path. The process example from Chapter 13 can invoke <code>ffprobe</code>:</p>
+<pre><code>desc := os.Process_Desc{
+    command = []string{
+        "ffprobe", "-v", "error", "-show_format", "-show_streams",
+        "-of", "json", input_path,
+    },
+}
+state, stdout, stderr, err := os.process_exec(desc, context.allocator)
+defer delete(stdout)
+defer delete(stderr)
+if err != nil {
+    // The executable could not be started or the process operation failed.
+} else if !state.success {
+    // ffprobe ran but rejected the input; inspect stderr and exit_code.
+} else {
+    // Parse stdout as JSON, then validate fields before using them.
+}</code></pre>
+<p>This is a focused fragment; it assumes <code>os</code> is imported and <code>input_path</code> is a validated string. <code>process_exec</code> captures output in memory until the child exits, so keep it for bounded probe results. For untrusted or potentially enormous inputs, use streaming process APIs, impose time/output limits at the surrounding service boundary, and avoid accumulating all output.</p>
+<h3>Three outcomes, not one</h3>
+<ol><li>Spawn error: the process could not be started or managed.</li><li>Non-zero child status: <code>ffprobe</code> ran and reported failure.</li><li>Zero exit status but malformed/unexpected JSON: the tool succeeded, but the caller’s data contract was not met.</li></ol>
+<p>Keep these distinctions in your error messages and tests. A successful child exit does not make every metadata value valid; validate required streams, dimensions, duration and optional fields explicitly. Do not assume a file contains video or only one audio track.</p>
+<div class="exercise"><strong>Lab 19.1.</strong> Put spaces and shell punctuation in a test filename. Pass the path as one process argument. Confirm that the file is probed correctly, then test a missing executable, a corrupt file and a file with multiple streams.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> argument-vector invocation prevents shell parsing; it does not make media metadata trustworthy. Treat tags, titles and JSON strings from the file as untrusted data, and remember captured output consumes memory proportional to its size.</p>
+</section>
+<section id="libav-model" class="chapter">
+<h2>20. How the libav libraries fit together</h2>
+<p>The FFmpeg libraries divide the pipeline by responsibility. The usual path is:</p>
+<pre><code>input bytes
+  → libavformat demuxer
+  → compressed AVPacket values, tagged with stream indices
+  → libavcodec decoder
+  → raw AVFrame values
+  → libavfilter and/or application processing
+  → libavcodec encoder
+  → compressed AVPacket values
+  → libavformat muxer
+  → output bytes</code></pre>
+<table><thead><tr><th>Library</th><th>Role</th><th>Typical reason to call it directly</th></tr></thead><tbody>
+<tr><td><code>libavformat</code></td><td>Open media input/output, inspect containers, demux and mux streams.</td><td>Custom IO, stream metadata, precise packet routing.</td></tr>
+<tr><td><code>libavcodec</code></td><td>Decode compressed packets and encode raw frames.</td><td>Per-frame access or an application-owned codec pipeline.</td></tr>
+<tr><td><code>libavutil</code></td><td>Shared types, buffers, timestamps, dictionaries, errors and utilities.</td><td>Required support for most other FFmpeg libraries.</td></tr>
+<tr><td><code>libavfilter</code></td><td>Connect frame-processing filters as graphs.</td><td>Embed a configurable audio/video filtergraph in an application.</td></tr>
+<tr><td><code>libswscale</code></td><td>Scale or convert video pixel formats.</td><td>Convert decoded frames to the pixel format a renderer needs.</td></tr>
+<tr><td><code>libswresample</code></td><td>Convert audio sample formats, rates and layouts.</td><td>Feed audio to a device or application format.</td></tr>
+<tr><td><code>libavdevice</code></td><td>Capture and output through supported devices.</td><td>Integrate supported capture or playback devices.</td></tr>
+</tbody></table>
+<p>These libraries are not a single “codec API.” A container can carry multiple streams; packets belong to a particular stream; decoders transform packets into frames; frames may be delayed, reordered or absent for some input packets. Streamcopy is the shorter route: demux packets, map them to output streams, rescale timestamps as required, then mux them without decoding.</p>
+<p class="watch-out"><strong>Subtle watch-out:</strong> libavformat inputs are URLs, not only local filenames; supported protocols can include network and device access. Treat an input URL as a capability boundary. If an untrusted caller supplies it, apply an explicit protocol/path policy instead of assuming it points to a harmless local file.</p>
+<h3>Choosing a boundary</h3>
+<ul><li>Use <code>ffprobe</code> for inspection and JSON metadata.</li><li>Use <code>ffmpeg</code> for ordinary conversion, filtering and streamcopy.</li><li>Use libav when your program must inspect or transform frames itself, supply custom IO, integrate with an existing event loop, or avoid a separate process for a justified reason.</li><li>Use a narrow C shim when the C structures and version-sensitive setup are more complex than the behavior you need to expose to Odin.</li></ul>
+<p>Native binding is not automatically faster or more maintainable. It moves responsibility for ABI compatibility, object lifetimes, error translation, threading and cleanup into your program. Choose it for a requirement, not as a badge of low-level programming.</p>
+</section>
+<section id="libav-probe" class="chapter">
+<h2>21. A real Odin-to-libav binding</h2>
+<p>This small Linux example opens an input, asks libavformat to discover stream information, prints its summary, and closes the input. It intentionally keeps <code>AVFormatContext</code> opaque: Odin stores only a pointer-sized handle and never guesses the layout of FFmpeg’s versioned C struct.</p>
+<p>Install the FFmpeg development libraries and linker metadata (Debian/Ubuntu package names commonly include <code>libavformat-dev</code>, <code>libavcodec-dev</code>, <code>libavutil-dev</code>, and <code>pkg-config</code>). Check the actual installed development package and <code>pkg-config --modversion libavformat</code>; the command-line tool and libraries can come from different builds.</p>
+<pre><code>package main
+
+import "core:c"
+import "core:fmt"
+import "core:os"
+import "core:strings"
+
+foreign import libavformat "system:avformat"
+
+foreign libavformat {
+    avformat_open_input :: proc(ctx: ^rawptr, url: cstring, format: rawptr, options: ^rawptr) -&gt; c.int ---
+    avformat_find_stream_info :: proc(ctx: rawptr, options: ^rawptr) -&gt; c.int ---
+    av_dump_format :: proc(ctx: rawptr, index: c.int, url: cstring, is_output: c.int) ---
+    avformat_close_input :: proc(ctx: ^rawptr) ---
+}
+
+probe :: proc(path: string) -&gt; int {
+    url := strings.clone_to_cstring(path)
+    defer delete(url)
+
+    format_ctx: rawptr = nil
+    status := avformat_open_input(&amp;format_ctx, url, nil, nil)
+    if status &lt; 0 {
+        fmt.eprintfln("avformat_open_input failed: %d", status)
+        return 1
+    }
+    defer avformat_close_input(&amp;format_ctx)
+
+    status = avformat_find_stream_info(format_ctx, nil)
+    if status &lt; 0 {
+        fmt.eprintfln("avformat_find_stream_info failed: %d", status)
+        return 1
+    }
+
+    av_dump_format(format_ctx, 0, url, 0)
+    return 0
+}
+
+main :: proc() {
+    if len(os.args) != 2 {
+        fmt.eprintln("usage: probe &lt;media-file&gt;")
+        os.exit(2)
+    }
+    os.exit(probe(os.args[1]))
+}</code></pre>
+<p>On a machine with the headers and shared-library link available, check and run it from this package directory:</p>
+<pre><code>pkg-config --modversion libavformat
+odin check .
+odin run . -- sample.mp4</code></pre>
+<p>This exact pattern was compiled and run against the installed FFmpeg 6.x libraries used to prepare this book. The summary is written by FFmpeg’s C library, normally to stderr. Negative return values are FFmpeg errors; a production tool should translate them with <code>av_strerror</code> instead of exposing only the integer.</p>
+<h3>Read every type against the C prototype</h3>
+<p><code>c.int</code> matches C <code>int</code>; <code>cstring</code> supplies NUL-terminated input; <code>^rawptr</code> is used here for pointer-to-pointer out parameters; <code>rawptr</code> is an opaque handle, not a license to dereference it. The <code>foreign</code> declaration ends each function with <code>---</code> because the implementation is in the shared library. The <code>system:avformat</code> import asks the Linux linker to find the system library. On another OS or non-system prefix, library naming, link flags and runtime search paths differ.</p>
+<div class="callout"><strong>Safety boundary.</strong> This example demonstrates only a few functions. It does not define FFmpeg structs, enumerate streams, decode media, or establish a general binding. For each installed release, compare declarations with its headers and official docs. Never copy an old struct layout into a modern binding.</div>
+</section>
+<section id="libav-decode" class="chapter">
+<h2>22. Decoding is a send/receive state machine</h2>
+<p>To decode, opening the container is only the first step. Find stream information, select a stream, find its decoder, allocate a codec context, copy stream codec parameters into it, and open the decoder. Then allocate reusable packet and frame objects and obey the codec’s input/output protocol.</p>
+<pre><code>for each packet returned by av_read_frame(input):
+    if packet.stream_index is the selected stream:
+        send packet to decoder
+        receive frames repeatedly until EAGAIN or EOF
+        process every received frame
+    unreference packet
+
+send a null packet to signal end of input
+receive frames until EOF</code></pre>
+<p>The outline omits C declarations, error handling and cleanup; use it as a map while reading the matching FFmpeg example, not as compilable code. The important rule is that one compressed packet can produce zero, one, or multiple decoded frames. Do not assume one input packet means one output frame.</p>
+<h3>Why both send and receive exist</h3>
+<p><code>avcodec_send_packet</code> submits compressed input. <code>avcodec_receive_frame</code> drains available decoded output. A receive result of <code>AVERROR(EAGAIN)</code> means the decoder needs more input; it is not a fatal error. Conversely, if send returns EAGAIN, drain output before retrying input. The API is a bounded state machine: it must not report EAGAIN on both directions at once.</p>
+<p>At input EOF, send a null packet to enter draining mode and continue receiving until <code>AVERROR_EOF</code>. This flush is required because codecs may buffer or reorder frames, for example due to B-frames. Forgetting to drain can silently drop the final frames.</p>
+<figure class="diagram">
+<svg viewBox="0 0 1000 330" role="img" aria-labelledby="decoder-title decoder-desc">
+<title id="decoder-title">The decoder send and receive protocol</title>
+<desc id="decoder-desc">Send a compressed packet, then receive and process every available frame. If receive needs more input, read the next packet. If send needs output drained, receive frames and retry the same packet. At input end, send a null packet and receive until decoder EOF.</desc>
+<defs><marker id="decoder-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<text class="warning" x="20" y="24">INPUT LOOP</text>
+<rect class="box" x="20" y="42" width="190" height="76" rx="12"/><text class="label" x="38" y="72">Input packet</text><text class="note" x="38" y="98">keep until accepted</text>
+<rect class="box" x="270" y="42" width="190" height="76" rx="12"/><text class="label" x="288" y="72">send_packet</text><text class="note" x="288" y="98">submit compressed data</text>
+<rect class="box" x="520" y="42" width="190" height="76" rx="12"/><text class="label" x="538" y="72">receive_frame</text><text class="note" x="538" y="98">drain available output</text>
+<rect class="box" x="770" y="42" width="210" height="76" rx="12"/><text class="label" x="788" y="72">Process each frame</text><text class="note" x="788" y="98">then receive again</text>
+<path class="flow" d="M214 80 H258" marker-end="url(#decoder-arrow)"/><path class="flow" d="M464 80 H508" marker-end="url(#decoder-arrow)"/><path class="flow" d="M714 80 H758" marker-end="url(#decoder-arrow)"/>
+<path class="flow" d="M875 126 V148 H615 V130" marker-end="url(#decoder-arrow)"/><text class="note" x="688" y="170">frame: continue draining</text>
+<text class="note" x="30" y="169">receive EAGAIN → read next packet</text><text class="note" x="30" y="192">send EAGAIN → drain receive side, then retry this same packet</text>
+<text class="warning" x="20" y="226">FLUSH AFTER INPUT EOF</text>
+<rect class="box" x="20" y="242" width="205" height="70" rx="12"/><text class="label" x="38" y="272">Input EOF</text><text class="note" x="38" y="296">no more packets</text>
+<rect class="box" x="280" y="242" width="205" height="70" rx="12"/><text class="label" x="298" y="272">Send null packet</text><text class="note" x="298" y="296">enter drain mode</text>
+<rect class="box" x="540" y="242" width="235" height="70" rx="12"/><text class="label" x="558" y="272">Receive remaining frames</text><text class="note" x="558" y="296">until AVERROR_EOF</text>
+<rect class="box" x="830" y="242" width="150" height="70" rx="12"/><text class="label" x="848" y="272">Done</text><text class="note" x="848" y="296">all output drained</text>
+<path class="flow" d="M229 277 H268" marker-end="url(#decoder-arrow)"/><path class="flow" d="M489 277 H528" marker-end="url(#decoder-arrow)"/><path class="flow" d="M779 277 H818" marker-end="url(#decoder-arrow)"/>
+</svg>
+<figcaption>EAGAIN is a protocol transition, not a reason to sleep. At end of input, flushing and draining preserves delayed or reordered frames.</figcaption>
+</figure>
+<h3>Packets and frames have explicit ownership</h3>
+<p>FFmpeg objects often use reference-counted buffers. Reuse a packet or frame only after releasing/unreferencing its current contents according to the API; freeing the wrapper object and releasing its referenced data are distinct operations. A decoded frame’s pixel planes can be separate buffers with line sizes that include padding. Do not treat them as one tightly packed <code>width × height × 4</code> array unless the pixel format and line sizes prove that representation.</p>
+<div class="exercise"><strong>Lab 22.1.</strong> Trace the official <code>demuxing_decoding.c</code> example. Mark the open, parameter-copy, packet-send, frame-receive, flush and cleanup calls. Then explain where it handles EAGAIN and where it releases each packet/frame reference.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> EAGAIN means “the other side of the send/receive protocol must make progress,” not “sleep and retry.” At demuxer EOF, still flush the decoder and receive until EOF or delayed frames will be lost.</p>
+</section>
+<section id="libav-design" class="chapter">
+<h2>23. Encoding, ownership, timestamps, and design choices</h2>
+<h3>Transcoding is a pipeline, not a single codec call</h3>
+<p>For video transcoding, packets from a demuxer go to a decoder; raw frames may pass through a filtergraph or pixel conversion; the encoder produces new packets; and a muxer writes those packets into an output container. Audio has the analogous sample-format and resampling concerns. Configure output streams and codec parameters, write the container header, send frames to the encoder, receive and mux every output packet, flush the encoder, and write the trailer. Preserve a clear cleanup path for every partially opened object.</p>
+<p>When the task only changes the container or stream selection, prefer streamcopy. When you must alter pixels or samples, decode/filter/encode. A new encode can change quality, bitrate, timestamps and metadata; test those as output properties rather than judging only by “file exists.”</p>
+<h3>Time bases and timestamps</h3>
+<p>FFmpeg timestamps are integers interpreted in a stream or codec <em>time base</em>, a rational number of seconds per tick. A timestamp of 90000 can mean one second in a 1/90000 time base and something entirely different in another. Packet DTS (decode time) and PTS (presentation time) can differ when frames are reordered. Before writing a packet to an output stream, rescale timestamps from the encoder’s time base to the muxer stream’s time base with the library helper intended for that conversion. Do not compare raw timestamp integers from different streams as if they shared units.</p>
+<h3>Errors, versions, and threading</h3>
+<ul><li>Translate negative library results with <code>av_strerror</code>; retain the numeric code for logs.</li><li>Check every allocation and open call before using its output pointer.</li><li>Follow the installed headers and versioned API documentation; FFmpeg keeps ABI and API versioning, and struct fields may change.</li><li>Do not call cleanup twice or release a buffer while another reference still uses it.</li><li>Respect thread-safety rules for each context; do not concurrently mutate one codec or format context without documented support.</li><li>For callbacks, custom IO and cancellation, define which thread owns each callback and buffer before adding concurrency.</li></ul>
+<h3>Direct binding or C shim?</h3>
+<table><thead><tr><th>Approach</th><th>Use when</th><th>Trade-off</th></tr></thead><tbody>
+<tr><td>Invoke <code>ffmpeg</code>/<code>ffprobe</code></td><td>Standard conversion, filtering, probing or batch work.</td><td>Simple and version-isolated; adds a process boundary and requires output/status handling.</td></tr>
+<tr><td>Bind a small set of C functions in Odin</td><td>Opaque handles and a narrow, stable API are enough.</td><td>Low ceremony, but declarations and link names must match the installed ABI.</td></tr>
+<tr><td>Write a C shim and bind the shim</td><td>Complex structs, macros, callbacks or version adaptation dominate the application.</td><td>One extra C file, but it keeps header-sensitive details on the C side and exposes a smaller Odin-facing contract.</td></tr>
+<tr><td>Use a maintained binding package</td><td>A package explicitly supports your compiler and FFmpeg versions.</td><td>Less handwritten FFI; verify its release cadence, licensing and supported platforms.</td></tr>
+</tbody></table>
+<div class="exercise"><strong>Design exercise 23.1.</strong> Choose one task: “extract the first audio stream,” “show frame-by-frame luminance,” or “resize every input from a watched directory.” Pick CLI, direct binding or C shim. State which requirement drives the choice, how errors propagate, who owns every buffer, and how you will test the output.</div>
+<p class="watch-out"><strong>Subtle watch-out:</strong> frame timestamps are integers in a particular time base. Two streams’ timestamp integers cannot be compared directly until their units are reconciled; include timestamp rescaling and delayed output in your test plan.</p>
+</section></main>
+<footer>
+<p><strong>The systems-programming checklist:</strong> Where did input come from? What does failure look like? Who owns each allocation and handle? Is work bounded? What reaches stdout, stderr, and the exit status? Which ABI, library version, media time base, and Linux assumptions does this code depend on?</p>
+<p class="small">End of this edition. Extend the labs one behavior at a time. The official Odin docs and FFmpeg docs/headers that match your installed versions remain the authority for version-specific details.</p>
+</footer>
+</body>
+</html>
