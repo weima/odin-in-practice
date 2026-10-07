@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="title description">
+  <title id="title">Odin: a mythological codename that became a programming language</title>
+  <desc id="description">An original editorial illustration of a cloaked, one-eyed Odin with two ravens. On the right, a page of Odin code connects the mythological name to the language. The caption reads: A codename that stuck. The image does not imply that mythology determined the language design.</desc>
+  <defs>
+    <radialGradient id="sky"><stop stop-color="#285c50"/><stop offset="1" stop-color="#142d2a"/></radialGradient>
+    <pattern id="grain" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M0 23L23 0" stroke="#eee4cf" stroke-opacity=".035"/></pattern>
+  </defs>
+  <rect width="1200" height="640" rx="20" fill="#142d2a"/>
+  <rect width="1200" height="640" rx="20" fill="url(#grain)"/>
+  <circle cx="310" cy="290" r="235" fill="url(#sky)" stroke="#b6aa84" stroke-width="2"/>
+  <circle cx="310" cy="290" r="215" fill="none" stroke="#b6aa84" stroke-opacity=".35"/>
+  <path d="M93 484Q160 404 202 414L217 346Q184 309 200 265L197 222L360 203L399 270L378 340L415 412Q481 430 530 493Z" fill="#e4d9bd"/>
+  <path d="M205 347L255 382L303 473L352 369L379 339L358 443L310 505L245 435Z" fill="#a9a084"/>
+  <path d="M263 322L310 362L349 322L330 401L306 435L281 395Z" fill="#142d2a"/>
+  <path d="M274 261L288 313L307 322L320 310" fill="none" stroke="#142d2a" stroke-width="7" stroke-linecap="round"/>
+  <path d="M234 272L258 266" stroke="#142d2a" stroke-width="7" stroke-linecap="round"/>
+  <path d="M319 249L382 271" stroke="#142d2a" stroke-width="5"/>
+  <path d="M320 262Q337 253 354 265L351 283Q335 295 320 279Z" fill="#142d2a"/>
+  <path d="M234 272L258 266" stroke="#e4d9bd" stroke-width="2"/>
+  <path d="M148 248Q183 208 210 204L230 120Q270 95 312 104L358 194Q411 203 435 232Q298 211 148 248Z" fill="#142d2a" stroke="#e4d9bd" stroke-width="5"/>
+  <path d="M218 201Q285 178 357 194" fill="none" stroke="#b6aa84" stroke-width="4"/>
+  <path d="M229 370L172 438M249 405L210 480M378 379L433 469M348 446L381 487" stroke="#142d2a" stroke-width="5" fill="none"/>
+  <path d="M92 208Q64 177 81 150Q99 131 122 147L139 160L167 169L139 179Q149 213 119 235L111 269L98 265L104 229Z" fill="#142d2a" stroke="#b6aa84" stroke-width="3"/>
+  <circle cx="126" cy="162" r="3" fill="#e4d9bd"/>
+  <path d="M439 151Q460 129 479 142L496 157L524 166L496 175Q501 208 471 225L456 255L444 249L457 218Q425 194 439 151Z" fill="#142d2a" stroke="#b6aa84" stroke-width="3"/>
+  <circle cx="481" cy="158" r="3" fill="#e4d9bd"/>
+  <path d="M562 108V502" stroke="#b6aa84" stroke-opacity=".4"/>
+  <g font-family="system-ui, sans-serif" fill="#e4d9bd">
+    <text x="618" y="132" font-size="18" letter-spacing="4">FROM MYTH TO A PROJECT NAME</text>
+    <text x="613" y="219" font-size="75" font-weight="700" letter-spacing="-3">ODIN</text>
+    <text x="618" y="262" font-size="24">A codename that stuck.</text>
+  </g>
+  <rect x="615" y="309" width="505" height="163" rx="10" fill="#0d211f" stroke="#80977d"/>
+  <g font-family="ui-monospace, monospace" font-size="22">
+    <text x="644" y="353" fill="#98d2b6">package main</text>
+    <text x="644" y="398" fill="#e4d9bd">main :: proc() {</text>
+    <text x="644" y="436" fill="#e4d9bd">}</text>
+  </g>
+  <path d="M100 556H1100" stroke="#b6aa84" stroke-opacity=".5"/>
+  <text x="100" y="598" font-family="system-ui, sans-serif" font-size="19" letter-spacing="2" fill="#c0b799">MYTHOLOGICAL NAME · PRACTICAL SYSTEMS LANGUAGE</text>
+</svg>
