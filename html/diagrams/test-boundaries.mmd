@@ -1,0 +1,4 @@
+flowchart LR
+  accTitle: How Odin runs package tests
+  accDescr: Odin compiles package files together, discovers test-attributed procedures, and runs them through core testing. A test filename is a human convention, not the discovery mechanism.
+  Package["One package: production.odin and preview_test.odin"] --> Command["odin test ."] --> Discovery["Discover procedures with test attribute"] --> Runner["core:testing: testing.T and expectations"] --> Result["Pass or failure with test location"]

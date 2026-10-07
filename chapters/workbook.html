@@ -10,7 +10,7 @@
 <body>
 <header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>Workbook and references</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
 <main><section id="workbook" class="chapter">
-<h2>24. Workbook: exercises and solutions</h2>
+<h2>29. Workbook: exercises and solutions</h2>
 <p>The aim of these exercises is not to reproduce the examples from memory. It is to test the mental model that made those examples seem obvious. Before running each case, predict the output, status, ownership, and relevant lifetime. If the observation differs, identify which assumption failed.</p>
 <p>Try each exercise before opening the solution. A useful answer includes the rejected alternatives: why an empty string cannot represent absence, why a fixed scratch buffer need not imply bounded total memory, and why a successful child process can still return data we cannot use.</p>
 <h3>Exercise A · Usage is part of the interface</h3>
@@ -34,7 +34,7 @@
 <p class="watch-out"><strong>Subtle watch-out:</strong> avoid brittle assertions about OS-specific error wording. Assert stable behavior and your own diagnostic contract, not a kernel message that can change across systems.</p>
 <details><summary>Solution sketch</summary><p>Keep one row per observable behavior. A successful size report belongs on stdout with exit status zero; invalid input and failed reads produce a concise stderr diagnostic and non-zero status. Add exact output only when the output format is a deliberate contract.</p></details>
 <h3>Exercise F · Same length, wrong bytes</h3>
-<p>Change the preview implementation to return the last <code>n</code> bytes instead of the first. Which Chapter 16 tests fail? Restore the implementation, then change it to allocate a copy. Which test distinguishes copying from borrowing?</p>
+<p>Change the preview implementation to return the last <code>n</code> bytes instead of the first. Which Chapter 21 tests fail? Restore the implementation, then change it to allocate a copy. Which test distinguishes copying from borrowing?</p>
 <details><summary>Reasoning</summary><p>The original four length tests allow a suffix implementation. The content assertions reject it. The mutation assertion rejects an independent copy because this particular API promises a borrowed prefix. That assertion would be inappropriate for a copy-returning API. Tests should distinguish contracts, not declare that one ownership choice is always right.</p></details>
 <h3>Exercise G · The allocator changed</h3>
 <p>A helper allocates a slice with allocator A, then its caller changes <code>context.allocator</code> to B before deleting the slice. Explain the likely problem without running an invalid free. Compare the runtime’s slice and dynamic-array delete overloads.</p>
@@ -51,7 +51,7 @@
 <div class="checkpoint"><strong>Completion test.</strong> Explain one result from each source trail without quoting the function body. Then write the smallest experiment that could disprove your explanation. If your test cannot fail for a plausible wrong implementation, strengthen the oracle rather than simply adding more cases.</div>
 </section>
 <section id="glossary" class="chapter">
-<h2>25. Pocket glossary</h2>
+<h2>30. Pocket glossary</h2>
 <p>A glossary is useful when it keeps adjacent concepts apart. “String,” “owned string,” and “C string” are not interchangeable. Nor are “compiled,” “linked,” and “ran successfully.” Use these definitions to ask more precise questions, not to replace an API’s specific contract.</p>
 <table><thead><tr><th>Term</th><th>Working meaning</th></tr></thead><tbody>
 <tr><td>Package</td><td>A directory-based unit of Odin source; files in it share a package name.</td></tr>
@@ -83,7 +83,7 @@
 </tbody></table>
 </section>
 <section id="sources" class="chapter">
-<h2>26. Official references and source trail</h2>
+<h2>31. Official references and source trail</h2>
 <p>The source walkthroughs in this edition were read from the runtime and core libraries shipped with <code>dev-2026-09-nightly:a2fb372</code>. The corresponding upstream commit is <a href="https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924"><code>a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924</code></a>. Repository links below are pinned to it rather than to a moving branch.</p>
 <p>This is library and runtime source evidence, not a claim to have audited the entire compiler. The installed distribution does not contain the compiler's complete C++ source. Where this book explains language semantics, use the official language guide and a small compiler experiment; where it explains a library mechanism, follow the named symbol in the pinned source.</p>
 <h3>A source trail with a question attached</h3>

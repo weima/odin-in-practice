@@ -11,7 +11,7 @@
 <header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>FFmpeg and libav</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
 <main><section id="ffmpeg-cli" class="chapter">
 <p class="chapter-no">Part VIII · Media tools</p>
-<h2>18. FFmpeg and ffprobe from the command line</h2>
+<h2>23. FFmpeg and ffprobe from the command line</h2>
 <p>We want to extract audio from a video file. Should we start by declaring C structs? Not yet. The first question is whether an existing executable already implements the operation we need. <code>ffprobe</code> inspects inputs; <code>ffmpeg</code> builds processing pipelines. Calling either from Odin can be a complete solution rather than a temporary embarrassment before a “real” binding.</p>
 <p>Begin with a disposable local fixture and a question you can verify: which streams exist, which stream do we want, and do we need to change its samples? A container name alone cannot answer those questions.</p>
 <div class="callout"><strong>Name check.</strong> In this book, “libav” means FFmpeg’s libraries whose names start with <code>libav</code>—not the separate historical Libav fork. FFmpeg’s command-line programs and libraries are related but distinct interfaces.</div>
@@ -64,7 +64,7 @@ ffmpeg -i input.mkv -map 0:v:0 -map 0:a:0 \
 <p class="watch-out"><strong>Subtle watch-out:</strong> stream indices are zero-based and <code>-map</code> selectors refer to input/stream indices, not “audio first” assumptions. Streamcopy cannot apply filters or guarantee that every target container accepts the copied codec.</p>
 </section>
 <section id="odin-ffprobe" class="chapter">
-<h2>19. Compose ffprobe with Odin</h2>
+<h2>24. Compose ffprobe with Odin</h2>
 <p>Let us turn “run ffprobe” into a precise Odin operation. Its result is not merely a text string: it is a managed process outcome plus an output document that still needs validation. Keeping those layers separate prevents a missing executable from becoming a mysterious JSON error.</p>
 <p>Pass the path as a single argument. A path containing spaces needs no shell quotes inside that string. Quotes in the Odin string would become part of the argument rather than instructions to a shell.</p>
 <pre><code>desc := os.Process_Desc{
@@ -118,12 +118,12 @@ main :: proc() {
 <h3>Three outcomes, not one</h3>
 <ol><li>Spawn error: the process could not be started or managed.</li><li>Non-zero child status: <code>ffprobe</code> ran and reported failure.</li><li>Zero exit status but malformed/unexpected JSON: the tool succeeded, but the caller’s data contract was not met.</li></ol>
 <p>Keep these distinctions in your error messages and tests. A zero exit code does not establish that a duration exists, that it is positive, or that a file contains video. Probe metadata can include absent fields and numeric-looking strings. Treat <code>"N/A"</code> and missing values as representations to handle, not as numbers to cast blindly.</p>
-<p>There is a fourth practical boundary: the selected executable. As Chapter 13 showed, this Odin revision searches the parent’s PATH and may fall back to the current directory for an unqualified name. For a controlled deployment, choose the executable path and version explicitly. Argument-vector invocation removes shell injection; it does not establish a trusted executable, a timeout, an output budget, or a protocol policy for media URLs.</p>
+<p>There is a fourth practical boundary: the selected executable. As Chapter 15 showed, this Odin revision searches the parent’s PATH and may fall back to the current directory for an unqualified name. For a controlled deployment, choose the executable path and version explicitly. Argument-vector invocation removes shell injection; it does not establish a trusted executable, a timeout, an output budget, or a protocol policy for media URLs.</p>
 <div class="exercise"><strong>Lab 19.1.</strong> Put spaces and shell punctuation in a test filename. Pass the path as one process argument. Confirm that the file is probed correctly, then test a missing executable, a corrupt file and a file with multiple streams.</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> argument-vector invocation prevents shell parsing; it does not make media metadata trustworthy. Treat tags, titles and JSON strings from the file as untrusted data, and remember captured output consumes memory proportional to its size.</p>
 </section>
 <section id="libav-model" class="chapter">
-<h2>20. How the libav libraries fit together</h2>
+<h2>25. How the libav libraries fit together</h2>
 <p>Suppose the next requirement is to inspect every decoded frame. JSON metadata is no longer enough: we need a boundary that exposes frame data. Before binding functions, we need a model of what flows through them. “A video file goes into a codec” is too coarse to explain multiple streams, delayed frames, or muxing.</p>
 <p>The FFmpeg libraries divide responsibilities. The usual transformation path is:</p>
 <pre><code>input bytes
@@ -156,7 +156,7 @@ main :: proc() {
 <div class="exercise"><strong>Boundary choice.</strong> For “copy one audio stream,” “read video dimensions,” and “measure the brightness of every decoded frame,” choose the smallest adequate interface. Name the requirement that rules out the simpler interface, if any. “It feels lower-level” is not a requirement.</div>
 </section>
 <section id="libav-probe" class="chapter">
-<h2>21. A real Odin-to-libav binding</h2>
+<h2>26. A real Odin-to-libav binding</h2>
 <p>We will bind exactly enough to open an input, discover stream information, print a summary, and close it. We will not copy an <code>AVFormatContext</code> definition from a different release. Its pointer is sufficient for this operation; its fields are not.</p>
 <p>Keeping a type opaque is a positive design choice, not a missing lesson. It prevents our example from depending on fields it never needs to inspect. It does not prove that a wrong handle is safe to pass; the compiler cannot enforce the semantic type of a <code>rawptr</code>.</p>
 <p>Install the FFmpeg development libraries and linker metadata (Debian/Ubuntu package names commonly include <code>libavformat-dev</code>, <code>libavcodec-dev</code>, <code>libavutil-dev</code>, and <code>pkg-config</code>). Check the actual installed development package and <code>pkg-config --modversion libavformat</code>; the command-line tool and libraries can come from different builds.</p>
@@ -233,7 +233,7 @@ odin run . -- sample.mp4</code></pre>
 <div class="callout"><strong>Safety boundary.</strong> This example does not enumerate streams, decode media, define version-sensitive structures, or restrict FFmpeg’s supported input protocols. An externally supplied URL needs a separate capability policy; a valid C string is not proof of a safe input.</div>
 </section>
 <section id="libav-decode" class="chapter">
-<h2>22. Decoding is a send/receive state machine</h2>
+<h2>27. Decoding is a send/receive state machine</h2>
 <p>A naive decoder reads a packet, asks for a frame, and repeats. It is attractive because it mirrors a loop over records. It is wrong because a packet is not a promise of exactly one frame. The decoder may need more input, have several outputs ready, or retain delayed frames until the end.</p>
 <p>Opening the container is only preparation. Select a stream, find its decoder, allocate a codec context, copy the stream parameters into it, and open the decoder. Packet and frame wrappers can then be reused, provided we release their previous contents correctly.</p>
 <pre><code>for each packet returned by av_read_frame(input):
@@ -290,7 +290,7 @@ receive frames until EOF</code></pre>
 <p class="watch-out"><strong>Subtle watch-out:</strong> EAGAIN means “the other side of the send/receive protocol must make progress,” not “sleep and retry.” At demuxer EOF, still flush the decoder and receive until EOF or delayed frames will be lost.</p>
 </section>
 <section id="libav-design" class="chapter">
-<h2>23. Encoding, ownership, timestamps, and design choices</h2>
+<h2>28. Encoding, ownership, timestamps, and design choices</h2>
 <p>We have a frame and want to write a new file. The remaining work is not simply “call an encoder.” We need an output stream contract, a pixel or sample representation accepted by the encoder, a timestamp interpretation, and a container that can carry the encoded packets. Every boundary can be wrong while the others appear to work.</p>
 <h3>Transcoding is a pipeline, not a single codec call</h3>
 <p>For video transcoding, packets from a demuxer go to a decoder; raw frames may pass through a filtergraph or pixel conversion; the encoder produces new packets; and a muxer writes those packets into an output container. Audio has the analogous sample-format and resampling concerns. Configure output streams and codec parameters, write the container header, send frames to the encoder, receive and mux every output packet, flush the encoder, and write the trailer. Preserve a clear cleanup path for every partially opened object.</p>

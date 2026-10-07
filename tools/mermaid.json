@@ -1,0 +1,19 @@
+{
+  "theme": "base",
+  "securityLevel": "strict",
+  "deterministicIds": true,
+  "deterministicIDSeed": "odin-book",
+  "themeVariables": {
+    "fontFamily": "Arial, sans-serif",
+    "fontSize": "18px",
+    "primaryColor": "#eef2ff",
+    "primaryTextColor": "#172033",
+    "primaryBorderColor": "#5366a9",
+    "lineColor": "#5366a9",
+    "secondaryColor": "#f0f7f4",
+    "tertiaryColor": "#f5f6f8"
+  },
+  "flowchart": {
+    "htmlLabels": false
+  }
+}

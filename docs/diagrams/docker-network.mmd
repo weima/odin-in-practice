@@ -1,0 +1,8 @@
+flowchart LR
+  accTitle: Two routes to a Docker service
+  accDescr: The host uses port publication. A helper on the user-defined bridge uses the application container name and its internal port.
+  Host["Host browser or curl"] -->|"published localhost:1333"| App
+  subgraph Network["User-defined network: odin-book-net"]
+    App["odin-book-lab: server on 0.0.0.0:1333"]
+    Peer["Helper container"] -->|"DNS name odin-book-lab:1333"| App
+  end

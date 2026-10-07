@@ -1,0 +1,1665 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
+      
+      
+      
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/odin-foundations.html">
+      
+      
+        <link rel="prev" href="../index.html">
+      
+      
+        <link rel="next" href="cli-linux.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Foundations - Odin in Practice</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/book.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#odin-foundations" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Odin in Practice
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Foundations
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Odin in Practice
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book contents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="odin-foundations.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prepare-your-workshop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prepare your workshop
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Prepare your workshop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-loop-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build loop and evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-source-is-already-in-your-workshop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The source is already in your workshop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-packages-compilation-and-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Packages, compilation, and targets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Packages, compilation, and targets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#following-the-entry-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Following the entry path
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-read-odin-declarations-and-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Read Odin: declarations and types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Read Odin: declarations and types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strings-and-bytes-are-related-but-not-identical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings and bytes are related, but not identical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-and-dynamic-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed and dynamic collections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-values-representation-before-guessing-its-lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a value’s representation before guessing its lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#length-is-measured-in-the-values-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Length is measured in the value’s units
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-procedures-control-flow-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Procedures, control flow, and data
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Procedures, control flow, and data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-type-for-both-arguments-or-an-independent-type-for-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One type for both arguments, or an independent type for each?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-can-a-procedure-say-only-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why can a procedure say only return?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polymorphism-in-a-real-library-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polymorphism in a real library procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-passed-by-value-does-not-promise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What “passed by value” does not promise
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interlude-compile-time-choices-data-layout-and-the-c-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interlude. Compile-time choices, data layout, and the C boundary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interlude. Compile-time choices, data layout, and the C boundary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-is-not-runtime-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-time is not runtime configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#struct-layout-and-binary-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Struct layout and binary data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-branches-leave-a-testing-obligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-time branches leave a testing obligation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allocator-strategy-follows-lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Allocator strategy follows lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#foreign-calls-are-abi-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foreign calls are ABI contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions-data-first-explicit-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions: data first, explicit flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design decisions: data first, explicit flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-data-oriented-programming-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What data-oriented programming means
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language-choices-as-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language choices as trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-source-level-example-the-map-is-not-a-bag-of-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source-level example: the map is not a bag of objects
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-layout-becomes-a-performance-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When layout becomes a performance decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli-linux.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI and Linux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pointers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pointers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="memory-philosophy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="networking.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="containers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parallel-programming.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ffmpeg-libav.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workbook.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workbook and sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prepare-your-workshop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prepare your workshop
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Prepare your workshop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-loop-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build loop and evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-source-is-already-in-your-workshop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The source is already in your workshop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-packages-compilation-and-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Packages, compilation, and targets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Packages, compilation, and targets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#following-the-entry-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Following the entry path
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-read-odin-declarations-and-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Read Odin: declarations and types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Read Odin: declarations and types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strings-and-bytes-are-related-but-not-identical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strings and bytes are related, but not identical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-and-dynamic-collections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed and dynamic collections
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-values-representation-before-guessing-its-lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a value’s representation before guessing its lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#length-is-measured-in-the-values-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Length is measured in the value’s units
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-procedures-control-flow-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Procedures, control flow, and data
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Procedures, control flow, and data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-type-for-both-arguments-or-an-independent-type-for-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One type for both arguments, or an independent type for each?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-can-a-procedure-say-only-return" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why can a procedure say only return?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#polymorphism-in-a-real-library-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polymorphism in a real library procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-passed-by-value-does-not-promise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What “passed by value” does not promise
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interlude-compile-time-choices-data-layout-and-the-c-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interlude. Compile-time choices, data layout, and the C boundary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interlude. Compile-time choices, data layout, and the C boundary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-is-not-runtime-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-time is not runtime configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#struct-layout-and-binary-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Struct layout and binary data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compile-time-branches-leave-a-testing-obligation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compile-time branches leave a testing obligation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allocator-strategy-follows-lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Allocator strategy follows lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#foreign-calls-are-abi-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Foreign calls are ABI contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions-data-first-explicit-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions: data first, explicit flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design decisions: data first, explicit flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-data-oriented-programming-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What data-oriented programming means
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#language-choices-as-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Language choices as trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-source-level-example-the-map-is-not-a-bag-of-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A source-level example: the map is not a bag of objects
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-layout-becomes-a-performance-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When layout becomes a performance decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="odin-foundations">Odin foundations<a class="headerlink" href="#odin-foundations" title="Permanent link">&para;</a></h1>
+<p><a id="setup"></a></p>
+<p>Part I · The language</p>
+<h2 id="1-prepare-your-workshop">1. Prepare your workshop<a class="headerlink" href="#1-prepare-your-workshop" title="Permanent link">&para;</a></h2>
+<p>Before learning a language, we need a way to tell whether our understanding is wrong. A working compiler is only the beginning: we also need to know which compiler it is, which libraries it ships, and how to repeat an experiment. Otherwise a change in the tools can look like a change in our program.</p>
+<p>This edition follows Odin <code>dev-2026-09-nightly:a2fb372</code>. That is a baseline, not a claim that newer versions are incompatible. If your version differs, first run the small example unchanged; investigate a difference before layering more code on top. Record these two pieces of evidence:</p>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>version
+odin<span class="w"> </span><span class="nb">help</span>
+</code></pre></div>
+<p>Keep each lesson in its own directory. An Odin package is the set of source files in a directory that declare the same package name; the compiler normally compiles those files together. A directory is not merely a place to store unrelated files—it is one compilation unit and a useful boundary for tests and ownership.</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/learn/odin/01-hello
+<span class="nb">cd</span><span class="w"> </span>~/learn/odin/01-hello
+<span class="nv">$EDITOR</span><span class="w"> </span>main.odin
+</code></pre></div>
+<p>Use the editor you know. Later Linux labs also use ordinary command-line tools; the FFmpeg chapters require <code>ffmpeg</code>, <code>ffprobe</code>, and development libraries. Keep generated executables outside source directories or ignore them deliberately.</p>
+<h3 id="build-loop-and-evidence">Build loop and evidence<a class="headerlink" href="#build-loop-and-evidence" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>check<span class="w"> </span>.
+odin<span class="w"> </span>run<span class="w"> </span>.<span class="w"> </span>-debug
+odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>.
+odin<span class="w"> </span>build<span class="w"> </span>.<span class="w"> </span>-out:./build/tool
+</code></pre></div>
+<p>Checking, running, testing, and building answer different questions. The <code>-debug</code> switch requests debug information; setting an environment variable named <code>ODIN_DEBUG</code> is not a substitute. Create <code>build/</code> before choosing an output inside it. A successful check establishes that this compiler accepts the selected package, not that it can find every shared library at deployment time.</p>
+<h3 id="the-source-is-already-in-your-workshop">The source is already in your workshop<a class="headerlink" href="#the-source-is-already-in-your-workshop" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>root
+odin<span class="w"> </span>version
+<span class="c1"># Open these paths below the directory printed by odin root:</span>
+<span class="c1"># base/runtime/core.odin</span>
+<span class="c1"># core/os/file_util.odin</span>
+<span class="c1"># core/testing/testing.odin</span>
+</code></pre></div>
+<p>The compiler distribution includes its runtime and library source. We will use that copy rather than assuming the current GitHub branch matches our installation. In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">runtime/core.odin</a>, find <code>Context</code> and <code>Allocator</code>. You do not need to understand them yet. Their presence tells us something valuable: allocation policy is represented as ordinary data and procedures, not concealed behind a completely separate library mechanism.</p>
+<p>Keep three labels in mind as you read: <em>language rule</em>, <em>API contract</em>, and <em>implementation observation</em>. A loop’s syntax is a language rule. A procedure’s documented return values form an API contract. The buffer size chosen inside that procedure is an implementation observation. Source makes the third visible, but does not turn it into a permanent promise.</p>
+<p><strong>Checkpoint.</strong> <code>odin version</code> prints a version and exits successfully. If not, solve the installation or PATH issue before debugging Odin code.</p>
+<p><a id="first-program"></a></p>
+<p>Chapter 2 · Compilation model</p>
+<h2 id="2-packages-compilation-and-targets">2. Packages, compilation, and targets<a class="headerlink" href="#2-packages-compilation-and-targets" title="Permanent link">&para;</a></h2>
+<p>Write this into <code>main.odin</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">println</span><span class="p">(</span><span class="nc">"Hello, Odin"</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Run it from its directory:</p>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>run<span class="w"> </span>.
+</code></pre></div>
+<p>The greeting hides a useful question: how did the operating system find an Odin procedure with no arguments? Linux starts an executable through its platform entry mechanism, not by looking for this particular source declaration. Odin supplies the bridge. Our <code>main</code> is the application entry point; the runtime has work to do before it calls us.</p>
+<h3 id="following-the-entry-path">Following the entry path<a class="headerlink" href="#following-the-entry-path" title="Permanent link">&para;</a></h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin">base/runtime/entry_unix.odin</a>. In the ordinary non-test, CRT-enabled executable branch, a C-convention <code>main</code> receives <code>argc</code> and <code>argv</code>. It stores the argument slice, creates the default context, calls runtime startup, invokes the compiler’s application entry-point intrinsic, then runs runtime cleanup before returning zero. Tests, dynamic libraries, and no-CRT builds select different branches.</p>
+<p>That sequence explains why our procedure can use <code>context</code> without constructing it and why the process arguments exist before our first statement. It also explains why a test build is not simply a normal executable that happens to call some extra procedures. Its entry path is selected separately.</p>
+<p>The package line associates a source file with a package. Files in the same package directory can refer to each other without headers or forward declarations. Try moving the greeting text into a second file with the same package declaration. Nothing about the call needs to change. Moving that file into a subdirectory, however, creates a separate package boundary rather than continuing the original one. Imports refer to packages, not individual source files.</p>
+<p>One boundary remains file-local: an import name is not automatically available in every other file of the package. A test file using <code>os.pipe</code> needs its own <code>core:os</code> import even if the production file already imports it. Package declarations share definitions; files still declare the import names they use. Deliberately remove that import from a small test file and inspect the diagnostic.</p>
+<p>The <code>core:</code> prefix selects a library collection; it is not a network package download. Here <code>::</code> binds the procedure as a compile-time entity. Splitting the source can improve navigation, but does not create the isolation that a separate package provides.</p>
+<p>That greeting is only a toolchain smoke test. For real work, ask which build target and configuration you are producing, which packages are included, and which platform assumptions the code makes. Use <code>odin help build</code> and <code>odin help run</code> for the installed compiler’s flags; do not copy a target or optimization switch from a different compiler release without checking it.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>odin check .</code></td>
+<td>Compile and type-check without running the program.</td>
+</tr>
+<tr>
+<td><code>odin run .</code></td>
+<td>Compile the package and run its executable.</td>
+</tr>
+<tr>
+<td><code>odin build . -out:hello</code></td>
+<td>Build an executable named <code>hello</code> in the current directory.</td>
+</tr>
+<tr>
+<td><code>./hello</code></td>
+<td>Run the built executable directly through Linux.</td>
+</tr>
+</tbody>
+</table>
+<p>Odin also accepts a single source file as a complete package with <code>-file</code>, for example <code>odin run hello.odin -file</code>. That mode is useful for a compact experiment; a directory package is easier to extend and test. Keep source, test fixtures, and build output distinguishable.</p>
+<p><strong>Checkpoint.</strong> Explain why <code>odin check</code>, <code>odin test</code>, and <code>odin build</code> are different evidence. Then change the greeting and deliberately break an import to inspect a package-level compiler error.</p>
+<p><a id="syntax"></a></p>
+<p>Chapter 3 · Declarations</p>
+<h2 id="3-read-odin-declarations-and-types">3. Read Odin: declarations and types<a class="headerlink" href="#3-read-odin-declarations-and-types" title="Permanent link">&para;</a></h2>
+<p>Suppose you see <code>count := 3</code> and <code>limit :: 10</code>. Both names have numbers on the right. Why should the punctuation matter? Because one introduces a runtime variable and the other a compile-time constant. Treating them as two spellings of an immutable variable will lead to surprises when you try to take addresses or index constant aggregates.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">count</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="w">          </span><span class="p">//</span><span class="w"> </span><span class="nc">inferred</span><span class="p">,</span><span class="w"> </span><span class="nc">mutable</span><span class="w"> </span><span class="nc">variable</span>
+<span class="nc">limit</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="mi">10</span><span class="w">         </span><span class="p">//</span><span class="w"> </span><span class="nc">constant</span>
+<span class="l">name:</span><span class="p"> </span><span class="nc">string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Ada"</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="nc">explicitly</span><span class="w"> </span><span class="nc">typed</span><span class="w"> </span><span class="nc">variable</span>
+<span class="l">ready:</span><span class="p"> </span><span class="nc">bool</span><span class="w">         </span><span class="p">//</span><span class="w"> </span><span class="nc">zero</span><span class="w"> </span><span class="l">value:</span><span class="p"> </span><span class="l">false</span>
+</code></pre></div>
+<p>Odin is statically typed: the compiler checks values and calls before execution. Treat a type as part of the contract, not decoration. <code>int</code> is the language’s machine-sized signed integer; it is not a promise of C <code>int</code>. Use fixed-width integers such as <code>u8</code>, <code>u32</code>, and <code>i64</code> when a file format, protocol, or foreign ABI specifies a width. Common types also include <code>f32</code>, <code>f64</code>, <code>bool</code>, <code>rune</code>, and <code>string</code>.</p>
+<h3 id="strings-and-bytes-are-related-but-not-identical">Strings and bytes are related, but not identical<a class="headerlink" href="#strings-and-bytes-are-related-but-not-identical" title="Permanent link">&para;</a></h3>
+<p>An Odin <code>string</code> is a length-carrying byte sequence, commonly UTF-8 text; it is not inherently NUL-terminated. One visible character may occupy multiple UTF-8 bytes, so a byte count is not a character count and an arbitrary byte offset may split a code point. A C <code>char *</code>, by contrast, is usually terminated by NUL and has no length field. This difference becomes a real ABI concern in the libav chapters.</p>
+<h3 id="fixed-and-dynamic-collections">Fixed and dynamic collections<a class="headerlink" href="#fixed-and-dynamic-collections" title="Permanent link">&para;</a></h3>
+<p>An array has a size that is part of its type; a slice describes a view over elements; a dynamic array owns resizable storage. A map associates keys with values. These choices communicate both shape and storage behavior.</p>
+<div class="highlight"><pre><span></span><code><span class="l">three:</span><span class="p"> [</span><span class="mi">3</span><span class="p">]</span><span class="nc">int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">{</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="err">}</span>
+<span class="nc">view</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">three</span><span class="p">[</span><span class="err">:</span><span class="p">]</span>
+<span class="nc">first</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">view</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="nc">numbers</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[dynamic]int</span><span class="p">)</span>
+<span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">numbers</span><span class="p">)</span>
+<span class="nc">append</span><span class="p">(</span><span class="nc">&amp;numbers, 2</span><span class="p">)</span>
+<span class="nc">append</span><span class="p">(</span><span class="nc">&amp;numbers, 4</span><span class="p">)</span>
+</code></pre></div>
+<p>A dynamic array with no requested capacity need not allocate immediately. Growth is the first operation that may require backing storage. That distinction matters if you are counting allocations: declaring an empty container and adding an element are not necessarily the same cost.</p>
+<h3 id="read-a-values-representation-before-guessing-its-lifetime">Read a value’s representation before guessing its lifetime<a class="headerlink" href="#read-a-values-representation-before-guessing-its-lifetime" title="Permanent link">&para;</a></h3>
+<p>In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">base/runtime/core.odin</a>, the raw representations give us a compact mental model:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Representation in this runtime</th>
+<th>Consequence of copying it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String</td>
+<td>Byte pointer and length</td>
+<td>The bytes are not cloned.</td>
+</tr>
+<tr>
+<td>Slice</td>
+<td>Data pointer and length</td>
+<td>The view is copied; backing storage is shared.</td>
+</tr>
+<tr>
+<td>Dynamic array</td>
+<td>Data pointer, length, capacity, allocator</td>
+<td>The header is copied; the allocation is not.</td>
+</tr>
+<tr>
+<td>Fixed array</td>
+<td>Its elements are part of the value</td>
+<td>Element values are copied, including any pointers those elements contain.</td>
+</tr>
+</tbody>
+</table>
+<p>This is a source-backed description of this implementation, not permission to serialize its headers. A pointer and length do not say whether a value is an owner. A slice can refer to a local array, heap allocation, mapped file, or another container’s storage. The caller must know which lifetime applies.</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">F</span><span class="nc">ragment</span><span class="w"> </span><span class="nc">inside</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="l">procedure:</span><span class="p"> </span><span class="nc">predict</span><span class="w"> </span><span class="nc">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="nc">before</span><span class="w"> </span><span class="nc">running</span><span class="err">.</span>
+<span class="nc">a</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="nc">int</span><span class="err">{</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="err">}</span>
+<span class="nc">b</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">a</span>
+<span class="nc">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">99</span>
+<span class="nc">view</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">a</span><span class="p">[</span><span class="err">:</span><span class="p">]</span>
+<span class="nc">view</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">7</span>
+<span class="p">//</span><span class="w"> </span><span class="nc">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="mi">7</span><span class="p">;</span><span class="w"> </span><span class="nc">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="mi">99</span><span class="err">.</span>
+</code></pre></div>
+<p>The array copy separated the element storage. The slice did not. Now replace <code>int</code> with a record containing a pointer: copying the array copies the pointer values, not their targets. “Value copy” is not a synonym for “recursive clone.”</p>
+<h3 id="length-is-measured-in-the-values-units">Length is measured in the value’s units<a class="headerlink" href="#length-is-measured-in-the-values-units" title="Permanent link">&para;</a></h3>
+<p><code>len("é")</code> is two UTF-8 bytes, not one visible character. Iterating a string yields runes and byte offsets; combining marks can make even a rune count differ from a user-perceived character count. <code>Raw_String</code> has no encoding-validity flag. Bytes can inhabit a string without being valid text, so validation and interpretation still belong at the input boundary.</p>
+<p>The practical question is not merely “what is the type?” It is “what does a copy preserve, what does it share, and who keeps that shared data alive?” We will use that question repeatedly.</p>
+<p><strong>Experiment.</strong> Change the array to contain four numbers. Try assigning a string to one of its integer elements and observe the compile-time diagnostic.</p>
+<p><strong>Subtle watch-out:</strong> a slice such as <code>three[:]</code> is a view, not a copy or owner. If the original storage goes out of scope or is resized, the slice may no longer be valid.</p>
+<p><a id="procedures"></a></p>
+<p>Chapter 4 · Computation</p>
+<h2 id="4-procedures-control-flow-and-data">4. Procedures, control flow, and data<a class="headerlink" href="#4-procedures-control-flow-and-data" title="Permanent link">&para;</a></h2>
+<p>A procedure declaration gives a name, typed parameters, and a result type. Its body uses ordinary control flow. A procedure can return several results; the common systems-programming pattern is a value and an error.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">clamp</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">value, low, high: int</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">int</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">value</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">low</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">low</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">value</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="nc">high</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">high</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">value</span>
+<span class="err">}</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">result</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">clamp</span><span class="p">(</span><span class="nc">14, 0, 10</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">printfln</span><span class="p">(</span><span class="nc">"clamped value: %d", result</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The example assumes <code>core:fmt</code> is imported. Odin has <code>if</code>, <code>switch</code>, and one loop form, <code>for</code>. A basic counting loop looks like this:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">for</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">printfln</span><span class="p">(</span><span class="nc">"item %d", i</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>A range loop can iterate over elements and indices:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">names</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="nc">string</span><span class="err">{</span><span class="s">"Ada"</span><span class="p">,</span><span class="w"> </span><span class="s">"Grace"</span><span class="p">,</span><span class="w"> </span><span class="s">"Edsger"</span><span class="err">}</span>
+<span class="nc">for</span><span class="w"> </span><span class="nc">name</span><span class="p">,</span><span class="w"> </span><span class="nc">index</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">names</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">printfln</span><span class="p">(</span><span class="nc">"%d: %s", index, name</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Structs collect fields into a named record. Use them when values belong together or when a procedure would otherwise accept a long list of loosely related parameters.</p>
+<div class="highlight"><pre><span></span><code><span class="err">P</span><span class="nc">oint</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">struct</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">x</span><span class="p">,</span><span class="w"> </span><span class="l">y:</span><span class="p"> </span><span class="nc">f64</span><span class="p">,</span>
+<span class="err">}</span>
+
+<span class="nc">origin</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="err">P</span><span class="nc">oint</span><span class="err">{</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="err">}</span>
+</code></pre></div>
+<p>Polymorphic procedures let a single implementation be specialized from argument types without erasing the type information:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">minimum</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">a, b: $T</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="err">T</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">b</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">a</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">b</span>
+<span class="err">}</span>
+
+<span class="nc">small_int</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">minimum</span><span class="p">(</span><span class="nc">3, 7</span><span class="p">)</span>
+<span class="nc">small_float</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">minimum</span><span class="p">(</span><span class="nc">3.5, 1.25</span><span class="p">)</span>
+</code></pre></div>
+<p>The <code>$T</code> parameter is inferred from the call. This example is intentionally small: standard-library containers use polymorphism extensively, but not every repeated operation deserves a generic abstraction. Keep a specialized function when its domain meaning is clearer.</p>
+<p><a id="independent-type-parameters"></a></p>
+<h3 id="one-type-for-both-arguments-or-an-independent-type-for-each">One type for both arguments, or an independent type for each?<a class="headerlink" href="#one-type-for-both-arguments-or-an-independent-type-for-each" title="Permanent link">&para;</a></h3>
+<p>In <code>proc(a, b: $T)</code>, the comma groups two parameter names under one type declaration: both arguments must fit the same inferred <code>T</code>. For independent types, give each parameter its own declaration: <code>proc(a: $S, b: $T)</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">C</span><span class="nc">ompilable</span><span class="w"> </span><span class="nc">procedure</span><span class="p">;</span><span class="w"> </span><span class="nc">also</span><span class="w"> </span><span class="nc">included</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">complete</span><span class="w"> </span><span class="nc">companion</span><span class="err">.</span>
+<span class="nc">pair</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">a: $S, b: $T</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">S, T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">a</span><span class="p">,</span><span class="w"> </span><span class="nc">b</span>
+<span class="err">}</span>
+
+<span class="p">//</span><span class="w"> </span><span class="err">C</span><span class="nc">all</span><span class="err">-</span><span class="nc">site</span><span class="w"> </span><span class="nc">fragment</span><span class="w"> </span><span class="nc">inside</span><span class="w"> </span><span class="l">main:</span>
+<span class="nc">number</span><span class="p">,</span><span class="w"> </span><span class="nc">text</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">pair</span><span class="p">(</span><span class="nc">i32(7</span><span class="p">),</span><span class="w"> </span><span class="s">"hello"</span><span class="err">)</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="err">S</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">i32</span><span class="p">,</span><span class="w"> </span><span class="err">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">string</span>
+<span class="nc">left</span><span class="p">,</span><span class="w"> </span><span class="nc">right</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">pair</span><span class="p">(</span><span class="nc">i32(7</span><span class="p">),</span><span class="w"> </span><span class="nc">i32</span><span class="p">(</span><span class="nc">9</span><span class="p">)</span><span class="err">)</span><span class="w">  </span><span class="p">//</span><span class="w"> </span><span class="err">S</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">i32</span><span class="p">,</span><span class="w"> </span><span class="err">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">i32</span>
+</code></pre></div>
+<p><code>$S</code> and <code>$T</code> introduce separate compile-time type parameters; use <code>S</code> and <code>T</code> in the result types. They are inferred independently, not required to be different. This is specialization with concrete types, not an untyped runtime container.</p>
+<p>Separate parameters do not make every operation between them valid. A <code>minimum</code> using <code>a &lt; b</code> still needs meaningful comparison and a chosen result type. A number and a string do not acquire an ordering because you named their types. If your domain compares different numeric representations, choose an explicit comparison/conversion policy, including precision and range, rather than expecting generic syntax to invent one.</p>
+<p><strong>Exercise 4.1 · Infer before running.</strong> Predict the types of both results of the two <code>pair</code> calls, then run the <a href="../examples/04-procedures/main.odin">complete companion</a> and its <a href="../examples/04-procedures/return_test.odin">tests</a>. Try returning <code>a + b</code> for a number/string pair as an intentional compile-failure experiment. Explain why independent inference does not guarantee that the body supports that combination.</p>
+<p>Procedures can return a tuple of results:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">divide</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">numerator, denominator: f64</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">quotient: f64, ok: bool</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">denominator</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="l">false</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">numerator</span><span class="w"> </span><span class="p">/</span><span class="w"> </span><span class="nc">denominator</span><span class="p">,</span><span class="w"> </span><span class="l">true</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>This is plain control flow, not an exception. But the boolean is not decoration: ignoring it makes division by zero indistinguishable from a successful zero result. Before calling <code>divide</code>, predict both results for <code>(0, 2)</code> and <code>(2, 0)</code>. Same number, different meaning.</p>
+<p><a id="bare-returns"></a></p>
+<h3 id="why-can-a-procedure-say-only-return">Why can a procedure say only <code>return</code>?<a class="headerlink" href="#why-can-a-procedure-say-only-return" title="Permanent link">&para;</a></h3>
+<p>Read the result declaration before interpreting the return statement. A proc with no results uses bare <code>return</code> to exit the current call. A proc with named results uses it to return those result variables' current values, in declaration order. It is not returning nothing, ignoring an error, or terminating the whole program.</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">C</span><span class="nc">omplete</span><span class="w"> </span><span class="nc">procedure</span><span class="p">;</span><span class="w"> </span><span class="nc">quotient</span><span class="w"> </span><span class="nc">starts</span><span class="w"> </span><span class="nc">at</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="nc">and</span><span class="w"> </span><span class="nc">ok</span><span class="w"> </span><span class="nc">starts</span><span class="w"> </span><span class="nc">at</span><span class="w"> </span><span class="l">false</span><span class="err">.</span>
+<span class="nc">divide_named</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">numerator, denominator: f64</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">quotient: f64, ok: bool</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">denominator</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="err">R</span><span class="nc">eturns</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">current</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="l">false</span><span class="err">.</span>
+<span class="w">    </span><span class="nc">quotient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">numerator</span><span class="w"> </span><span class="p">/</span><span class="w"> </span><span class="nc">denominator</span>
+<span class="w">    </span><span class="nc">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="l">true</span>
+<span class="w">    </span><span class="nc">return</span><span class="w">                       </span><span class="p">//</span><span class="w"> </span><span class="err">R</span><span class="nc">eturns</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">assigned</span><span class="w"> </span><span class="nc">quotient</span><span class="p">,</span><span class="w"> </span><span class="l">true</span><span class="err">.</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The named results are zero-initialized local result variables. In this example the final bare return has the same effect as <code>return quotient, ok</code>. A named-result procedure can also use explicit return expressions, as our original <code>divide</code> does. By contrast, <code>proc() -&gt; (f64, bool)</code> has unnamed results and must supply their values explicitly; do not copy a bare return into it.</p>
+<p>Now inspect <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net/socket_linux.odin#L182-L224"><code>_listen_tcp</code>, including the bare return at line 195</a>. Its result declaration is <code>-&gt; (socket: TCP_Socket, err: Network_Error)</code>. This is an excerpt inside that implementation, not a standalone program:</p>
+<div class="highlight"><pre><span></span><code>os_sock, errno = linux.socket(ep_family, .STREAM, {.CLOEXEC}, .TCP)
+if errno != .NONE {
+    err = _create_socket_error(errno)
+    return
+}
+</code></pre></div>
+<p>The error branch assigns the named <code>err</code> and returns both results. Because the later <code>socket = cast(TCP_Socket)os_sock</code> has not run, the named socket is still its zero value. Conceptually, this path returns <code>socket, err</code>, not an empty result. On a successful path, <code>socket</code> is assigned and <code>err</code> remains <code>nil</code>.</p>
+<p>After acquiring the socket, the source installs <code>defer if err != nil { close(socket) }</code>. A later bind/listen failure assigns <code>err</code>, and cleanup closes the socket before control reaches the caller. The returned numeric handle is therefore not necessarily usable on failure. Check the error before using it; a default or nonzero value alone is not a success signal.</p>
+<p><code>defer</code> still runs when its scope exits normally through a return. However, do not import Go's deferred-named-result intuition: this pinned Odin compiler diagnoses a direct assignment to a named return value inside <code>defer</code> as not affecting the returned value. Choose scalar results before returning; use deferred work for cleanup. A returned pointer or slice can still refer to shared mutable data, which is a separate ownership issue.</p>
+<p><a href="../examples/04-procedures/main.odin">The complete runnable companion</a> compares explicit and bare-return results, distinguishes successful zero from failure, and demonstrates a no-result early return with deferred cleanup. Run <code>odin run docs/examples/04-procedures</code> and <code>TZ=UTC odin test docs/examples/04-procedures</code> from the repository root.</p>
+<p><strong>Exercise 4.2 · Trace the values, not the spelling.</strong> Predict both results for <code>(8, 2)</code>, <code>(0, 2)</code>, and <code>(2, 0)</code>. Rewrite the bare returns with explicit expressions. Then follow each return in <code>_listen_tcp</code>: was a socket acquired, was cleanup registered, and what may the caller use?</p>
+<h3 id="polymorphism-in-a-real-library-procedure">Polymorphism in a real library procedure<a class="headerlink" href="#polymorphism-in-a-real-library-procedure" title="Permanent link">&para;</a></h3>
+<p>Our <code>minimum</code> requires that comparison makes sense for <code>T</code>. Specialization does not invent an ordering for arbitrary records. Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin">testing.expect_value</a>: its parameters are <code>value, expected: $T</code>, and a <code>where</code> clause requires a comparable type. The public signature tells us more than “generic equality helper”: the supplied values must share a suitable type.</p>
+<p>The same source uses <code>#caller_location</code> and <code>#caller_expression(value)</code> as default arguments. These capture information about the call site. A failed expectation can name your expression and your source location rather than only naming the library implementation. This is a good use of compile-time support: better diagnostics without asking every caller to manually supply a filename and line.</p>
+<h3 id="what-passed-by-value-does-not-promise">What “passed by value” does not promise<a class="headerlink" href="#what-passed-by-value-does-not-promise" title="Permanent link">&para;</a></h3>
+<p>Odin parameters are immutable values. The language can preserve that meaning while choosing an efficient internal calling convention; it need not physically copy every large record onto a stack. More importantly, a slice parameter contains a reference to mutable backing data. You cannot reassign the parameter header, but a procedure can still change an element in that backing data. Separate the immutability of the parameter from the mutability of the thing it refers to.</p>
+<p>For a record that a procedure must update, pass a pointer and make the mutation visible. For a procedure that merely selects part of a slice, return a view and document its dependence on the input lifetime. Neither decision requires methods or a class hierarchy.</p>
+<p><strong>Experiment.</strong> Supply <code>low &gt; high</code> to <code>clamp</code>. Its implementation still returns something, but is that something meaningful? State the precondition or add an explicit failure result. Then try specializing <code>minimum</code> for a record with no ordering; compare the compiler error with the contract you inferred.</p>
+<p><strong>Checkpoint.</strong> Explain the difference between <code>:=</code> and <code>::</code>. Name the type of every parameter in <code>clamp</code>. Predict all three return paths before running it.</p>
+<p><a id="advanced-odin"></a></p>
+<p>Part I · An advanced foundation</p>
+<h2 id="interlude-compile-time-choices-data-layout-and-the-c-boundary">Interlude. Compile-time choices, data layout, and the C boundary<a class="headerlink" href="#interlude-compile-time-choices-data-layout-and-the-c-boundary" title="Permanent link">&para;</a></h2>
+<p>Our examples have been small enough to keep several facts implicit. Larger tools cannot afford that luxury. A branch may exist only on one target; a record may have padding; an apparently harmless string conversion may cross an ABI boundary. Let us expose those assumptions before using them in the CLI chapters.</p>
+<h3 id="compile-time-is-not-runtime-configuration">Compile-time is not runtime configuration<a class="headerlink" href="#compile-time-is-not-runtime-configuration" title="Permanent link">&para;</a></h3>
+<p>Odin has compile-time values and directives. Use them for facts known while compiling—such as a target-specific implementation or a fixed type relationship—not for values that should be selected by a user while the program runs. A runtime flag belongs in the CLI contract; a compile-time branch belongs in the build design. Start with the installed compiler’s overview and examples because directive syntax and target names are version-sensitive.</p>
+<h3 id="struct-layout-and-binary-data">Struct layout and binary data<a class="headerlink" href="#struct-layout-and-binary-data" title="Permanent link">&para;</a></h3>
+<p>Do not serialize an Odin struct by dumping its memory. Padding, endianness, field widths, and compiler layout are not a portable file format. Decode fields explicitly from a byte slice, check that every requested range fits before reading it, and state whether integers are little-endian or big-endian. A packed struct can model a particular ABI layout, but it is not a replacement for validating untrusted input.</p>
+<div class="highlight"><pre><span></span><code>// A parser should establish this before reading bytes 4 through 7:
+if len(data) &lt; 8 {
+    return 0, false
+}
+// Decode the format's specified byte order explicitly.
+</code></pre></div>
+<p>The fragment expresses a precondition, not a complete decoder. A useful first decoder takes four bytes and explicitly combines their values; there is then no struct padding or host byte order to guess:</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">P</span><span class="nc">rocedure</span><span class="w"> </span><span class="nc">fragment</span><span class="p">;</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">boolean</span><span class="w"> </span><span class="nc">distinguishes</span><span class="w"> </span><span class="nc">short</span><span class="w"> </span><span class="nc">input</span><span class="w"> </span><span class="nc">from</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">zero</span><span class="w"> </span><span class="nc">value</span><span class="err">.</span>
+<span class="nc">read_u32_le</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">data: []u8</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">u32, bool</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">data</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="l">false</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">value</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">u32</span><span class="p">(</span><span class="nc">data[0]</span><span class="p">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="err">(u</span><span class="mi">32</span><span class="err">(data[</span><span class="mi">1</span><span class="err">])</span><span class="w"> </span><span class="p">&lt;&lt; </span><span class="mi">8</span><span class="err">)</span><span class="w"> </span><span class="p">|</span>
+<span class="w">             </span><span class="p">(</span><span class="nc">u32(data[2]</span><span class="p">)</span><span class="w"> </span><span class="p">&lt;&lt;</span><span class="w"> </span><span class="mi">16</span><span class="err">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="err">(u</span><span class="mi">32</span><span class="err">(data[</span><span class="mi">3</span><span class="err">])</span><span class="w"> </span><span class="p">&lt;&lt; </span><span class="mi">24</span><span class="err">)</span>
+<span class="w">    </span><span class="err">return</span><span class="w"> </span><span class="err">value,</span><span class="w"> </span><span class="err">true</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Predict the result for <code>{1, 0, 0, 0}</code> and <code>{0, 0, 0, 1}</code>. Then test a three-byte input. Notice that the conversions happen <em>before</em> the shifts: shifting an eight-bit value is not the same operation as constructing a 32-bit integer.</p>
+<h3 id="compile-time-branches-leave-a-testing-obligation">Compile-time branches leave a testing obligation<a class="headerlink" href="#compile-time-branches-leave-a-testing-obligation" title="Permanent link">&para;</a></h3>
+<p>The <code>when</code> branches in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin">entry_unix.odin</a> select target-specific entry code and even different syscall numbers. Reading that source is enough to understand the selection mechanism; it is not enough to claim that our program works on every listed architecture. A successful Linux amd64 build gives no runtime evidence for the other branches.</p>
+<p><code>size_of</code>, <code>align_of</code>, and field offsets are useful observations when investigating layout. Use <code>#assert</code> for a compile-time relationship you deliberately depend on. Do not infer a portable wire format from the layout printed by one machine. Endian-specific integer types express byte-order choices, but they do not remove the need to validate input length and alignment.</p>
+<h3 id="allocator-strategy-follows-lifetime">Allocator strategy follows lifetime<a class="headerlink" href="#allocator-strategy-follows-lifetime" title="Permanent link">&para;</a></h3>
+<p>Odin passes an implicit <code>context</code> containing the current allocator. APIs that accept allocators let a caller decide where results live. A long-lived result, per-request scratch, and a whole-command arena have different lifetimes. Pick the narrowest lifetime that satisfies the use, and do not return memory from a temporary allocator after its scope ends. First make ownership correct; profile before choosing a more specialized allocator.</p>
+<h3 id="foreign-calls-are-abi-contracts">Foreign calls are ABI contracts<a class="headerlink" href="#foreign-calls-are-abi-contracts" title="Permanent link">&para;</a></h3>
+<p>Odin’s <code>foreign import</code> links a library and a <code>foreign</code> block declares C-compatible symbols. This is not automatic header translation: the declaration must match the installed C header’s widths, calling convention, pointer levels, and ownership rules. Import <code>core:c</code> for C types—especially <code>c.int</code> and <code>c.size_t</code>—rather than assuming Odin’s <code>int</code> means C <code>int</code>. Use <code>cstring</code> for NUL-terminated strings and keep opaque C objects opaque unless you have a verified layout.</p>
+<p><img alt="An Odin foreign call crosses a declared C ABI" src="../assets/diagrams/ffi-boundary.svg" /></p>
+<p>The declaration is the contract between two compiled components. Linking proves a symbol was found; it does not prove the declaration’s types, ownership, or library version are correct.</p>
+<p><a href="../diagrams/ffi-boundary.mmd">Editable Mermaid source</a>.</p>
+<p><strong>Design test.</strong> For every foreign function, write down the matching C prototype, which side allocates each object, how it is released, and which library version supplies the symbol. If any answer is unknown, do not guess a struct layout.</p>
+<p><a id="design-decisions"></a></p>
+<p>Part I · Why the language looks this way</p>
+<h2 id="design-decisions-data-first-explicit-flow">Design decisions: data first, explicit flow<a class="headerlink" href="#design-decisions-data-first-explicit-flow" title="Permanent link">&para;</a></h2>
+<p>It is tempting to turn a language’s design goals into slogans: “explicit,” “fast,” “data-oriented.” A more useful question is what each choice lets us predict. Can we see where failure returns? Can we choose where memory comes from? Can we change data layout without rebuilding an inheritance hierarchy? None of those questions is answered by a benchmark headline.</p>
+<p>The <a href="https://odin-lang.org/docs/faq/">designers’ FAQ</a> states the goals. The runtime source lets us see individual mechanisms. Keep the two distinct: an allocator interface creates an opportunity to choose a good policy, not a guarantee that every choice will be efficient.</p>
+<h3 id="what-data-oriented-programming-means">What data-oriented programming means<a class="headerlink" href="#what-data-oriented-programming-means" title="Permanent link">&para;</a></h3>
+<p><strong>Data-oriented programming (DOP)</strong> starts by asking what data a program processes, how that data is laid out, and in what order the program transforms it. Instead of beginning with a hierarchy of objects that own behavior, begin with the records and arrays that move through the work. Then choose procedures and memory layout that make the important transformations straightforward and, when needed, efficient.</p>
+<p>For example, an array of structures stores each particle’s position and velocity together. That is convenient when each operation uses all fields of one particle. A structure of arrays stores all positions together and all velocities together; that can be convenient when a loop updates one field across many particles, because the loop reads a compact field range. Neither layout is always faster: cache behavior, vectorization, access patterns, and the cost of converting between layouts matter. Measure the real workload.</p>
+<p><strong>DOP is not:</strong> “never use abstractions,” “make every struct flat,” “optimize every loop,” or “you must use an entity-component-system.” It is a habit of making data flow and representation deliberate. A good domain model and clear procedures still matter.</p>
+<h3 id="language-choices-as-trade-offs">Language choices as trade-offs<a class="headerlink" href="#language-choices-as-trade-offs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Design intent</th>
+<th>Subtle cost / watch-out</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain data and procedures rather than classes and inheritance</td>
+<td>Keep data representation separate from algorithms and make calls visible as ordinary procedures.</td>
+<td>There is no inherited method lookup to find behavior; choose clear package/procedure boundaries and pass the data or its pointer explicitly.</td>
+</tr>
+<tr>
+<td>Multiple return values and explicit error checks rather than exceptions</td>
+<td>Keep failure visible at the call site and make ordinary control flow easy to follow.</td>
+<td>A caller can still ignore an error result. Explicit syntax is not proof that every failure was handled.</td>
+</tr>
+<tr>
+<td>Manual memory management with custom allocators</td>
+<td>Let a program match storage strategy to lifetime—arena, pool, scratch, or longer-lived allocation.</td>
+<td>Allocator choice affects ownership and validity. A slice does not own its backing memory; returning scratch-backed data is a lifetime bug.</td>
+</tr>
+<tr>
+<td>Implicit scope <code>context</code></td>
+<td>Pass cross-cutting choices such as the current allocator and logger through Odin calls without adding the same plumbing parameter to every procedure.</td>
+<td>Because context is implicit, a procedure can depend on behavior not obvious in its parameter list. Inspect allocation and logging calls when reviewing a function.</td>
+</tr>
+<tr>
+<td>Polymorphic procedures</td>
+<td>Reuse algorithms across types while keeping type information and ordinary procedure calls.</td>
+<td>Generic code still needs meaningful constraints and tests for each important type. Do not turn one domain operation into a generic framework just because the syntax permits it.</td>
+</tr>
+<tr>
+<td>Explicit numeric conversions</td>
+<td>Make width, signedness and precision changes visible instead of relying on architecture-sensitive implicit rules.</td>
+<td>A conversion can still lose data or overflow. The cast makes the decision visible; it does not prove the value fits.</td>
+</tr>
+<tr>
+<td>Explicit overload sets</td>
+<td>Show which procedures share an overload name rather than searching an implicit candidate set across nested scopes.</td>
+<td>The overload group needs maintenance as new supported cases are added; a generic procedure may be clearer when the algorithm truly is the same.</td>
+</tr>
+<tr>
+<td>Compile-time <code>when</code></td>
+<td>Select platform or type-specific code using compiler-understood conditions instead of textual preprocessor substitution.</td>
+<td>Only the selected branch is semantically checked for a particular target. Build and test every target you claim to support.</td>
+</tr>
+<tr>
+<td><code>defer</code> for lexical cleanup</td>
+<td>Place cleanup near successful acquisition and keep early-return paths tidy.</td>
+<td>It runs at the end of its lexical scope, in reverse declaration order—not necessarily at the end of the whole procedure. If per-item work is not inside its own scope, defers can accumulate until the outer scope exits.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a-source-level-example-the-map-is-not-a-bag-of-objects">A source-level example: the map is not a bag of objects<a class="headerlink" href="#a-source-level-example-the-map-is-not-a-bag-of-objects" title="Permanent link">&para;</a></h3>
+<p>The comments beside <code>Raw_Map</code> in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">core.odin</a> describe one allocation containing key, value, and hash regions. They also describe using low bits of an aligned pointer to encode capacity information. That is a concrete representation choice made to serve the container’s operations, not a universal recipe for your application.</p>
+<p>Why mention it here? Because “map” is an interface, while the work performed by a lookup depends on a representation. A language-level map does not mean one separately allocated object per entry. Conversely, this particular layout does not promise stable iteration order, serializable headers, or pointers that remain valid during mutation. Reading implementation should refine performance questions without quietly widening the public contract.</p>
+<h3 id="when-layout-becomes-a-performance-decision">When layout becomes a performance decision<a class="headerlink" href="#when-layout-becomes-a-performance-decision" title="Permanent link">&para;</a></h3>
+<p>Start with a representation that makes invariants clear. If profiling shows a hot loop is limited by memory traffic, compare array-of-structures and structure-of-arrays layouts using representative input. Record the compiler version, build mode, input size, and measurement. A benchmark on tiny data can measure startup noise rather than the workload.</p>
+<p><strong>Exercise · Choose a layout.</strong> Model ten million audio samples with left/right channels. Compare an array of stereo structs with separate left and right arrays. Which operation—mixing both channels sample by sample, or scanning only the left channel—fits each layout better? Write both access patterns and explain the expected memory traffic.</p>
+<p><strong>Subtle watch-out:</strong> an SoA layout may help one loop and hurt another that needs all fields together. Do not declare a winner from the diagram; measure with realistic data and include conversion costs.</p>
+<p><strong>Design checkpoint.</strong> For a procedure, identify its input data, output data, allocation lifetime, error path, and hot loop. Then say which language choices make those facts visible and which remain implicit.</p>
+<p>For primary explanations of these choices, see the official <a href="workbook.html#sources">Odin FAQ and language overview</a>. The table paraphrases the designers’ stated intent; the watch-outs are practical consequences, not claims that every trade-off is right for every program.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

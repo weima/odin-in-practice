@@ -1,0 +1,1384 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
+      
+      
+      
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/memory-philosophy.html">
+      
+      
+        <link rel="prev" href="pointers.html">
+      
+      
+        <link rel="next" href="networking.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Memory philosophy - Odin in Practice</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/book.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#memory-and-error-philosophy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Odin in Practice
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Memory philosophy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Odin in Practice
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book contents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="odin-foundations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli-linux.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI and Linux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pointers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pointers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="memory-philosophy.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-why-odin-makes-memory-and-failure-your-business" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Why Odin makes memory and failure your business
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Why Odin makes memory and failure your business">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-begin-with-the-systems-lifetime-not-the-allocators-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Begin with the system’s lifetime, not the allocator’s name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ownership-and-allocation-policy-are-separate-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Ownership and allocation policy are separate answers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-real-allocator-interface-is-deliberately-ordinary-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The real allocator interface is deliberately ordinary data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-why-implicit-context-instead-of-an-allocator-argument-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Why implicit context instead of an allocator argument everywhere?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-an-arena-is-a-lifetime-boundary-not-free-memory-forever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. An arena is a lifetime boundary, not “free memory forever”
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-temporary-storage-is-not-automatically-scoped-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Temporary storage is not automatically scoped storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-why-not-let-a-garbage-collector-or-borrow-checker-do-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Why not let a garbage collector or borrow checker do this?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-allocation-failure-is-part-of-the-api-not-an-afterthought" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Allocation failure is part of the API, not an afterthought
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-why-the-clunky-go-like-error-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Why the “clunky Go-like” error checks?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-similar-syntax-does-not-make-odin-identical-to-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Similar syntax does not make Odin identical to Go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-reduce-repetition-without-deleting-the-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Reduce repetition without deleting the decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-a-real-file-reading-helper-shows-where-the-responsibilities-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. A real file-reading helper shows where the responsibilities split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-handle-what-you-know-translate-at-the-right-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Handle what you know; translate at the right boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-cleanup-is-necessary-rollback-is-a-separate-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Cleanup is necessary; rollback is a separate design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-test-the-policy-not-only-the-happy-path-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Test the policy, not only the happy-path value
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#companion-exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Companion exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="networking.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="containers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parallel-programming.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ffmpeg-libav.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workbook.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workbook and sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#11-why-odin-makes-memory-and-failure-your-business" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Why Odin makes memory and failure your business
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Why Odin makes memory and failure your business">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-begin-with-the-systems-lifetime-not-the-allocators-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Begin with the system’s lifetime, not the allocator’s name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ownership-and-allocation-policy-are-separate-answers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Ownership and allocation policy are separate answers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-real-allocator-interface-is-deliberately-ordinary-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The real allocator interface is deliberately ordinary data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-why-implicit-context-instead-of-an-allocator-argument-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Why implicit context instead of an allocator argument everywhere?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-an-arena-is-a-lifetime-boundary-not-free-memory-forever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. An arena is a lifetime boundary, not “free memory forever”
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-temporary-storage-is-not-automatically-scoped-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Temporary storage is not automatically scoped storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-why-not-let-a-garbage-collector-or-borrow-checker-do-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Why not let a garbage collector or borrow checker do this?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-allocation-failure-is-part-of-the-api-not-an-afterthought" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Allocation failure is part of the API, not an afterthought
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-why-the-clunky-go-like-error-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Why the “clunky Go-like” error checks?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-similar-syntax-does-not-make-odin-identical-to-go" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Similar syntax does not make Odin identical to Go
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-reduce-repetition-without-deleting-the-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Reduce repetition without deleting the decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-a-real-file-reading-helper-shows-where-the-responsibilities-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. A real file-reading helper shows where the responsibilities split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-handle-what-you-know-translate-at-the-right-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Handle what you know; translate at the right boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-cleanup-is-necessary-rollback-is-a-separate-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Cleanup is necessary; rollback is a separate design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-test-the-policy-not-only-the-happy-path-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Test the policy, not only the happy-path value
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#companion-exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Companion exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="memory-and-error-philosophy">Memory and error philosophy<a class="headerlink" href="#memory-and-error-philosophy" title="Permanent link">&para;</a></h1>
+<p><a id="memory-philosophy"></a></p>
+<p>Chapter 11 · Control is a responsibility, not a safety proof</p>
+<h2 id="11-why-odin-makes-memory-and-failure-your-business">11. Why Odin makes memory and failure your business<a class="headerlink" href="#11-why-odin-makes-memory-and-failure-your-business" title="Permanent link">&para;</a></h2>
+<p>A file inspector can read input, allocate a preview, run a media probe, and produce output in a few happy-path statements. Why does an Odin version surround those statements with allocator choices, deferred cleanup, and error branches? Is this control, or simply work that another language would spare us?</p>
+<p>Both descriptions contain some truth. Odin deliberately exposes resource policy and ordinary failure as parts of the program. That can make costs and recovery decisions easier to audit, but it moves obligations onto the programmer. This chapter explains the intended benefits without pretending that verbosity, leaks, or dangling pointers disappear merely because allocation is explicit.</p>
+<p>For intent, we can cite the creator’s <a href="https://www.gingerbill.org/article/2019/02/01/memory-allocation-strategies-001/">memory-allocation essay</a>, his <a href="https://www.gingerbill.org/article/2025/12/15/odins-most-misunderstood-feature-context/">explanation of context</a>, and the official <a href="https://odin-lang.org/docs/faq/#why-does-odin-not-have-exceptions">exception rationale</a>. For mechanics, we use the runtime and libraries at <code>a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924</code>. An author’s preference is evidence of a design goal, not proof that every alternative is slower or less readable.</p>
+<h3 id="1-begin-with-the-systems-lifetime-not-the-allocators-name">1. Begin with the system’s lifetime, not the allocator’s name<a class="headerlink" href="#1-begin-with-the-systems-lifetime-not-the-allocators-name" title="Permanent link">&para;</a></h3>
+<p>Imagine processing a directory of media files. The list of input paths lasts for the command. The current file’s parsed metadata lasts until its report is emitted. A formatting buffer may last only until one line is written. These lifetimes exist before we choose heap allocation, an arena, or a fixed buffer.</p>
+<p>The creator’s allocation essay asks about size, lifetime, and usage, then groups allocations by lifetimes that end together. Its numerical proportions are his illustrative observations, not universal workload statistics. The transferable idea is to make your own resource ledger rather than assume that every allocation is an unrelated object with an unrelated release time.</p>
+<table>
+<thead>
+<tr>
+<th>Resource in a media inspector</th>
+<th>Last required use</th>
+<th>Possible policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input path list and accumulated report</td>
+<td>End of the command, or report handoff.</td>
+<td>Longer-lived allocator with one clear owner.</td>
+</tr>
+<tr>
+<td>Current file’s parse tree and token strings</td>
+<td>After processing and copying retained results.</td>
+<td>Per-file arena reset at the operation boundary.</td>
+</tr>
+<tr>
+<td>Formatted diagnostic text</td>
+<td>After the output consumer has finished reading it.</td>
+<td>Scratch storage, unless an async consumer retains it.</td>
+</tr>
+<tr>
+<td>Input descriptor and decoder handle</td>
+<td>After their final I/O or decode operation.</td>
+<td>Explicit close functions, often deferred.</td>
+</tr>
+</tbody>
+</table>
+<p>An arena does not close descriptors or decoder handles. Bulk memory reset solves a storage-reclamation problem, not every resource-management problem. Similarly, a garbage collector can reclaim unreachable managed objects without necessarily implementing timely closing of external handles. Decide both contracts.</p>
+<h3 id="2-ownership-and-allocation-policy-are-separate-answers">2. Ownership and allocation policy are separate answers<a class="headerlink" href="#2-ownership-and-allocation-policy-are-separate-answers" title="Permanent link">&para;</a></h3>
+<p><em>Ownership</em> answers who is responsible for a resource and its release. <em>Allocation policy</em> answers where storage comes from and what reclamation operations the allocator supports. A pointer type alone answers neither. A caller can own a result stored in an arena, while the arena itself belongs to a subsystem whose reset invalidates all such results together.</p>
+<p>This separation explains the seemingly inconsistent treatment of slices and dynamic arrays. A slice describes a range and carries no allocator field; it can refer to a local array or an allocation. A dynamic array carries its allocator so growth and deletion can use the right policy. That remembered policy is not a unique-owner certificate: copying its header still creates an alias.</p>
+<p>The language does not automatically walk a dynamic array of strings and free every string allocation. Its backing array and the independently allocated character buffers are different resources. If the strings are views into one arena, reset may release their common storage. If they are independently cloned heap strings, the owner needs a cleanup loop. Choosing the same element type does not choose either contract.</p>
+<h3 id="3-the-real-allocator-interface-is-deliberately-ordinary-data">3. The real allocator interface is deliberately ordinary data<a class="headerlink" href="#3-the-real-allocator-interface-is-deliberately-ordinary-data" title="Permanent link">&para;</a></h3>
+<p>These declarations are a short excerpt from <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">base/runtime/core.odin</a>; they are not a complete application:</p>
+<div class="highlight"><pre><span></span><code><span class="err">A</span><span class="nc">llocator_Proc</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="err">#</span><span class="nc">type</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">allocator_data: rawptr, mode: Allocator_Mode,</span>
+<span class="nc">                             size, alignment: int,</span>
+<span class="nc">                             old_memory: rawptr, old_size: int,</span>
+<span class="nc">                             location: Source_Code_Location = #caller_location</span><span class="p">)</span>
+<span class="w">                             </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">[]byte, Allocator_Error</span><span class="p">)</span>
+<span class="err">A</span><span class="nc">llocator</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">struct</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="l">procedure:</span><span class="p"> </span><span class="err">A</span><span class="nc">llocator_Proc</span><span class="p">,</span>
+<span class="w">    </span><span class="l">data:</span><span class="p"> </span><span class="w">     </span><span class="nc">rawptr</span><span class="p">,</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The procedure field is behavior; the data pointer supplies the allocator instance’s state. This is the same pointer-to-live-state issue examined in Chapter 10. Copying an <code>Allocator</code> copies those two fields; it does not duplicate the arena, free list, or tracking map behind <code>data</code>.</p>
+<p>The modes include allocation, resize, individual free, bulk free, and queries. An allocator can report <code>Mode_Not_Implemented</code>. An arena can therefore satisfy allocation requests while refusing individual free. Read the actual implementation instead of interpreting “allocator” as a universal replacement for every heap operation.</p>
+<p>The source is also a reminder that an allocation is a fallible procedure call. Size, alignment, old storage, and source location are inputs to a policy. Tracking can be attached at this boundary, but code that bypasses the boundary or allocates through a foreign library is outside that tracking path.</p>
+<h3 id="4-why-implicit-context-instead-of-an-allocator-argument-everywhere">4. Why implicit context instead of an allocator argument everywhere?<a class="headerlink" href="#4-why-implicit-context-instead-of-an-allocator-argument-everywhere" title="Permanent link">&para;</a></h3>
+<p>Odin-convention procedures receive a scope-local context implicitly. Many allocation procedures use <code>context.allocator</code> as a default argument, while others accept an explicit allocator. This is a compromise between spelling every cross-cutting policy at every call and hard-coding a global allocator that a caller cannot intercept.</p>
+<p>The creator’s context article identifies interception of third-party code as the main goal. A caller can run a library under a tracking allocator or an operation arena even when every intermediate procedure does not list an allocator argument. This works only along paths that respect context or the supplied allocator; a hard-coded policy and a foreign C allocator do not magically become interceptable.</p>
+<p>Context is not a process-wide mutable singleton, a garbage collector, or a ownership registry. It is local to scope, with changes flowing to downstream Odin calls rather than automatically changing the caller’s policy. Its implicit pointer is part of the Odin calling convention. A C-convention callback is a different boundary.</p>
+<p>The cost is real: a procedure’s printed argument list may not show all the policy affecting its behavior. When a result must outlive the operation, an explicit result allocator often makes the contract clearer. Use context for coherent subsystem defaults; use explicit parameters where the result’s ownership boundary would otherwise be ambiguous. These choices can coexist.</p>
+<h3 id="5-an-arena-is-a-lifetime-boundary-not-free-memory-forever">5. An arena is a lifetime boundary, not “free memory forever”<a class="headerlink" href="#5-an-arena-is-a-lifetime-boundary-not-free-memory-forever" title="Permanent link">&para;</a></h3>
+<p>A growing arena can allocate sequentially from blocks and release or reset storage in bulk. This can avoid managing each short-lived allocation separately. It also retains storage until the chosen boundary, may reserve more memory than an individual result needs, and can accumulate substantial memory when a supposed “short operation” is actually an unbounded loop.</p>
+<p>In the pinned <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/mem/virtual/arena.odin">virtual arena implementation</a>, <code>arena_free_all</code> releases all but the first block of a growing arena and resets usage. <code>arena_destroy</code> releases its blocks. The allocator adapter returns <code>Mode_Not_Implemented</code> for individual <code>Free</code>. These are concrete implementation observations; not every arena implementation must make the same retention choices.</p>
+<p><img alt="Copy a retained result across a scratch lifetime boundary" src="../assets/diagrams/memory-lifetimes.svg" /></p>
+<p>Copying the slice header would preserve a pointer into scratch. Copying its elements into independently owned storage crosses the lifetime boundary correctly.</p>
+<p><a href="../diagrams/memory-lifetimes.mmd">Editable Mermaid source</a>.</p>
+<p>Here is a complete version of that boundary. Its small integer snapshot stands in for a retained parse result; the allocator and reset operations are real library operations, not simulated counters.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:mem"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:mem/virtual"</span>
+
+<span class="nc">make_snapshot</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">scratch_allocator, result_allocator: mem.Allocator</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="p">(</span><span class="nc">result: []int, err: mem.Allocator_Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">scratch_allocator</span>
+<span class="w">    </span><span class="nc">scratch</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[]int, 3</span><span class="p">)</span><span class="w"> </span><span class="nc">or_return</span>
+<span class="w">    </span><span class="nc">scratch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="nc">scratch</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="nc">scratch</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span>
+<span class="w">    </span><span class="nc">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[]int, len(scratch</span><span class="p">),</span><span class="w"> </span><span class="nc">result_allocator</span><span class="err">)</span><span class="w"> </span><span class="nc">or_return</span>
+<span class="w">    </span><span class="nc">copy</span><span class="p">(</span><span class="nc">result, scratch</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">return</span>
+<span class="err">}</span>
+
+<span class="nc">run</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">mem</span><span class="err">.A</span><span class="nc">llocator_Error</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">persistent</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="w">    </span><span class="l">arena:</span><span class="p"> </span><span class="nc">virtual</span><span class="err">.A</span><span class="nc">rena</span>
+<span class="w">    </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_init_growing</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span><span class="w"> </span><span class="nc">or_return</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_destroy</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nc">result</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make_snapshot</span><span class="p">(</span><span class="nc">virtual.arena_allocator(&amp;arena</span><span class="p">),</span><span class="w"> </span><span class="nc">persistent</span><span class="err">)</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">result, persistent</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_free_all</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">result[0] == 10 &amp;&amp; result[2] == 30</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">context.allocator == persistent</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">println</span><span class="p">(</span><span class="nc">"result survived scratch reset because its elements were copied"</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">nil</span>
+<span class="err">}</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">run</span><span class="p">()</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">err == nil, "allocation failed in arena example"</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p><code>make_snapshot</code> changes its local allocator policy for scratch but explicitly selects the allocator for the retained result. Returning <code>scratch</code> instead would compile with the same result type yet break the promised lifetime after reset. The type does not distinguish these contracts; documentation and tests must.</p>
+<p>There is no individual deletion of scratch allocations because this arena’s reclamation boundary owns them together. The output allocation is deleted separately. The arena itself stays alive while its adapter is used: returning that adapter with <code>data</code> pointing to a dead local <code>Arena</code> would create a different dangling-pointer bug.</p>
+<h3 id="6-temporary-storage-is-not-automatically-scoped-storage">6. Temporary storage is not automatically scoped storage<a class="headerlink" href="#6-temporary-storage-is-not-automatically-scoped-storage" title="Permanent link">&para;</a></h3>
+<p><code>context.temp_allocator</code> is intended for short-lived allocations; the default is arena-like. The temporary name is a convention about intended lifetime, not a promise that every procedure return automatically resets its bytes. The operation, frame, or cycle owner must choose a safe reset boundary and ensure no live consumer still relies on the storage.</p>
+<p>A reusable helper should not casually call <code>free_all(context.temp_allocator)</code>. It may invalidate scratch owned by its caller or another nested helper. A private arena or a supported temporary checkpoint can isolate lifetimes; blindly resetting shared temporary storage cannot. For delayed logging, asynchronous I/O, callbacks, and queued jobs, “used later” means the data is not temporary relative to the current call.</p>
+<p>Tracking allocations can detect unreleased tracked storage and invalid frees, but cannot generally prove that a borrowed pointer remains alive. A leak-free program can still read an expired view. Conversely, an arena intentionally retaining a block for reuse is not necessarily a leak: compare retention with the documented lifetime and measured memory budget.</p>
+<h3 id="7-why-not-let-a-garbage-collector-or-borrow-checker-do-this">7. Why not let a garbage collector or borrow checker do this?<a class="headerlink" href="#7-why-not-let-a-garbage-collector-or-borrow-checker-do-this" title="Permanent link">&para;</a></h3>
+<p>Automatic reclamation can reduce explicit cleanup and make shared object graphs easier to express. A tracing collector decides reclamation from reachability; reference counting associates costs with changes in references; RAII couples cleanup to object lifetime; a borrow checker can reject many unsafe sharing and lifetime combinations statically. These approaches have different trade-offs, and all can coexist with arenas or low-level interfaces in suitable languages.</p>
+<p>Odin instead emphasizes application-controlled storage and ordinary data representations. This suits workloads where the programmer knows an operation’s lifetime and wants allocation strategies to follow it. No tracing collector is inserted to keep an escaped local pointer alive. Nor does the compiler supply a Rust-style borrow proof for every alias.</p>
+<p>The benefit is the opportunity to control grouping, retention, layout, and when allocator work occurs. It is not a guarantee of real-time latency: page faults, locks, operating-system scheduling, foreign libraries, and a slow custom allocator remain. A manual allocation strategy can perform worse than a well-tuned managed workload, or retain more memory than expected. Measure the application rather than treating “no GC” as a benchmark result.</p>
+<p>The cost includes reasoning about transfers, errors during construction, double release, stale views, and concurrency. If independent lifetimes are poorly understood, a carefully designed managed or ownership-checked model may be a better fit. Odin’s philosophy makes these decisions available; it does not make every programmer’s decisions correct.</p>
+<h3 id="8-allocation-failure-is-part-of-the-api-not-an-afterthought">8. Allocation failure is part of the API, not an afterthought<a class="headerlink" href="#8-allocation-failure-is-part-of-the-api-not-an-afterthought" title="Permanent link">&para;</a></h3>
+<p>The runtime’s <code>Allocator_Error</code> includes <code>Out_Of_Memory</code>, <code>Invalid_Pointer</code>, <code>Invalid_Argument</code>, and <code>Mode_Not_Implemented</code>, with the zero value <code>None</code>. Many built-ins have optional allocator-error forms: convenient code can use one returned value, but code with a recovery requirement should capture the error explicitly. Do not assume an omitted error turns every failed allocation into an exception.</p>
+<p>Test failure deterministically rather than asking the OS for an enormous allocation. This teaching allocator rejects allocation requests without consuming system memory. It is intentionally not a general allocator.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:mem"</span>
+
+<span class="nc">reject_requests</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">data: rawptr, mode: mem.Allocator_Mode,</span>
+<span class="nc">    size, alignment: int, old_memory: rawptr, old_size: int,</span>
+<span class="nc">    location := #caller_location</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">[]byte, mem.Allocator_Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="err">#</span><span class="nc">partial</span><span class="w"> </span><span class="nc">switch</span><span class="w"> </span><span class="nc">mode</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">case</span><span class="w"> </span><span class="err">.A</span><span class="nc">lloc</span><span class="p">,</span><span class="w"> </span><span class="err">.A</span><span class="nc">lloc_Non_Zeroed</span><span class="p">,</span><span class="w"> </span><span class="err">.R</span><span class="nc">esize</span><span class="p">,</span><span class="w"> </span><span class="err">.R</span><span class="nc">esize_Non_Zeroed</span><span class="err">:</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="err">.O</span><span class="nc">ut_Of_Memory</span>
+<span class="w">    </span><span class="nc">case</span><span class="w"> </span><span class="err">.F</span><span class="l">ree:</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="err">T</span><span class="nc">his</span><span class="w"> </span><span class="nc">allocator</span><span class="w"> </span><span class="nc">has</span><span class="w"> </span><span class="nc">issued</span><span class="w"> </span><span class="nc">no</span><span class="w"> </span><span class="nc">allocations</span><span class="err">.</span>
+<span class="w">    </span><span class="l">case:</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="err">.M</span><span class="nc">ode_Not_Implemented</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="err">}</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">rejecting</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">mem</span><span class="err">.A</span><span class="nc">llocator</span><span class="err">{</span><span class="nc">procedure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">reject_requests</span><span class="err">}</span>
+<span class="w">    </span><span class="nc">p</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">new</span><span class="p">(</span><span class="nc">int, rejecting</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">p == nil &amp;&amp; err == .Out_Of_Memory</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">println</span><span class="p">(</span><span class="nc">"allocation failure is a result; no target was dereferenced"</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Now inspect <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin">the real <code>new</code> body</a>. It requests bytes with the type’s size and alignment, uses <code>or_return</code> on failure, and casts the returned data address to <code>^T</code>. The source makes the nil/failure path concrete. You can swap policy without rewriting the client, but a client that ignores the failure can still dereference nil.</p>
+<p>On a virtual-memory OS, apparent allocation success may not guarantee all pages can later be committed under pressure. An allocator’s returned error is the contract visible at that call, not a promise that every future system-memory failure is recoverable. Choose a domain response: reject a request, lower a quality setting, use bounded preallocated storage, or terminate at the application boundary. Returning an error from one allocation does not automatically make every procedure in the program allocation-failure-safe.</p>
+<h3 id="9-why-the-clunky-go-like-error-checks">9. Why the “clunky Go-like” error checks?<a class="headerlink" href="#9-why-the-clunky-go-like-error-checks" title="Permanent link">&para;</a></h3>
+<p>The visible resemblance is real: a call produces a useful result and a failure indication, then a nearby branch decides what happens. The official FAQ favors making it clear which call produced an error. The creator’s <a href="https://www.gingerbill.org/article/2018/09/05/exceptions---and-why-odin-will-never-have-them/">2018 explanation</a> also objects to failure raised in one location and handled remotely through exception control flow.</p>
+<p>This is a preference for readable, structural control flow, not a claim that the number of typed characters is minimal. A branch can retry, choose a fallback, release a partial result, add operation context, or return. The point is the decision, not the ritual of writing <code>if err != nil</code>.</p>
+<p>The criticism is justified too: repeated propagation can dominate a happy path, introduce copy-and-paste mistakes, or tempt callers to discard errors. Explicit values can still be ignored. A variable named <code>err</code> does not ensure a useful recovery policy. Exception handling, typed result types, and checked effects offer other ways to express failure, each with its own costs and guarantees.</p>
+<p>Do not rely on a blanket performance argument. The cost of exceptions depends on their implementation, usage frequency, generated code, and workload. Return values also have costs. The source-backed rationale here is visibility and control; a speed claim needs a measured comparison.</p>
+<h3 id="10-similar-syntax-does-not-make-odin-identical-to-go">10. Similar syntax does not make Odin identical to Go<a class="headerlink" href="#10-similar-syntax-does-not-make-odin-identical-to-go" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Odin</th>
+<th>Go comparison</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What represents failure?</td>
+<td>Ordinary chosen types: booleans, enums, unions, and richer records.</td>
+<td>Conventionally the predeclared <code>error</code> interface, implemented by concrete error values.</td>
+</tr>
+<tr>
+<td>Is absence a failure?</td>
+<td>An API decides; a map lookup can return <code>ok: bool</code>.</td>
+<td>Likewise, presence checks are not all <code>error</code> results.</td>
+</tr>
+<tr>
+<td>When does ordinary <code>defer</code> run?</td>
+<td>At the lexical scope’s exit.</td>
+<td>At the containing function’s return.</td>
+</tr>
+<tr>
+<td>Can deferred work change a named returned value?</td>
+<td>Do not assume Go’s behavior; Odin’s overview explicitly says deferred assignment does not change the already returned value.</td>
+<td>A deferred function can modify named result parameters before return completes.</td>
+</tr>
+<tr>
+<td>Is general storage automatically reclaimed?</td>
+<td>No general tracing GC is provided by the language.</td>
+<td>Go normally uses garbage collection for managed heap storage; external resources still need a policy.</td>
+</tr>
+<tr>
+<td>Does a returned error unwind to a distant handler?</td>
+<td>No; the caller chooses structural control flow.</td>
+<td>An ordinary returned <code>error</code> does not unwind either; Go separately has <code>panic</code>/<code>recover</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The Go team’s <a href="https://go.dev/blog/error-handling-and-go">error-handling article</a> documents the interface and concrete data carried by errors. It is wrong to claim Go errors are always strings or lack typed detail. It is equally wrong to infer a universal Odin error interface merely from the convention of naming a variable <code>err</code>.</p>
+<p>A boolean is sufficient when the caller only needs a two-way distinction. An enum names a closed set of failure categories. A union can distinguish payloads such as a missing path and a format error with a byte offset. Rich error data may itself borrow strings or contain allocations; returning it does not exempt those payloads from lifetime reasoning.</p>
+<h3 id="11-reduce-repetition-without-deleting-the-decision">11. Reduce repetition without deleting the decision<a class="headerlink" href="#11-reduce-repetition-without-deleting-the-decision" title="Permanent link">&para;</a></h3>
+<p>The pinned runtime already uses <code>or_return</code>. It would be misleading to teach Odin as having no propagation shorthand, or to turn the creator’s historical objections into a claim that current syntax cannot propagate. Here both styles implement the same small numerical contract:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+
+<span class="err">R</span><span class="nc">atio_Error</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">enum</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="err">N</span><span class="nc">one</span><span class="p">,</span><span class="w"> </span><span class="err">Z</span><span class="nc">ero_Denominator</span><span class="w"> </span><span class="err">}</span>
+
+<span class="nc">checked_ratio</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">numerator, denominator: f64</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="p">(</span><span class="nc">ratio: f64, err: Ratio_Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">denominator</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="err">.Z</span><span class="nc">ero_Denominator</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">numerator</span><span class="w"> </span><span class="p">/</span><span class="w"> </span><span class="nc">denominator</span><span class="p">,</span><span class="w"> </span><span class="nc">nil</span>
+<span class="err">}</span>
+
+<span class="nc">explicit_adjustment</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">a, b: f64</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">value: f64, err: Ratio_Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">ratio</span><span class="p">,</span><span class="w"> </span><span class="nc">ratio_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">checked_ratio</span><span class="p">(</span><span class="nc">a, b</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">ratio_err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nc">ratio_err</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">ratio</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nc">nil</span>
+<span class="err">}</span>
+
+<span class="nc">propagated_adjustment</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">a, b: f64</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">value: f64, err: Ratio_Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">ratio</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">checked_ratio</span><span class="p">(</span><span class="nc">a, b</span><span class="p">)</span><span class="w"> </span><span class="nc">or_return</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">ratio</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nc">nil</span>
+<span class="err">}</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">value</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">propagated_adjustment</span><span class="p">(</span><span class="nc">6, 2</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">value == 4 &amp;&amp; err == nil</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">failed_value</span><span class="p">,</span><span class="w"> </span><span class="nc">failed_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">propagated_adjustment</span><span class="p">(</span><span class="nc">6, 0</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">failed_value == 0 &amp;&amp; failed_err == .Zero_Denominator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">explicit_value</span><span class="p">,</span><span class="w"> </span><span class="nc">explicit_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">explicit_adjustment</span><span class="p">(</span><span class="nc">6, 0</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">assert</span><span class="p">(</span><span class="nc">explicit_value == failed_value &amp;&amp; explicit_err == failed_err</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">println</span><span class="p">(</span><span class="nc">"the failure branch remains; its propagation spelling is shorter"</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p><code>or_return</code> consumes the final failure indication and returns when it is non-nil, or when an optional-ok boolean is false. In a multi-result caller, results must be named so it can assign the propagated final result and use a bare return. Earlier named result values retain their current values; they are not automatically a translated success payload or a rich domain diagnostic.</p>
+<p>Use the explicit branch when you need to translate an error, choose a fallback, preserve partial data, or explain a contextual recovery decision. <code>or_else</code> similarly selects a fallback for suitable optional-result expressions; a fallback is correct only if your contract genuinely accepts loss of the original failure distinction.</p>
+<p><code>@(require_results)</code> requires acknowledgement of a procedure’s results. It prevents silently using a result-requiring call as a discarded statement, but assigning to <code>_</code> is still acknowledgement. It does not prove that the caller inspected the error or used a good recovery policy. Type checking and intent checking are different jobs.</p>
+<h3 id="12-a-real-file-reading-helper-shows-where-the-responsibilities-split">12. A real file-reading helper shows where the responsibilities split<a class="headerlink" href="#12-a-real-file-reading-helper-shows-where-the-responsibilities-split" title="Permanent link">&para;</a></h3>
+<p>This is the actual path-based helper from <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin">core/os/file_util.odin</a>, with indentation normalized. It belongs to the <code>os</code> package, not a standalone program:</p>
+<div class="highlight"><pre><span></span><code><span class="err">@</span><span class="p">(</span><span class="nc">require_results</span><span class="p">)</span>
+<span class="nc">read_entire_file_from_path</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">name: string, allocator: runtime.Allocator,</span>
+<span class="nc">    loc := #caller_location</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">data: []byte, err: Error</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">f</span><span class="p">,</span><span class="w"> </span><span class="nc">ferr</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">open</span><span class="p">(</span><span class="nc">name</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">ferr</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">nil</span><span class="p">,</span><span class="w"> </span><span class="nc">ferr</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">close</span><span class="p">(</span><span class="nc">f</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">read_entire_file_from_file</span><span class="p">(</span><span class="nc">f=f, allocator=allocator, loc=loc</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Follow every resource. If opening fails, no usable file handle is returned and the helper stops. After successful open, a deferred close covers every return from the scope. The file-based reader receives a specific result allocator. The returned bytes belong to the caller, whereas the helper closes the descriptor it acquired. A descriptor and its loaded bytes do not have identical ownership simply because one procedure produced both.</p>
+<p>Now inspect the file-based reader. A read can fail after bytes have been allocated or appended. Consequently, “the answer is invalid” does not imply “no resource was acquired.” At the caller:</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">F</span><span class="nc">ragment</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">procedure</span><span class="w"> </span><span class="nc">returning</span><span class="w"> </span><span class="nc">os</span><span class="err">.E</span><span class="nc">rror</span><span class="p">;</span><span class="w"> </span><span class="nc">imports</span><span class="p">/</span><span class="nc">path</span><span class="w"> </span><span class="nc">are</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">scope</span><span class="err">.</span>
+<span class="nc">allocator</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="nc">data</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">os</span><span class="err">.</span><span class="nc">read_entire_file_from_path</span><span class="p">(</span><span class="nc">path, allocator</span><span class="p">)</span>
+<span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">data, allocator</span><span class="p">)</span>
+<span class="nc">if</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">}</span>
+<span class="p">//</span><span class="w"> </span><span class="err">P</span><span class="nc">rocess</span><span class="w"> </span><span class="nc">data</span><span class="w"> </span><span class="nc">only</span><span class="w"> </span><span class="nc">on</span><span class="w"> </span><span class="nc">success</span><span class="err">.</span>
+</code></pre></div>
+<p>Blindly writing <code>data := os.read_entire_file_from_path(path, allocator) or_return</code> can lose the opportunity to release a partial result if the failure path returned an allocation. The shorthand is not itself defective: the problem is applying it without the callee’s ownership contract. The append implementation even includes comments warning not to use <code>or_return</code> at some resize points because partial success is possible.</p>
+<h3 id="13-handle-what-you-know-translate-at-the-right-boundary">13. Handle what you know; translate at the right boundary<a class="headerlink" href="#13-handle-what-you-know-translate-at-the-right-boundary" title="Permanent link">&para;</a></h3>
+<p>“Handle errors near the call” is valuable when that code has enough information to recover. A parser can reject a malformed field. An operation can clean up incomplete state. A UI or CLI can choose the human-facing diagnostic. A low-level file routine usually cannot decide whether the user wants a retry, a missing-file default, or a failed job.</p>
+<p>Propagating a failure to a layer with the necessary context is legitimate. What should remain local is cleanup and restoration of invariants the callee owns. Do not turn the creator’s preference for local handling into a rule that every library procedure must log and terminate. Such a library would deprive its caller of useful choices.</p>
+<p>For a media inspector, distinguish launch failure, child non-zero exit, malformed JSON, missing stream metadata, and an allocation failure while retaining results. Retry only where the failure is actually retryable, with a bound and a reason. Printing the same message at every layer adds noise, not context. Preserve structured details and report once at the appropriate outer boundary.</p>
+<h3 id="14-cleanup-is-necessary-rollback-is-a-separate-design">14. Cleanup is necessary; rollback is a separate design<a class="headerlink" href="#14-cleanup-is-necessary-rollback-is-a-separate-design" title="Permanent link">&para;</a></h3>
+<p>Register cleanup immediately after successful acquisition, or before interpreting failure when the API can return owned partial data. Return through the resource-owning scope so its defers run. Calling <code>os.exit</code> deep inside the operation does not return through those scopes; keep process termination at the outer boundary after the operation has finished cleanup.</p>
+<p>Deferred close does not restore a file already truncated or a database transaction already committed. If an operation must be all-or-nothing, choose a transactional protocol: stage output separately, finish and validate it, then publish through the appropriate atomic or transactional boundary. Error values describe failure; they do not reverse side effects.</p>
+<p>For multiple resources, draw acquisition and release order. If a decoder depends on a format context, close the decoder before closing that context. Reverse-order defers are useful only when registered in the correct dependency order. A leak-free but prematurely closed dependency still breaks the operation.</p>
+<h3 id="15-test-the-policy-not-only-the-happy-path-value">15. Test the policy, not only the happy-path value<a class="headerlink" href="#15-test-the-policy-not-only-the-happy-path-value" title="Permanent link">&para;</a></h3>
+<p>Save this separate package as <code>memory_test.odin</code> and run <code>odin test .</code>. It exercises real allocation/reset operations and scope cleanup. The assertions check independently copied data rather than reading deliberately expired scratch.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">memory_specs</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:mem"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:mem/virtual"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:testing"</span>
+
+<span class="err">@</span><span class="p">(</span><span class="nc">test</span><span class="p">)</span>
+<span class="nc">test_copy_survives_arena_reset</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">t: ^testing.T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="l">arena:</span><span class="p"> </span><span class="nc">virtual</span><span class="err">.A</span><span class="nc">rena</span>
+<span class="w">    </span><span class="nc">init_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_init_growing</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, init_err == nil</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_destroy</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">allocator</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="w">    </span><span class="nc">scratch</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[]int, 2, virtual.arena_allocator(&amp;arena</span><span class="p">)</span><span class="err">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, err == nil</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">scratch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="nc">scratch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span>
+<span class="w">    </span><span class="nc">owned</span><span class="p">,</span><span class="w"> </span><span class="nc">owned_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[]int, 2, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">owned, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, owned_err == nil</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">copy</span><span class="p">(</span><span class="nc">owned, scratch</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_free_all</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, owned[0], 7</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, owned[1], 9</span><span class="p">)</span>
+<span class="err">}</span>
+
+<span class="err">@</span><span class="p">(</span><span class="nc">test</span><span class="p">)</span>
+<span class="nc">test_individual_arena_free_is_not_implemented</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">t: ^testing.T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="l">arena:</span><span class="p"> </span><span class="nc">virtual</span><span class="err">.A</span><span class="nc">rena</span>
+<span class="w">    </span><span class="nc">init_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_init_growing</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, init_err == nil</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_destroy</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">allocator</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">virtual</span><span class="err">.</span><span class="nc">arena_allocator</span><span class="p">(</span><span class="nc">&amp;arena</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">p</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">new</span><span class="p">(</span><span class="nc">int, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, err == nil</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">free_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">free</span><span class="p">(</span><span class="nc">p, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, free_err, mem.Allocator_Error.Mode_Not_Implemented</span><span class="p">)</span>
+<span class="err">}</span>
+
+<span class="err">@</span><span class="p">(</span><span class="nc">test</span><span class="p">)</span>
+<span class="nc">test_defer_runs_on_early_return</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">t: ^testing.T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">cleanup_count</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="nc">operation</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">count: ^int</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">bool</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">defer</span><span class="w"> </span><span class="nc">count</span><span class="err">^</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="l">false</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, !operation(&amp;cleanup_count</span><span class="p">)</span><span class="err">)</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, cleanup_count, 1</span><span class="p">)</span>
+<span class="err">}</span>
+
+<span class="err">@</span><span class="p">(</span><span class="nc">test</span><span class="p">)</span>
+<span class="nc">test_block_defer_runs_before_function_exit</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">t: ^testing.T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">cleanup_count</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">defer</span><span class="w"> </span><span class="nc">cleanup_count</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, cleanup_count, 0</span><span class="p">)</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect_value</span><span class="p">(</span><span class="nc">t, cleanup_count, 1</span><span class="p">)</span>
+<span class="err">}</span>
+
+<span class="err">@</span><span class="p">(</span><span class="nc">test</span><span class="p">)</span>
+<span class="nc">test_local_context_change_does_not_change_caller</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">t: ^testing.T</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">original</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="w">    </span><span class="nc">local_policy</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">mem</span><span class="err">.A</span><span class="nc">llocator</span><span class="err">{}</span>
+<span class="w">        </span><span class="p">//</span><span class="w"> </span><span class="err">D</span><span class="nc">o</span><span class="w"> </span><span class="nc">not</span><span class="w"> </span><span class="nc">allocate</span><span class="w"> </span><span class="nc">through</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">intentionally</span><span class="w"> </span><span class="nc">empty</span><span class="w"> </span><span class="nc">policy</span><span class="err">.</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">local_policy</span><span class="p">()</span>
+<span class="w">    </span><span class="nc">testing</span><span class="err">.</span><span class="nc">expect</span><span class="p">(</span><span class="nc">t, context.allocator == original</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The individual-free assertion intentionally specifies this pinned arena’s implementation, not a universal property of allocator interfaces. The copy test would be invalid if it tried to prove safety by reading scratch after reset. The context test changes policy without making an invalid allocation through it. A good experiment isolates one claim and avoids introducing undefined lifetime behavior as its supposed oracle.</p>
+<h3 id="companion-exercises">Companion exercises<a class="headerlink" href="#companion-exercises" title="Permanent link">&para;</a></h3>
+<p><strong>Exercise 11.1 · A real subsystem boundary.</strong> Extend the arena snapshot to two retained records, one containing a string. Decide whether that string is borrowed or cloned. Reset scratch before printing retained results. Verify the copied payloads and cleanup with the test runner; do not retain an arena-backed string header accidentally.</p>
+<p><strong>Exercise 11.2 · Fail before and after acquisition.</strong> Use the rejecting allocator for output allocation while scratch allocation still succeeds. Confirm that the function returns an allocation error and the arena owner still resets/destroys its storage. Then make a test helper return allocated partial data plus a deliberate domain error, and demonstrate that the caller releases it.</p>
+<p><strong>Exercise 11.3 · Remove ceremony, keep information.</strong> Compare an explicit branch with <code>or_return</code> in a file-processing function. Introduce a missing input, a malformed payload, and an allocation failure. Choose where each error is translated and where owned resources are released. Verify the failure category and exit status, not merely that something was printed.</p>
+<p><strong>Checkpoint.</strong> Explain why explicit allocation does not imply memory safety, why a GC is not a substitute for every resource protocol, why context is not a global owner, and why error propagation can be appropriate even when error cleanup must remain local. If you cannot name the operation boundary, you are not ready to choose its reset policy.</p>
+<p>Continue with <a href="cli-linux.html#files">Chapter 12: applying these contracts to real file input</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

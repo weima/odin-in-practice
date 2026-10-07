@@ -1,0 +1,1006 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
+      
+      
+      
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/networking.html">
+      
+      
+        <link rel="prev" href="memory-philosophy.html">
+      
+      
+        <link rel="next" href="containers.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Networking - Odin in Practice</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/book.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#network-programming" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Odin in Practice
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Networking
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Odin in Practice
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book contents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="odin-foundations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli-linux.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI and Linux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pointers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pointers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="memory-philosophy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="networking.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#17-network-programming-and-a-practical-http-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Network programming and a practical HTTP client
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. Network programming and a practical HTTP client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-an-address-is-not-a-socket-and-a-socket-is-not-a-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. An address is not a socket, and a socket is not a message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-a-real-receive-wrapper-has-a-smaller-promise-than-an-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. A real receive wrapper has a smaller promise than an application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sending-all-bytes-is-not-an-acknowledgement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sending all bytes is not an acknowledgement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-framing-defines-the-parsers-obligations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Framing defines the parser’s obligations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-udp-preserves-datagrams-not-delivery-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. UDP preserves datagrams, not delivery guarantees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-a-bounded-buffer-is-not-a-deadline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. A bounded buffer is not a deadline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-a-half-close-is-a-protocol-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. A half-close is a protocol event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-use-an-http-implementation-instead-of-rebuilding-one-accidentally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Use an HTTP implementation instead of rebuilding one accidentally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-the-runnable-get-client-separates-transport-from-http-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The runnable GET client separates transport from HTTP policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-moving-from-the-fixture-to-a-production-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Moving from the fixture to a production client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#companion-exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Companion exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="containers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parallel-programming.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ffmpeg-libav.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workbook.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workbook and sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#17-network-programming-and-a-practical-http-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Network programming and a practical HTTP client
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. Network programming and a practical HTTP client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-an-address-is-not-a-socket-and-a-socket-is-not-a-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. An address is not a socket, and a socket is not a message
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-a-real-receive-wrapper-has-a-smaller-promise-than-an-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. A real receive wrapper has a smaller promise than an application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sending-all-bytes-is-not-an-acknowledgement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sending all bytes is not an acknowledgement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-framing-defines-the-parsers-obligations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Framing defines the parser’s obligations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-udp-preserves-datagrams-not-delivery-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. UDP preserves datagrams, not delivery guarantees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-a-bounded-buffer-is-not-a-deadline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. A bounded buffer is not a deadline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-a-half-close-is-a-protocol-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. A half-close is a protocol event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-use-an-http-implementation-instead-of-rebuilding-one-accidentally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Use an HTTP implementation instead of rebuilding one accidentally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-the-runnable-get-client-separates-transport-from-http-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The runnable GET client separates transport from HTTP policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-moving-from-the-fixture-to-a-production-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Moving from the fixture to a production client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#companion-exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Companion exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="network-programming">Network programming<a class="headerlink" href="#network-programming" title="Permanent link">&para;</a></h1>
+<p><a id="networking"></a></p>
+<p>Chapter 17 · Protocols, budgets, and trust boundaries</p>
+<h2 id="17-network-programming-and-a-practical-http-client">17. Network programming and a practical HTTP client<a class="headerlink" href="#17-network-programming-and-a-practical-http-client" title="Permanent link">&para;</a></h2>
+<p>A program writes four bytes once, and its peer reads two bytes twice. Which side is broken? With TCP, neither necessarily is. A connection supplies a byte stream, not the record boundaries of the application that wrote it. That single distinction affects parser state, buffering, timeouts, and every claim that an echo demo is a complete protocol implementation.</p>
+<p>This chapter uses the <a href="https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net">pinned <code>core:net</code> source</a>, not guessed API names from another language. The companions perform TCP and UDP exchanges on <code>127.0.0.1</code>, using port zero to let the OS choose an available port. The HTTP client uses a maintained curl implementation rather than inventing HTTP parsing or TLS.</p>
+<h3 id="1-an-address-is-not-a-socket-and-a-socket-is-not-a-message">1. An address is not a socket, and a socket is not a message<a class="headerlink" href="#1-an-address-is-not-a-socket-and-a-socket-is-not-a-message" title="Permanent link">&para;</a></h3>
+<p><code>net.Endpoint</code> contains an address and port. A socket is an OS-backed handle with protocol state and a release obligation. A TCP listener accepts connections; each accepted socket is a separate resource. Closing an accepted connection is not the same operation as closing the listener. A UDP socket exchanges datagrams and need not accept each peer.</p>
+<p>IPv4 and IPv6 are different address representations, not strings with interchangeable punctuation. Hostname lookup can return multiple candidates, fail, or take time. Parsing an IP literal is not DNS resolution, and resolving a hostname is not authenticating the server. Use endpoint/hostname procedures appropriate to the input contract.</p>
+<p>In this revision, <code>dial_tcp_from_host</code> resolves a host and selects IPv4 when available, otherwise IPv6. Read that source before assuming a complete staggered multi-address connection strategy. A portable function name is not a guarantee of identical selection policy or cancellation behavior on every target.</p>
+<p>While reading these wrappers, a lone <code>return</code> does not necessarily mean “no result.” <code>_listen_tcp</code> declares named <code>socket</code> and <code>err</code> results; its error branch returns their current values. See <a href="odin-foundations.html#bare-returns">Chapter 4's line-by-line explanation</a>, including why a returned numeric handle can already be closed on failure.</p>
+<h3 id="2-a-real-receive-wrapper-has-a-smaller-promise-than-an-application">2. A real receive wrapper has a smaller promise than an application<a class="headerlink" href="#2-a-real-receive-wrapper-has-a-smaller-promise-than-an-application" title="Permanent link">&para;</a></h3>
+<p>The Linux implementation in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net/socket_linux.odin">socket_linux.odin</a> delegates a receive to the kernel and translates its result. This short excerpt belongs inside that package:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">bytes_read</span><span class="p">,</span><span class="w"> </span><span class="nc">errno</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">linux</span><span class="err">.</span><span class="nc">recv</span><span class="p">(</span><span class="nc">linux.Fd(tcp_sock</span><span class="p">),</span><span class="w"> </span><span class="nc">buf</span><span class="p">,</span><span class="w"> </span><span class="err">{})</span>
+<span class="nc">if</span><span class="w"> </span><span class="nc">errno</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="err">.NONE</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nc">_tcp_recv_error</span><span class="p">(</span><span class="nc">errno</span><span class="p">)</span>
+<span class="err">}</span>
+<span class="nc">return</span><span class="w"> </span><span class="nc">int</span><span class="p">(</span><span class="nc">bytes_read</span><span class="p">),</span><span class="w"> </span><span class="nc">nil</span>
+</code></pre></div>
+<p>It does not assemble your record. With a non-empty requested buffer, <code>0, nil</code> signals a gracefully closed TCP receive side. Requesting an empty buffer also returns zero in this wrapper, so do not use a zero-length read to test for EOF. A reset is an error, while a timeout and a nonblocking would-block condition have their own meanings.</p>
+<p>The loopback companion’s <code>receive_exact</code> repeatedly reads into the unfilled suffix and deliberately limits each read to one byte. That proves the application does not depend on a send matching a receive. EOF before the expected count is a truncated record, not a successful shorter message.</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">F</span><span class="nc">rom</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">complete</span><span class="w"> </span><span class="err">TCP</span><span class="w"> </span><span class="l">companion:</span><span class="p"> </span><span class="nc">fixed</span><span class="err">-</span><span class="nc">size</span><span class="w"> </span><span class="nc">record</span><span class="w"> </span><span class="nc">contract</span><span class="err">.</span>
+<span class="nc">total</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="nc">for</span><span class="w"> </span><span class="nc">total</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">target</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">n</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">net</span><span class="err">.</span><span class="nc">recv_tcp</span><span class="p">(</span><span class="nc">socket, target[total:][:1]</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="nc">n</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="l">false</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">total</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="nc">n</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>A real reusable API should preserve the received count and a suitable failure category instead of this teaching helper’s boolean. The buffer already contains partial bytes if a later read fails. Define whether those bytes may be inspected and whether the connection remains usable.</p>
+<h3 id="3-sending-all-bytes-is-not-an-acknowledgement">3. Sending all bytes is not an acknowledgement<a class="headerlink" href="#3-sending-all-bytes-is-not-an-acknowledgement" title="Permanent link">&para;</a></h3>
+<p>Some socket APIs return after one partial write. In this pinned Odin library, <code>send_tcp</code> already loops over the remaining suffix and returns a sent count plus error. On failure it can report partial progress. Inspect the source and check both results; do not write a redundant loop based solely on another language’s send API.</p>
+<p>A successful send means the local stack accepted the bytes under this API’s contract. It does not prove that the remote application parsed them or committed an operation. If an application needs acknowledgement, define a response and a correlation or sequence rule. Blindly retrying a request after an ambiguous disconnect can duplicate an external action.</p>
+<p>The Linux send path uses <code>NOSIGNAL</code> to avoid a broken connection delivering SIGPIPE through that call. This is an implementation fact, not permission to ignore a returned connection error. A blocking send can still wait; buffer limits and deadlines belong to the larger protocol design.</p>
+<h3 id="4-framing-defines-the-parsers-obligations">4. Framing defines the parser’s obligations<a class="headerlink" href="#4-framing-defines-the-parsers-obligations" title="Permanent link">&para;</a></h3>
+<p>Common framing choices include a fixed record size, a delimiter, a length prefix, or a higher-level protocol. A delimiter can span reads, and two messages can arrive in one read. A length prefix must be fully read, decoded in the protocol’s byte order, validated against a maximum, and checked for overflow before allocating payload storage.</p>
+<p>For a two-byte big-endian length prefix, bytes <code>{0, 4}</code> advertise four payload bytes. Do not cast that buffer to a native integer pointer: host byte order, alignment, and layout are different concerns. Decode bytes deliberately, and reject a declared length above your budget before allocating.</p>
+<p>Keep parser state when a read ends in the middle of a record. Keep unconsumed bytes when a read includes the next record. A parser that always discards its read buffer after finding one delimiter loses valid data. Exercise the parser with every possible split point, not only a single convenient network exchange.</p>
+<h3 id="5-udp-preserves-datagrams-not-delivery-guarantees">5. UDP preserves datagrams, not delivery guarantees<a class="headerlink" href="#5-udp-preserves-datagrams-not-delivery-guarantees" title="Permanent link">&para;</a></h3>
+<p>One UDP send represents one datagram. Delivery, ordering, uniqueness, and congestion handling are not guaranteed. UDP is useful when the application genuinely chooses those trade-offs; it is not a simpler drop-in replacement for TCP reliability.</p>
+<p>A zero-byte UDP datagram is valid data, not TCP-style EOF. If the receive buffer is too small, the rest of that datagram is not available as a continuation read. In the pinned Linux implementation, <code>recvfrom</code> uses the truncation flag and returns <code>Excess_Truncated</code> when the reported datagram is larger than the provided buffer. The companion deliberately tests that path. Other platform branches must be checked separately.</p>
+<p>Do not echo large datagrams to arbitrary spoofable sources as a casual public demo. Bound request and response sizes, choose authentication/rate limits where appropriate, and keep these learning programs bound only to loopback.</p>
+<h3 id="6-a-bounded-buffer-is-not-a-deadline">6. A bounded buffer is not a deadline<a class="headerlink" href="#6-a-bounded-buffer-is-not-a-deadline" title="Permanent link">&para;</a></h3>
+<p>The TCP and UDP companions set per-operation socket timeouts using <code>time.Duration</code>, as required by the Linux option adapter. Passing an integer that happens to mean “one second” is not the same typed contract. These timeouts do not automatically establish a whole-operation budget for DNS, connection attempts, repeated reads, and processing.</p>
+<p>A peer can send one byte shortly before each read timeout and keep a naive record reader busy indefinitely. Use a monotonic overall deadline, plus limits on message bytes, message count, concurrent connections, and queued work. Nonblocking readiness is a hint that an operation may proceed, not a guarantee the next operation cannot return would-block.</p>
+<p>For larger systems, study <code>core:nbio</code> and the selected platform event mechanism rather than assigning an unbounded thread to every accepted connection. Start with a bounded blocking design when it satisfies the actual workload. Measure before replacing it with a custom event framework.</p>
+<h3 id="7-a-half-close-is-a-protocol-event">7. A half-close is a protocol event<a class="headerlink" href="#7-a-half-close-is-a-protocol-event" title="Permanent link">&para;</a></h3>
+<p>A TCP peer can finish sending while still receiving. The companion calls <code>shutdown(client, .Send)</code>, then confirms that the other side observes a graceful EOF after consuming the request. Closing the whole connection earlier would change the protocol.</p>
+<p>Ownership must remain clear on every failure path: the listener, client, accepted socket, and buffers are distinct resources. Install cleanup after successful acquisition and return through their scope. No allocation wrapper makes an OS socket close itself simply because its handle is copied.</p>
+<h3 id="8-use-an-http-implementation-instead-of-rebuilding-one-accidentally">8. Use an HTTP implementation instead of rebuilding one accidentally<a class="headerlink" href="#8-use-an-http-implementation-instead-of-rebuilding-one-accidentally" title="Permanent link">&para;</a></h3>
+<p>HTTP adds methods, status codes, headers, body framing, connection reuse, redirects, and version-specific rules. TLS adds peer authentication, certificate/hostname verification, cryptographic negotiation, and trust-store configuration. A hand-written <code>GET / HTTP/1.1</code> string followed by a receive loop is not a production HTTPS client.</p>
+<p>The distribution includes <a href="https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/vendor/curl">libcurl bindings</a>. The binding’s C calling conventions, long option types, callbacks, and external library requirements need an ABI-aware integration. On the validation machine, the installed curl CLI is usable while the vendor binding’s development-library link requirements are not all present. The runnable companion therefore uses the existing CLI through an argument vector—no dependency installation or home-grown TLS.</p>
+<p>This is an HTTP client adapter, not just a shell command concatenation. It has an input contract, request limits, transport result, HTTP status, owned capture buffers, and a caller-facing policy. A subprocess per request is suitable for some small batch tools; connection reuse, cancellation, and throughput requirements can justify an in-process maintained client later.</p>
+<h3 id="9-the-runnable-get-client-separates-transport-from-http-policy">9. The runnable GET client separates transport from HTTP policy<a class="headerlink" href="#9-the-runnable-get-client-separates-transport-from-http-policy" title="Permanent link">&para;</a></h3>
+<p><a href="../examples/17-networking/http-client/main.odin">The complete companion</a> accepts a numeric loopback port and a small allowlist of fixture paths. It constructs the URL itself, so a prefix check cannot accidentally admit a URL whose user-info disguises another host. It does not follow redirects or accept arbitrary network targets.</p>
+<div class="highlight"><pre><span></span><code>// Excerpt from the companion's argument vector; url is constructed locally.
+"/usr/bin/curl", "--disable", "--silent", "--show-error",
+"--connect-timeout", "1", "--max-time", "2",
+"--max-filesize", "65536", "--proto", "=http",
+"--noproxy", "*", "--write-out", "\n%{http_code}", "--", url
+</code></pre></div>
+<p>The first curl option disables user configuration files so they cannot silently add other transfers or change the request policy. The surrounding command uses GNU timeout as an outer subprocess bound. The curl timeout bounds its transfer; the maximum size limits the response body. Curl 8.4 and newer enforce that size while downloading too; verify the installed version when relying on the limit. A post-download size check alone would not bound peak capture memory. The narrow profile deliberately disables proxy routing for its loopback fixture; an enterprise client needs an explicit proxy policy rather than blindly copying that setting.</p>
+<p>On successful transport, the three-digit status trailer is parsed separately from the body. A <code>404</code> is a real HTTP response, not a socket failure. This CLI prints a successful body only for 2xx results and returns a distinct status for HTTP rejection. A launch error, curl transport failure, invalid trailer, timeout, and oversized body are different failure cases.</p>
+<p>The body slice borrows the captured stdout allocation. Consume it before releasing stdout, or clone it into an owner whose lifetime covers later use. The adapter releases both output buffers even when the child fails. Capture is acceptable here because the response is intentionally bounded; a streaming client must still consume backpressure without retaining an unlimited body.</p>
+<h3 id="10-moving-from-the-fixture-to-a-production-client">10. Moving from the fixture to a production client<a class="headerlink" href="#10-moving-from-the-fixture-to-a-production-client" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Target policy:</strong> validate schemes, hostnames, ports, resolved addresses, proxy routes, and redirect targets. A safe initial URL does not make a redirected or newly resolved target safe; address validation must account for the actual connection.</li>
+<li><strong>TLS:</strong> use HTTPS for real credentials/data, retain certificate and hostname verification, maintain a trust store, and test expiry and untrusted certificates. Do not solve an error with a blanket verification-disable flag.</li>
+<li><strong>Budgets:</strong> include DNS/connect/transfer and an overall deadline; cap headers and decompressed body bytes, redirects, concurrent requests, and retries.</li>
+<li><strong>Retry policy:</strong> distinguish transient transport failure from permanent rejection; bound retries with backoff/jitter and honor protocol guidance. Non-idempotent requests need an application-level duplicate-prevention contract.</li>
+<li><strong>Secrets:</strong> keep credentials out of URLs, command-line history, process arguments, and diagnostics. An authenticated long-lived client often needs a different integration than this credential-free CLI fixture.</li>
+<li><strong>Reuse:</strong> an in-process libcurl handle/pool can reuse connections, but handles, callbacks, owned response buffers, and thread access still require explicit lifetimes.</li>
+<li><strong>Evidence:</strong> test redirects, malformed responses, status families, truncated bodies, TLS failures, deadlines, cancellation, and large/decompressed responses in an isolated environment.</li>
+</ul>
+<p>These are deployment requirements, not capabilities silently supplied by this loopback example. The companion intentionally does not claim authenticated HTTPS integration, a connection pool, or arbitrary-URL safety.</p>
+<h3 id="companion-exercises">Companion exercises<a class="headerlink" href="#companion-exercises" title="Permanent link">&para;</a></h3>
+<p><strong>Exercise 17.1 · TCP is not a record API.</strong> Run the loopback exchange, then change the read window to two bytes. Add a length-prefixed record with a 64-byte maximum. Test every split of the header and payload, two records in one input buffer, and EOF halfway through the payload. Expected result: identical parsed records for every valid split and an explicit truncation result for the incomplete case.</p>
+<p><strong>Exercise 17.2 · HTTP has two success questions.</strong> Use the local fixture commands in the companion README. Check <code>/ok</code>, <code>/missing</code>, an oversized body, and a delayed response. Assert stdout, stderr, and exit status separately. Expected result: transport success does not convert 404 into application success; a timeout or body-budget failure emits no partial success body.</p>
+<p><strong>Exercise 17.3 · Audit the real wrappers.</strong> Compare <code>recv_tcp</code>, <code>send_tcp</code>, and the selected Linux implementations. Explain why the sender wrapper already retries remaining bytes, why the receiver does not assemble a record, and why UDP truncation cannot be completed by another read. Then compare another platform branch without claiming it was executed.</p>
+<p><strong>Checkpoint.</strong> Name the protocol framing, valid peer, byte budget, operation deadline, ownership/release path, and acknowledgement rule before calling the connection a complete design.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,6 @@
+flowchart LR
+  accTitle: Copy values across the scratch lifetime boundary
+  accDescr: Scratch storage is reset after independently owned output is created. Copying only a header would not preserve the elements.
+  Scratch["Scratch arena: temporary elements"] -->|"copy elements"| Output["Result allocator: owned output"]
+  Scratch -->|"reset scratch"| Reclaimed["Temporary storage reclaimed"]
+  Output --> Consumer["Consumer uses result"] --> Release["Delete result through its owner"]

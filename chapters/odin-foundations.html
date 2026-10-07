@@ -157,6 +157,19 @@ origin := Point{0, 0}</code></pre>
 small_int := minimum(3, 7)
 small_float := minimum(3.5, 1.25)</code></pre>
 <p>The <code>$T</code> parameter is inferred from the call. This example is intentionally small: standard-library containers use polymorphism extensively, but not every repeated operation deserves a generic abstraction. Keep a specialized function when its domain meaning is clearer.</p>
+<h3 id="independent-type-parameters">One type for both arguments, or an independent type for each?</h3>
+<p>In <code>proc(a, b: $T)</code>, the comma groups two parameter names under one type declaration: both arguments must fit the same inferred <code>T</code>. For independent types, give each parameter its own declaration: <code>proc(a: $S, b: $T)</code>.</p>
+<pre><code>// Compilable procedure; also included in the complete companion.
+pair :: proc(a: $S, b: $T) -&gt; (S, T) {
+    return a, b
+}
+
+// Call-site fragment inside main:
+number, text := pair(i32(7), "hello") // S = i32, T = string
+left, right := pair(i32(7), i32(9))  // S = i32, T = i32</code></pre>
+<p><code>$S</code> and <code>$T</code> introduce separate compile-time type parameters; use <code>S</code> and <code>T</code> in the result types. They are inferred independently, not required to be different. This is specialization with concrete types, not an untyped runtime container.</p>
+<p>Separate parameters do not make every operation between them valid. A <code>minimum</code> using <code>a &lt; b</code> still needs meaningful comparison and a chosen result type. A number and a string do not acquire an ordering because you named their types. If your domain compares different numeric representations, choose an explicit comparison/conversion policy, including precision and range, rather than expecting generic syntax to invent one.</p>
+<div class="exercise"><strong>Exercise 4.1 · Infer before running.</strong> Predict the types of both results of the two <code>pair</code> calls, then run the <a href="../examples/04-procedures/main.odin">complete companion</a> and its <a href="../examples/04-procedures/return_test.odin">tests</a>. Try returning <code>a + b</code> for a number/string pair as an intentional compile-failure experiment. Explain why independent inference does not guarantee that the body supports that combination.</div>
 <p>Procedures can return a tuple of results:</p>
 <pre><code>divide :: proc(numerator, denominator: f64) -&gt; (quotient: f64, ok: bool) {
     if denominator == 0 {
@@ -165,6 +178,27 @@ small_float := minimum(3.5, 1.25)</code></pre>
     return numerator / denominator, true
 }</code></pre>
 <p>This is plain control flow, not an exception. But the boolean is not decoration: ignoring it makes division by zero indistinguishable from a successful zero result. Before calling <code>divide</code>, predict both results for <code>(0, 2)</code> and <code>(2, 0)</code>. Same number, different meaning.</p>
+<h3 id="bare-returns">Why can a procedure say only <code>return</code>?</h3>
+<p>Read the result declaration before interpreting the return statement. A proc with no results uses bare <code>return</code> to exit the current call. A proc with named results uses it to return those result variables' current values, in declaration order. It is not returning nothing, ignoring an error, or terminating the whole program.</p>
+<pre><code>// Complete procedure; quotient starts at 0 and ok starts at false.
+divide_named :: proc(numerator, denominator: f64) -&gt; (quotient: f64, ok: bool) {
+    if denominator == 0 { return } // Returns the current 0, false.
+    quotient = numerator / denominator
+    ok = true
+    return                       // Returns the assigned quotient, true.
+}</code></pre>
+<p>The named results are zero-initialized local result variables. In this example the final bare return has the same effect as <code>return quotient, ok</code>. A named-result procedure can also use explicit return expressions, as our original <code>divide</code> does. By contrast, <code>proc() -&gt; (f64, bool)</code> has unnamed results and must supply their values explicitly; do not copy a bare return into it.</p>
+<p>Now inspect <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/net/socket_linux.odin#L182-L224"><code>_listen_tcp</code>, including the bare return at line 195</a>. Its result declaration is <code>-&gt; (socket: TCP_Socket, err: Network_Error)</code>. This is an excerpt inside that implementation, not a standalone program:</p>
+<pre><code>os_sock, errno = linux.socket(ep_family, .STREAM, {.CLOEXEC}, .TCP)
+if errno != .NONE {
+    err = _create_socket_error(errno)
+    return
+}</code></pre>
+<p>The error branch assigns the named <code>err</code> and returns both results. Because the later <code>socket = cast(TCP_Socket)os_sock</code> has not run, the named socket is still its zero value. Conceptually, this path returns <code>socket, err</code>, not an empty result. On a successful path, <code>socket</code> is assigned and <code>err</code> remains <code>nil</code>.</p>
+<p>After acquiring the socket, the source installs <code>defer if err != nil { close(socket) }</code>. A later bind/listen failure assigns <code>err</code>, and cleanup closes the socket before control reaches the caller. The returned numeric handle is therefore not necessarily usable on failure. Check the error before using it; a default or nonzero value alone is not a success signal.</p>
+<p><code>defer</code> still runs when its scope exits normally through a return. However, do not import Go's deferred-named-result intuition: this pinned Odin compiler diagnoses a direct assignment to a named return value inside <code>defer</code> as not affecting the returned value. Choose scalar results before returning; use deferred work for cleanup. A returned pointer or slice can still refer to shared mutable data, which is a separate ownership issue.</p>
+<p><a href="../examples/04-procedures/main.odin">The complete runnable companion</a> compares explicit and bare-return results, distinguishes successful zero from failure, and demonstrates a no-result early return with deferred cleanup. Run <code>odin run examples/04-procedures</code> and <code>TZ=UTC odin test examples/04-procedures</code> from the repository root.</p>
+<div class="exercise"><strong>Exercise 4.2 · Trace the values, not the spelling.</strong> Predict both results for <code>(8, 2)</code>, <code>(0, 2)</code>, and <code>(2, 0)</code>. Rewrite the bare returns with explicit expressions. Then follow each return in <code>_listen_tcp</code>: was a socket acquired, was cleanup registered, and what may the caller use?</div>
 <h3>Polymorphism in a real library procedure</h3>
 <p>Our <code>minimum</code> requires that comparison makes sense for <code>T</code>. Specialization does not invent an ordering for arbitrary records. Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin">testing.expect_value</a>: its parameters are <code>value, expected: $T</code>, and a <code>where</code> clause requires a comparable type. The public signature tells us more than “generic equality helper”: the supplied values must share a suitable type.</p>
 <p>The same source uses <code>#caller_location</code> and <code>#caller_expression(value)</code> as default arguments. These capture information about the call site. A failed expectation can name your expression and your source location rather than only naming the library implementation. This is a good use of compile-time support: better diagnostics without asking every caller to manually supply a filename and line.</p>

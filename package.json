@@ -1,0 +1,17 @@
+{
+  "name": "odin-in-practice",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "packageManager": "npm@11.17.0",
+  "scripts": {
+    "diagrams": "node tools/render-diagrams.mjs"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "12.0.0"
+  },
+  "allowScripts": {
+    "puppeteer@25.12.0": true
+  }
+}

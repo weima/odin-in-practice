@@ -1,0 +1,1341 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
+      
+      
+      
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/containers.html">
+      
+      
+        <link rel="prev" href="networking.html">
+      
+      
+        <link rel="next" href="parallel-programming.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Docker - Odin in Practice</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/book.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#containers-and-docker" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Odin in Practice
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Docker
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Odin in Practice
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book contents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="odin-foundations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli-linux.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI and Linux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pointers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pointers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="memory-philosophy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="networking.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="containers.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#18-explore-local-docker-networks-and-filesystems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. Explore local Docker networks and filesystems
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="18. Explore local Docker networks and filesystems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-first-identify-where-the-docker-daemon-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. First identify where the Docker daemon runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-port-1333-has-several-different-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Port 1333 has several different addresses
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-inspect-an-existing-container-before-changing-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Inspect an existing container before changing anything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-a-complete-lab-host-files-served-on-port-1333" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. A complete lab: host files served on port 1333
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-open-a-shell-without-replacing-the-running-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Open a shell without replacing the running server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-reach-the-service-from-another-container-on-its-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Reach the service from another container on its network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-native-linux-docker-desktop-and-the-return-route-to-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Native Linux, Docker Desktop, and the return route to the host
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-mount-a-host-folder-into-a-new-interactive-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Mount a host folder into a new interactive container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-mount-a-wider-filesystem-view-when-that-is-what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Mount a wider filesystem view when that is what you need
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-understand-what-a-mount-hides-and-why-permissions-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Understand what a mount hides and why permissions fail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-copying-files-and-named-volumes-are-different-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Copying files and named volumes are different tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-compose-records-the-choices-you-otherwise-forget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Compose records the choices you otherwise forget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-an-odin-tool-can-use-the-same-routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. An Odin tool can use the same routes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-diagnose-the-layer-that-actually-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Diagnose the layer that actually failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-finish-the-lab-without-sweeping-your-docker-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Finish the lab without sweeping your Docker environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parallel-programming.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ffmpeg-libav.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workbook.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workbook and sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#18-explore-local-docker-networks-and-filesystems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. Explore local Docker networks and filesystems
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="18. Explore local Docker networks and filesystems">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-first-identify-where-the-docker-daemon-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. First identify where the Docker daemon runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-port-1333-has-several-different-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Port 1333 has several different addresses
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-inspect-an-existing-container-before-changing-anything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Inspect an existing container before changing anything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-a-complete-lab-host-files-served-on-port-1333" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. A complete lab: host files served on port 1333
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-open-a-shell-without-replacing-the-running-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Open a shell without replacing the running server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-reach-the-service-from-another-container-on-its-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Reach the service from another container on its network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-native-linux-docker-desktop-and-the-return-route-to-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Native Linux, Docker Desktop, and the return route to the host
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-mount-a-host-folder-into-a-new-interactive-container" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Mount a host folder into a new interactive container
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-mount-a-wider-filesystem-view-when-that-is-what-you-need" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Mount a wider filesystem view when that is what you need
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-understand-what-a-mount-hides-and-why-permissions-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Understand what a mount hides and why permissions fail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-copying-files-and-named-volumes-are-different-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Copying files and named volumes are different tools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-compose-records-the-choices-you-otherwise-forget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Compose records the choices you otherwise forget
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-an-odin-tool-can-use-the-same-routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. An Odin tool can use the same routes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-diagnose-the-layer-that-actually-failed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Diagnose the layer that actually failed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-finish-the-lab-without-sweeping-your-docker-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Finish the lab without sweeping your Docker environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercises
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#primary-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="containers-and-docker">Containers and Docker<a class="headerlink" href="#containers-and-docker" title="Permanent link">&para;</a></h1>
+<p><a id="containers"></a></p>
+<h2 id="18-explore-local-docker-networks-and-filesystems">18. Explore local Docker networks and filesystems<a class="headerlink" href="#18-explore-local-docker-networks-and-filesystems" title="Permanent link">&para;</a></h2>
+<p>You have a container listening on port <strong>1333</strong>, and you own the local Docker environment. How do you reach it? How do you open a shell, attach another container, or make your files visible inside it? Those are ordinary development operations—not reasons to stop at an abstract security checklist.</p>
+<p>This chapter starts with working routes and mounts. The commands target your own local Linux containers. They are instructions for you to run, <strong>not a claim that Docker was executed during the book's checks</strong>. The image <code>python:3.13-alpine</code> gives the lab a shell, an HTTP server, and a client without installing tools inside the running application. Docker may download that image if it is not already present. Its tag is convenient for learning, not a reproducible production-image digest.</p>
+<h3 id="1-first-identify-where-the-docker-daemon-runs">1. First identify where the Docker daemon runs<a class="headerlink" href="#1-first-identify-where-the-docker-daemon-runs" title="Permanent link">&para;</a></h3>
+<p>Run these in your host terminal:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>context<span class="w"> </span>ls
+docker<span class="w"> </span>context<span class="w"> </span>show
+docker<span class="w"> </span>context<span class="w"> </span>inspect<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>docker<span class="w"> </span>context<span class="w"> </span>show<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span><span class="s1">'{{.Endpoints.docker.Host}}'</span>
+docker<span class="w"> </span>version
+docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">'table {{.Names}}\t{{.Status}}\t{{.Ports}}'</span>
+</code></pre></div>
+<p>A native Linux Engine runs on the Linux machine. Docker Desktop runs its Engine in a Linux environment/VM and provides forwarding and file sharing. A remote context is a different machine even though you type the command locally. The context name alone does not prove locality; inspect its endpoint. Environment variables such as <code>DOCKER_HOST</code>/<code>DOCKER_CONTEXT</code> can also change selection. Use an explicit <code>docker --context YOUR_LOCAL_CONTEXT ...</code> when you need to remove that ambiguity.</p>
+<p>The distinction explains many failures: a bind source belongs to the <strong>daemon-side filesystem</strong>, and a published port belongs to the daemon host or Desktop's forwarding path—not automatically to whichever terminal launched the client.</p>
+<h3 id="2-port-1333-has-several-different-addresses">2. Port 1333 has several different addresses<a class="headerlink" href="#2-port-1333-has-several-different-addresses" title="Permanent link">&para;</a></h3>
+<p><img alt="The host uses a published port; a peer on the user-defined network uses the container DNS name and internal port." src="../assets/diagrams/docker-network.svg" /></p>
+<p><a href="../diagrams/docker-network.mmd">Editable Mermaid source</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Where the client runs</th>
+<th>Address to try</th>
+<th>What must exist</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Host browser or terminal</td>
+<td><code>http://127.0.0.1:1333</code></td>
+<td>A mapping such as <code>-p 127.0.0.1:1333:1333</code></td>
+</tr>
+<tr>
+<td>Another container on the same user-defined network</td>
+<td><code>http://odin-book-lab:1333</code></td>
+<td>Shared network, resolvable name/alias, and a listening service</td>
+</tr>
+<tr>
+<td>Shell inside the application container</td>
+<td><code>http://127.0.0.1:1333</code></td>
+<td>The service in that same network namespace</td>
+</tr>
+<tr>
+<td>Helper sharing the application's network namespace</td>
+<td><code>http://127.0.0.1:1333</code></td>
+<td><code>--network container:odin-book-lab</code></td>
+</tr>
+</tbody>
+</table>
+<p>These examples assume HTTP. Port numbers do not identify a protocol: use the actual client if your service speaks raw TCP, UDP, TLS, or something else.</p>
+<p><code>127.0.0.1</code> means <strong>the current network namespace's loopback</strong>. A peer container's localhost is not your application's localhost. An application listening only on its own <code>127.0.0.1:1333</code> can work through <code>docker exec</code> but fail from peers and published ports. To receive those connections, bind the application to a container-facing address, commonly <code>0.0.0.0:1333</code>.</p>
+<p><code>EXPOSE 1333</code> in a Dockerfile is metadata. It does not create a host port mapping. <code>-p HOST_ADDRESS:HOST_PORT:CONTAINER_PORT</code> does. The ports can differ: <code>-p 127.0.0.1:11333:1333</code> means host clients use <strong>11333</strong>, while network peers still use <strong>1333</strong>.</p>
+<h3 id="3-inspect-an-existing-container-before-changing-anything">3. Inspect an existing container before changing anything<a class="headerlink" href="#3-inspect-an-existing-container-before-changing-anything" title="Permanent link">&para;</a></h3>
+<p>Replace the example name with your own container:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">CONTAINER</span><span class="o">=</span>my-app
+docker<span class="w"> </span>port<span class="w"> </span><span class="s2">"</span><span class="nv">$CONTAINER</span><span class="s2">"</span>
+docker<span class="w"> </span>inspect<span class="w"> </span><span class="s2">"</span><span class="nv">$CONTAINER</span><span class="s2">"</span><span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{json .NetworkSettings.Ports}}'</span>
+docker<span class="w"> </span>inspect<span class="w"> </span><span class="s2">"</span><span class="nv">$CONTAINER</span><span class="s2">"</span><span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{json .NetworkSettings.Networks}}'</span>
+docker<span class="w"> </span>inspect<span class="w"> </span><span class="s2">"</span><span class="nv">$CONTAINER</span><span class="s2">"</span><span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{json .Mounts}}'</span>
+docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="s2">"</span><span class="nv">$CONTAINER</span><span class="s2">"</span>
+</code></pre></div>
+<p>The network output shows the networks, IPs, and aliases. The mounts show source, destination, type, and whether each mount is writable. Restricting inspection to these fields avoids drowning the useful information in a whole configuration dump.</p>
+<p>If the service has no published port, you do <strong>not</strong> have to recreate it just to explore it: use a helper on its network, as below. To add a persistent <code>-p</code> mapping, recreate the container from its actual run/Compose configuration; <code>docker update</code> does not add port mappings or bind mounts. Preserve the application's volumes and configuration when recreating it.</p>
+<h3 id="4-a-complete-lab-host-files-served-on-port-1333">4. A complete lab: host files served on port 1333<a class="headerlink" href="#4-a-complete-lab-host-files-served-on-port-1333" title="Permanent link">&para;</a></h3>
+<p>From the repository root, the supplied <code>docs/examples/18-containers/lab-share/ok</code> file becomes <code>/srv/ok</code> inside the container:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">LAB</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/docs/examples/18-containers/lab-share"</span>
+docker<span class="w"> </span>network<span class="w"> </span>create<span class="w"> </span>odin-book-net
+docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>odin-book-lab<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--network<span class="w"> </span>odin-book-net<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mount<span class="w"> </span><span class="s2">"type=bind,src=</span><span class="nv">$LAB</span><span class="s2">,dst=/srv,readonly"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">127</span>.0.0.1:1333:1333<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python:3.13-alpine<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python<span class="w"> </span>-m<span class="w"> </span>http.server<span class="w"> </span><span class="m">1333</span><span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--directory<span class="w"> </span>/srv
+
+curl<span class="w"> </span>--max-time<span class="w"> </span><span class="m">3</span><span class="w"> </span>http://127.0.0.1:1333/ok
+docker<span class="w"> </span>port<span class="w"> </span>odin-book-lab<span class="w"> </span><span class="m">1333</span>/tcp
+</code></pre></div>
+<p>Expected body: <code>hello from the host folder</code>. If the network or container name already exists, inspect and use your existing lab resource, or choose new names—do not remove an unrelated resource to make the command pass. If host port 1333 is busy, publish <code>127.0.0.1:11333:1333</code> and change only the host URL to port 11333.</p>
+<p>The server binds <strong>inside</strong> the container to <code>0.0.0.0</code>. The host mapping binds <strong>outside</strong> to <code>127.0.0.1</code>. These are two independent settings. If you deliberately want LAN access, publish on a suitable host interface instead, for example <code>-p 0.0.0.0:1333:1333</code>; owning the container does not make your surrounding network private. Docker versions before 28.0.0 also have a documented localhost-publication exposure caveat, so check the daemon version.</p>
+<h3 id="5-open-a-shell-without-replacing-the-running-server">5. Open a shell without replacing the running server<a class="headerlink" href="#5-open-a-shell-without-replacing-the-running-server" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Host terminal: start a second process in the running container.</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>odin-book-lab<span class="w"> </span>sh
+</code></pre></div>
+<p>Then, <strong>inside that shell</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">pwd</span>
+ls<span class="w"> </span>-la<span class="w"> </span>/srv
+cat<span class="w"> </span>/srv/ok
+ip<span class="w"> </span>addr
+ip<span class="w"> </span>route
+cat<span class="w"> </span>/etc/resolv.conf
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:1333/ok', timeout=2).read().decode(), end='')"</span>
+<span class="nb">exit</span>
+</code></pre></div>
+<p>Exiting this shell does not stop the Python server. <code>exec</code> launches an additional process; <code>attach</code> connects to the container's existing main process and does not invent a shell. For watching output, use <code>docker logs -f --tail 40 odin-book-lab</code>; Ctrl-C stops that log viewer, not the service. Attaching to a main process can forward signals to it, so it is a different operation.</p>
+<p>Minimal images may have no shell or network utilities. That is not evidence of a broken network. Use a separate helper image rather than installing tools into the application merely to inspect it.</p>
+<h3 id="6-reach-the-service-from-another-container-on-its-network">6. Reach the service from another container on its network<a class="headerlink" href="#6-reach-the-service-from-another-container-on-its-network" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Host terminal: enter a temporary helper attached to the same network.</span>
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--network<span class="w"> </span>odin-book-net<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+</code></pre></div>
+<p>Inside the helper:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import socket; print(socket.getaddrinfo('odin-book-lab', 1333))"</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import urllib.request; print(urllib.request.urlopen('http://odin-book-lab:1333/ok', timeout=2).read().decode(), end='')"</span>
+<span class="nb">exit</span>
+</code></pre></div>
+<p>No <code>-p</code> is needed for this peer-to-peer route. A user-defined bridge supplies DNS names/aliases; the default legacy <code>bridge</code> network does not provide the same automatic name resolution. Prefer a shared user-defined network to hard-coding an address that may change when the container is recreated.</p>
+<p>You can attach an existing running container to a user-defined network:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>network<span class="w"> </span>connect<span class="w"> </span>--alias<span class="w"> </span>app<span class="w"> </span>odin-book-net<span class="w"> </span>my-app
+docker<span class="w"> </span>network<span class="w"> </span>inspect<span class="w"> </span>odin-book-net
+</code></pre></div>
+<p>A helper on that network can then request <code>http://app:1333</code>. This adds a network interface; it does not start a service, change the application's bind address, or publish a host port. If already attached, inspect its existing aliases first. Disconnecting/reconnecting a live network may interrupt connections.</p>
+<p>To investigate a service bound only to its own loopback, share its <strong>network namespace</strong>:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--network<span class="w"> </span>container:odin-book-lab<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+<span class="c1"># Inside: localhost now refers to the application's network namespace.</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:1333/ok', timeout=2).read().decode(), end='')"</span>
+</code></pre></div>
+<p>This shares networking, not the application's filesystem. The helper still has its own root filesystem unless you also declare mounts.</p>
+<h3 id="7-native-linux-docker-desktop-and-the-return-route-to-the-host">7. Native Linux, Docker Desktop, and the return route to the host<a class="headerlink" href="#7-native-linux-docker-desktop-and-the-return-route-to-the-host" title="Permanent link">&para;</a></h3>
+<p>On a normal native Linux bridge, the host can generally reach container IPs directly, subject to routing, firewall, and daemon mode:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">IP</span><span class="o">=</span><span class="k">$(</span>docker<span class="w"> </span>inspect<span class="w"> </span>odin-book-lab<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span><span class="s1">'{{(index .NetworkSettings.Networks "odin-book-net").IPAddress}}'</span><span class="k">)</span>
+curl<span class="w"> </span>--max-time<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="s2">"http://</span><span class="nv">$IP</span><span class="s2">:1333/ok"</span>
+</code></pre></div>
+<p>Do not make that the portable Desktop recipe: its bridge exists inside the Docker environment/VM, not as the same directly reachable bridge on the outer host. Published ports and helper containers are clearer cross-platform routes. Rootless engines and custom network policy can also change direct-IP reachability.</p>
+<p>For a container calling a service on the host, Docker Desktop supplies <code>host.docker.internal</code>. On native Linux, <code>--add-host=host.docker.internal:host-gateway</code> can provide a host-gateway mapping. A gateway address is not the host's loopback: a Linux service bound only to <code>127.0.0.1</code> may still be unreachable through it. Bind the host service to an appropriate reachable interface, or deliberately choose host networking.</p>
+<p>On native Linux, <code>--network host</code> shares the host network namespace, so container clients can use its localhost; <code>-p</code> mappings are unnecessary and ignored. Docker Desktop supports its own host-network feature from version 4.34, with opt-in setup and different limitations. It is not interchangeable with a user-defined bridge. Windows-host and WSL-distribution loopbacks are also not universally the same endpoint; identify which environment actually runs the service.</p>
+<h3 id="8-mount-a-host-folder-into-a-new-interactive-container">8. Mount a host folder into a new interactive container<a class="headerlink" href="#8-mount-a-host-folder-into-a-new-interactive-container" title="Permanent link">&para;</a></h3>
+<p>A <strong>bind mount</strong> makes a chosen host directory appear at a chosen container path. It is a live view, not a copied snapshot. From the host:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">DIR</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/docs/examples/18-containers/lab-share"</span>
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mount<span class="w"> </span><span class="s2">"type=bind,src=</span><span class="nv">$DIR</span><span class="s2">,dst=/workspace,readonly"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--workdir<span class="w"> </span>/workspace<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+</code></pre></div>
+<p>Inside:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">pwd</span><span class="w">                 </span><span class="c1"># /workspace</span>
+ls<span class="w"> </span>-la
+cat<span class="w"> </span>ok
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'test\n'</span><span class="w"> </span>&gt;<span class="w"> </span>note.txt<span class="w">  </span><span class="c1"># Expected: read-only filesystem error.</span>
+</code></pre></div>
+<p>Keep that shell open and edit <code>ok</code> from the host: the container sees the change. The image has not been rebuilt. To allow container writes, omit <code>readonly</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Host terminal: this is intentionally a writable bind mount.</span>
+<span class="nv">OUT</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/odin-docker-lab/output"</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$OUT</span><span class="s2">"</span>
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--user<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="s2">:</span><span class="k">$(</span>id<span class="w"> </span>-g<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mount<span class="w"> </span><span class="s2">"type=bind,src=</span><span class="nv">$OUT</span><span class="s2">,dst=/workspace"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--workdir<span class="w"> </span>/workspace<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+</code></pre></div>
+<p>Inside, <code>printf 'created in the container\n' &gt; result.txt</code> creates a real host file at <code>$OUT/result.txt</code>. Exit the shell and inspect it on the host. The numeric UID/GID helps avoid producing root-owned files with a normal rootful Linux engine. This assumes the image can run with that identity; a passwd/home lookup is a separate requirement.</p>
+<p>You do not need <code>--privileged</code> simply to bind-mount a folder. <code>--mount</code> normally reports a missing source instead of creating it; traditional <code>-v /missing:/target</code> can create a directory, which is confusing when you intended a file. Create/check your source explicitly. Paths containing commas require extra care with the mount option's CSV syntax.</p>
+<h3 id="9-mount-a-wider-filesystem-view-when-that-is-what-you-need">9. Mount a wider filesystem view when that is what you need<a class="headerlink" href="#9-mount-a-wider-filesystem-view-when-that-is-what-you-need" title="Permanent link">&para;</a></h3>
+<p>On a <strong>native Linux daemon running on your machine</strong>, this exposes its root filesystem at <code>/host</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Read-only including submounts; requires a supporting Engine and Linux &gt;= 5.12.</span>
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>bind,src<span class="o">=</span>/,dst<span class="o">=</span>/host,readonly,bind-recursive<span class="o">=</span><span class="nb">readonly</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python:3.13-alpine<span class="w"> </span>sh
+<span class="c1"># Inside: ls /host; ls /host/home</span>
+</code></pre></div>
+<p>This does not replace the container's <code>/</code>. <code>/host</code> is the additional view; the container still runs its own programs and has its own process/network namespaces. Ordinary file permissions, rootless/user-namespace mappings, and kernel restrictions still apply. On older kernels, recursive read-only requests fail; a plain <code>readonly</code> root bind does not necessarily make every nested mount read-only. Mount a selected folder when you do not need that complexity.</p>
+<p>If you deliberately want a writable native-host root view, the syntax is:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Deliberately writable: changes under /host affect the real daemon host.</span>
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>bind,src<span class="o">=</span>/,dst<span class="o">=</span>/host<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+</code></pre></div>
+<p>That is a capability choice, not forbidden syntax. It can modify or delete real system files; prefer a working folder for experiments. No example here executes that command for you.</p>
+<p>With Docker Desktop/WSL, do not interpret <code>src=/</code> as a guaranteed view of your entire Windows/macOS system. There is a daemon/VM and a file-sharing boundary. Choose the native folder explicitly and inspect the resulting mount. From an integrated WSL terminal, a Windows folder might be <code>/mnt/c/Users/YOUR_NAME/work</code>, while a Linux project is under the distribution's filesystem. Desktop sharing settings, Windows permissions, and WSL integration must permit the path. These examples use shell quoting for spaces; they are not PowerShell syntax.</p>
+<h3 id="10-understand-what-a-mount-hides-and-why-permissions-fail">10. Understand what a mount hides and why permissions fail<a class="headerlink" href="#10-understand-what-a-mount-hides-and-why-permissions-fail" title="Permanent link">&para;</a></h3>
+<p>A mount at <code>/workspace</code> covers any image files previously visible at <code>/workspace</code>; they are not merged with your host folder. Mounting over <code>/usr</code> or <code>/app</code> can hide the application's executable or libraries. Recreating the container without that mount reveals the image's original files again.</p>
+<p>For a permission failure, investigate these in order:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Host: does the source exist, and who owns it?</span>
+ls<span class="w"> </span>-ldn<span class="w"> </span><span class="s2">"</span><span class="nv">$DIR</span><span class="s2">"</span>
+<span class="c1"># Host: what was actually mounted?</span>
+docker<span class="w"> </span>inspect<span class="w"> </span>odin-book-lab<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{json .Mounts}}'</span>
+<span class="c1"># Container shell: identity and visible permissions.</span>
+id
+ls<span class="w"> </span>-ldn<span class="w"> </span>/srv
+</code></pre></div>
+<p>Compare numeric UID/GID, directory traversal permission, target ownership, and the mount's <code>RW</code> flag. A read-only mount cannot be made writable by running its process as root. Rootless/user-namespace engines and Desktop file sharing add mappings; container UID 0 is not always native-host UID 0. On SELinux hosts, labeling can also deny access. Fix the selected folder's actual requirement rather than blanket-disabling the host's policy.</p>
+<h3 id="11-copying-files-and-named-volumes-are-different-tools">11. Copying files and named volumes are different tools<a class="headerlink" href="#11-copying-files-and-named-volumes-are-different-tools" title="Permanent link">&para;</a></h3>
+<p>For an existing container, a copy avoids recreation when you only need to transfer a file:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>cp<span class="w"> </span>./local-file.txt<span class="w"> </span>odin-book-lab:/tmp/local-file.txt
+docker<span class="w"> </span>cp<span class="w"> </span>odin-book-lab:/tmp/local-file.txt<span class="w"> </span>./copied-back.txt
+</code></pre></div>
+<p>A copy is not a live mount. Later edits on one side are not mirrored. A file in the container's writable layer survives stop/start but is lost when that container is removed unless you preserve it elsewhere.</p>
+<p>A <strong>named volume</strong> persists independently of a container:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>volume<span class="w"> </span>create<span class="w"> </span>odin-book-data
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-it<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>volume,src<span class="o">=</span>odin-book-data,dst<span class="o">=</span>/data<span class="w"> </span>python:3.13-alpine<span class="w"> </span>sh
+<span class="c1"># Inside: printf 'persistent data\n' &gt; /data/hello; exit</span>
+
+docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--mount<span class="w"> </span><span class="nv">type</span><span class="o">=</span>volume,src<span class="o">=</span>odin-book-data,dst<span class="o">=</span>/data<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python:3.13-alpine<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'cat /data/hello'</span>
+</code></pre></div>
+<p>Use a bind for a specific host folder you want to edit. Use a volume for Docker-managed persistent data. Explore a volume with a helper mount instead of assuming its backing directory is accessible at <code>/var/lib/docker</code>—especially on Desktop or a rootless engine.</p>
+<h3 id="12-compose-records-the-choices-you-otherwise-forget">12. Compose records the choices you otherwise forget<a class="headerlink" href="#12-compose-records-the-choices-you-otherwise-forget" title="Permanent link">&para;</a></h3>
+<p>The supplied <a href="../examples/18-containers/compose.yaml">Compose file</a> is an alternative lab. From the repository root:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docs/examples/18-containers/compose.yaml<span class="w"> </span>config
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docs/examples/18-containers/compose.yaml<span class="w"> </span>up<span class="w"> </span>-d
+curl<span class="w"> </span>--max-time<span class="w"> </span><span class="m">3</span><span class="w"> </span>http://127.0.0.1:11333/ok
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docs/examples/18-containers/compose.yaml<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>web<span class="w"> </span>sh
+</code></pre></div>
+<p>It deliberately maps host <strong>11333</strong> to container <strong>1333</strong>, attaches service <code>web</code> to <code>odin-book-compose-net</code>, and binds <code>./lab-share</code> at <code>/srv</code> read-only. Compose resolves that relative source against the Compose project's directory, not an arbitrary shell working directory. A helper on its network uses <code>http://web:1333/ok</code>, not port 11333.</p>
+<p>Change the recorded ports or mounts and use <code>docker compose ... up -d</code> to apply/recreate the service as needed. Inspect the result rather than assuming an unchanged old container acquired the new configuration. Named/bind data has its own lifetime; do not add <code>down -v</code> unless deleting the named-volume data is intended.</p>
+<h3 id="13-an-odin-tool-can-use-the-same-routes">13. An Odin tool can use the same routes<a class="headerlink" href="#13-an-odin-tool-can-use-the-same-routes" title="Permanent link">&para;</a></h3>
+<p>The networking chapter's <a href="../examples/17-networking/http-client/main.odin">loopback HTTP adapter</a> can request the manual lab's <code>/ok</code> path through published host port 1333. The <a href="../examples/18-containers/main.odin">Docker inspect companion</a> separately demonstrates running a Docker argument vector from Odin; its default is a dry run and its only operation is inspecting <code>odin-book-lab</code>.</p>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>run<span class="w"> </span>docs/examples/18-containers
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/18-containers
+<span class="c1"># After selecting/checking the local Docker context used by the source:</span>
+odin<span class="w"> </span>run<span class="w"> </span>docs/examples/18-containers<span class="w"> </span>--<span class="w"> </span>--execute
+</code></pre></div>
+<p>The companion currently selects context <code>default</code> explicitly. If your own local daemon has a different context, adapt that constant/argument deliberately; this teaching program's narrow scope is <strong>not</strong> a restriction on what you may do manually with your own Docker environment.</p>
+<p>For an Odin application inside an image, inspect its target architecture, dynamic loader, and native library requirements. A binary existing at <code>/app/app</code> can still fail to execute if its loader or FFmpeg libraries are absent. A scratch image is not automatically suitable. Use an exec-form entrypoint and an application-owned writable directory. Normal <code>defer</code> cleanup does not run after SIGKILL/OOM termination, and timing out a Docker client does not prove that the daemon cancelled an operation already accepted.</p>
+<h3 id="14-diagnose-the-layer-that-actually-failed">14. Diagnose the layer that actually failed<a class="headerlink" href="#14-diagnose-the-layer-that-actually-failed" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>First investigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Name does not resolve from a peer</td>
+<td>Shared user-defined network, exact name/alias, resolver</td>
+</tr>
+<tr>
+<td>Connection refused</td>
+<td>Correct namespace/address/port, process listening, startup state</td>
+</tr>
+<tr>
+<td>Request times out</td>
+<td>Routing/firewall, stalled service, protocol, bounded request deadline</td>
+</tr>
+<tr>
+<td>Works via <code>exec</code>, fails from peers</td>
+<td>Service bound only to its loopback; network membership</td>
+</tr>
+<tr>
+<td>Works from peer, fails from host</td>
+<td>Missing/wrong publication; host port; Desktop forwarding</td>
+</tr>
+<tr>
+<td>Directory missing or unexpectedly empty</td>
+<td>Mount source on daemon side; destination hides image files</td>
+</tr>
+<tr>
+<td>Permission denied</td>
+<td>UID/GID, traversal/access permissions, mount mode, mappings/labeling</td>
+</tr>
+<tr>
+<td>Container is running but HTTP fails</td>
+<td>Lifecycle is not readiness; inspect the actual service/logs</td>
+</tr>
+</tbody>
+</table>
+<p>A successful TCP connection does not prove application readiness. A numeric exit such as 137 does not by itself prove OOM. Correlate the application response, container state, logs, and the daemon's actual environment instead of changing unrelated flags until one attempt works.</p>
+<h3 id="15-finish-the-lab-without-sweeping-your-docker-environment">15. Finish the lab without sweeping your Docker environment<a class="headerlink" href="#15-finish-the-lab-without-sweeping-your-docker-environment" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Removes only the manual lab described above.</span>
+docker<span class="w"> </span>stop<span class="w"> </span>odin-book-lab
+docker<span class="w"> </span>rm<span class="w"> </span>odin-book-lab
+docker<span class="w"> </span>network<span class="w"> </span>rm<span class="w"> </span>odin-book-net
+<span class="c1"># Alternative Compose lab:</span>
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docs/examples/18-containers/compose.yaml<span class="w"> </span>down
+</code></pre></div>
+<p>The bind source remains on the host. The separate named volume remains until you explicitly remove it. <code>docker volume rm odin-book-data</code> deletes that volume's data; keep it if you still need it. There is no need for a broad prune to finish these exercises.</p>
+<h3 id="exercises">Exercises<a class="headerlink" href="#exercises" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>18.1 — Four routes.</strong> Reach <code>/ok</code> from the host, an <code>exec</code> shell, a peer on the bridge, and a namespace-sharing helper. Write the exact address used by each.</li>
+<li><strong>18.2 — Two ports.</strong> Publish host 11333 to container 1333. Explain why a network peer still uses 1333 and why <code>EXPOSE</code> alone changes neither route.</li>
+<li><strong>18.3 — Loopback experiment.</strong> Run a separate lab server bound only to container <code>127.0.0.1</code>. Compare namespace-sharing and peer requests; restore a container-facing bind and retest.</li>
+<li><strong>18.4 — Live filesystem.</strong> Edit a host file while a bind-mounted shell is open. Demonstrate read-only failure, then a writable output folder with matching UID/GID. Identify the real host file created.</li>
+<li><strong>18.5 — Lifetime.</strong> Compare a container-layer file, a bind-mounted file, and a volume file after stop/start and container removal. Preserve any data before removing its owner.</li>
+<li><strong>18.6 — Compose reconstruction.</strong> Read <code>config</code>, change a port/mount, run <code>up -d</code>, and inspect the result. Explain which data survives recreation.</li>
+<li><strong>18.7 — Platform evidence.</strong> Record whether you use native Engine, Desktop, or an integrated WSL distribution. Test, rather than assume, the direct-IP and host-return routes.</li>
+</ol>
+<h3 id="primary-sources">Primary sources<a class="headerlink" href="#primary-sources" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="https://docs.docker.com/engine/network/drivers/bridge/">User-defined bridge networks, DNS, and live attachment</a></li>
+<li><a href="https://docs.docker.com/engine/network/port-publishing/">Port publication and the two port numbers</a></li>
+<li><a href="https://docs.docker.com/engine/storage/bind-mounts/">Bind mounts, obscured files, and recursive read-only behavior</a></li>
+<li><a href="https://docs.docker.com/desktop/features/networking/">Docker Desktop networking and the VM boundary</a></li>
+<li><a href="https://docs.docker.com/desktop/features/wsl/">WSL integration</a></li>
+<li><a href="https://docs.docker.com/engine/network/drivers/host/">Host network support and limitations</a></li>
+<li><a href="https://docs.docker.com/reference/cli/docker/container/exec/">Exec</a>, <a href="https://docs.docker.com/reference/cli/docker/container/cp/">copy</a>, and <a href="https://docs.docker.com/engine/storage/volumes/">volumes</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

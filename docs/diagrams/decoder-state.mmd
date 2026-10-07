@@ -1,0 +1,9 @@
+flowchart TB
+  accTitle: Decoder send and receive state machine
+  accDescr: Retry the same packet after receiving available frames on EAGAIN. At input EOF, send the flush marker and drain until decoder EOF.
+  Read["Read next packet"] --> Send["Send packet"]
+  Send -->|"accepted"| Receive["Receive frames until EAGAIN"]
+  Send -->|"EAGAIN"| Drain["Receive available frames"] -->|"retry same packet"| Send
+  Receive --> Read
+  Read -->|"input EOF"| Flush["Send flush marker"] --> Final["Receive delayed frames until decoder EOF"]
+  Send -->|"other error"| Fail["Fail; do not publish partial success"]

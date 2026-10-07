@@ -1,50 +1,103 @@
 # Odin in Practice
 
-**Read the formatted book: https://weima.github.io/odin-in-practice/**
+**Read the book: https://weima.github.io/odin-in-practice/**
 
-A 26-chapter, source-guided book for programmers learning Odin through Linux command-line tools and FFmpeg/libav. Explanations start with a practical question, trace a small example, challenge its assumptions, and examine trade-offs. Exercises ask readers to predict results before running code.
+A 31-chapter, source-guided book for programmers learning Odin through practical systems work: ownership, memory, Linux command-line tools, networking, Docker, parallel programming, and FFmpeg/libav.
 
-## Read locally
+## Markdown source; HTML for readers
 
-Open `index.html` in a browser. The HTML pages, CSS, diagrams, and cover are local assets; no build step, JavaScript, or server is required. External documentation and source links need internet access.
+- **Edit `docs/**/*.md`**, not the generated HTML.
+- Mermaid sources live in `docs/diagrams/*.mmd`; rendering produces local SVGs in `docs/assets/diagrams/`.
+- Precise pointer diagrams and the original illustrated cover remain SVG.
+- **The prebuilt `html/` folder is retained in the repository.** Open `html/index.html` to read without installing publishing tools.
+- [Download the complete offline reader](https://weima.github.io/odin-in-practice/odin-in-practice-offline.zip), extract it, and open its `index.html`. Styles, diagrams, code companions, and the skill ZIP are local. External references still require the internet.
+- Search may need a local HTTP server because browser restrictions apply to workers/fetches on `file:` URLs. `python3 -m http.server --bind 127.0.0.1 --directory html 8000` serves the already-built reader without internet access.
 
-| Part | Page | Topics |
+| Part | Markdown source | Topics |
 | --- | --- | --- |
-| Foundations | [Chapters 1–4 and interludes](chapters/odin-foundations.html) | Packages, values, polymorphism, representation, and the C boundary |
-| CLI and Linux | [Chapters 5–17](chapters/cli-linux.html) | Arguments, flags, errors, allocators, files, streams, processes, testing, and a capstone |
-| FFmpeg and libav | [Chapters 18–23](chapters/ffmpeg-libav.html) | Process composition, JSON, foreign calls, codec state machines, and timestamps |
-| Workbook | [Chapters 24–26](chapters/workbook.html) | Exercises, glossary, and a reproducible source trail |
+| Foundations | [Chapters 1–4](docs/chapters/odin-foundations.md) | Packages, values, procedures, bare returns, independent generic types |
+| CLI and Linux | [Chapters 5–9, 12–16, 20–22](docs/chapters/cli-linux.md) | Arguments, errors, allocators, files, processes, tests, composition |
+| Pointers | [Chapter 10](docs/chapters/pointers.md) | Aliases, headers, views, lifetime and foreign pointers |
+| Memory philosophy | [Chapter 11](docs/chapters/memory-philosophy.md) | Allocation strategy, context, errors and rollback |
+| Networking | [Chapter 17](docs/chapters/networking.md) | TCP/UDP, framing, deadlines and a loopback HTTP adapter |
+| Docker | [Chapter 18](docs/chapters/containers.md) | Port 1333, interactive shells, network peers, bind mounts and volumes |
+| Parallel programming | [Chapter 19](docs/chapters/parallel-programming.md) | Threads, ownership, synchronization, cancellation and pools |
+| FFmpeg and libav | [Chapters 23–28](docs/chapters/ffmpeg-libav.md) | Probing, JSON, foreign calls, decoding, remuxing and timestamps |
+| Workbook | [Chapters 29–31](docs/chapters/workbook.md) | Exercises, glossary and pinned source trail |
 
-## Run the examples
+Existing chapter page names and explicit anchors are retained. MkDocs uses `use_directory_urls: false`, so `docs/chapters/networking.md` becomes `html/chapters/networking.html` and keeps the public `.html` route.
 
-The reference compiler is **Odin `dev-2026-09-nightly:a2fb372`**. Runtime and core-library walkthroughs use source shipped with that installation, corresponding to upstream commit [`a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`](https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924). Chapter 26 identifies the inspected paths and symbols; implementation observations are not treated as permanent API guarantees.
+## Build and preview
 
-Use a separate directory for each example:
+The publishing tools are **MkDocs + Material**, with Mermaid CLI generating SVGs before the site build. Python dependencies are hash-locked in `requirements.txt`; Node dependencies are locked in `package-lock.json`. Use Node 24 and Python 3.12 or later.
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --require-hashes -r requirements.txt
+npm ci
+npm run diagrams
+mkdocs build --strict
+python tools/check-book.py
+python tools/package-offline.py
+```
+
+After editing a diagram, rerun `npm run diagrams`. Preview Markdown edits with `mkdocs serve --dev-addr 127.0.0.1:8000`. Before committing, rebuild the tracked `html/` reader and offline ZIP. Do not edit generated files by hand.
+
+## GitHub Actions and Pages
+
+The complete workflow is [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+
+One-time repository setup:
+
+1. Push the completed branch and bring the reviewed changes into `main`.
+2. Open **Settings → Pages → Build and deployment → Source** and select **GitHub Actions**.
+3. In **Actions**, open **Build and publish the book**. A main-branch update runs it automatically; **Run workflow** can rebuild `main` manually.
+4. If a protected `github-pages` environment requires approval, approve that deployment under your repository's policy.
+5. Check the deployment URL shown by the workflow and download the offline reader from the book.
+
+The build job installs the locked dependencies, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
+
+Publishing dependencies currently report a low-severity transitive KaTeX advisory (GHSA-238p-pmpm-9mq7). The diagrams are trusted repository inputs with strict Mermaid security, and KaTeX is not shipped as a reader runtime. Do not use this build as an arbitrary untrusted-diagram rendering service; dependency updates need a fresh rendering check rather than a forced automatic downgrade.
+
+The committed reader provides an immediately usable offline copy at each locally rebuilt revision; Actions separately rebuilds the published website and downloadable archive from Markdown. The automated workflow has to run on GitHub before its remote deployment can be claimed verified.
+
+## Run the Odin companions
+
+Reference compiler: **`dev-2026-09-nightly:a2fb372`**, corresponding to [`a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924`](https://github.com/odin-lang/Odin/commit/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924). Inspect your installed compiler/library before copying implementation-specific APIs.
 
 ```sh
 odin version
-odin root
-odin check .
-odin run .
-odin test .
+odin run docs/examples/04-procedures
+TZ=UTC odin test docs/examples/04-procedures
+odin run docs/examples/19-parallel
+TZ=UTC odin test docs/examples/19-parallel
 ```
 
-Complete programs include their package and imports. Fragments and protocol pseudocode are labeled and need their surrounding declarations. The two Chapter 16 files belong in the same package directory; the additional prefix/borrowing test goes in its test file.
+Each complete program has its own package directory. Inline fragments, pseudocode, and intentional compiler-failure experiments are labeled. Tests and reusable helpers stay alongside the relevant program.
 
-Linux labs require a Linux environment. Media labs also require `ffmpeg` and `ffprobe`; the direct binding targets FFmpeg 6.x and needs the installed development libraries and linker metadata. Check `pkg-config --modversion libavformat` and the installed headers before adapting it. Codec pseudocode is explanatory, not a complete decoder implementation. Use disposable local fixtures rather than production media or network inputs.
+The loopback/CLI integration lab builds the HTTP adapter and four CLI commands, then runs `python3 docs/examples/verify_systems.py`. The Docker recipes are explicit local exercises; no image pull, container launch, or daemon operation is implied by the book build. The read-only Odin Docker companion defaults to a dry run.
 
-## Verification of this revision
+The native media companion targets **FFmpeg 6.x** (avformat 60, avcodec 60, avutil 58), needs development headers/linker metadata, and is built with `sh docs/examples/26-libav-decode/build.sh`. Generated binaries/fixtures are not publishing inputs.
 
-- All eight complete Odin programs in the HTML pages passed `odin check` and `odin build` with the reference compiler.
-- Eight focused tests passed with memory tracking enabled: the five preview tests, a little-endian decoder test, and two stream-counting tests.
-- Nineteen local runtime scenarios passed, covering greetings, flag parsing/help, byte counts, empty/unset environment values, child execution, JSON parsing, and the libav probe’s success and failure paths. Media input was a generated disposable WAV fixture.
-- Chapter numbers 1–26, local links and anchors, SVG XML, and the README’s readable-book URL were checked.
-- The cover loaded at desktop and mobile sizes; all four chapter pages showed no page-level horizontal overflow at a 390-pixel viewport. Inline diagrams retain their accessible titles and descriptions.
+## Download the companion skill
 
-These checks do not claim that every exercise, shell pipeline, target platform, or codec pseudocode fragment has been implemented or tested. The capstone remains a reader exercise, and implementation explanations describe the pinned revision rather than future library releases.
+The optional [Odin companion skill](docs/skills/odin-companion/README.md) is bundled with the book as a [folder ZIP](docs/skills/odin-companion.zip). Read `SKILL.md` and customize it with your preferred skill-creation tool. Nothing installs globally or changes reader agent configuration automatically.
 
-## Cover and name
+## Verification evidence
 
-The original SVG cover depicts the mythological Odin and two ravens alongside an Odin code page. It reflects the name’s origin, not a claim about language-design symbolism. Creator Ginger Bill says the name was simply **[a mythological codename that stuck](https://forum.odin-lang.org/t/origin-of-the-name-odin/794)**.
+With the pinned compiler on Linux:
 
-This is an independent learning book, not an official Odin or FFmpeg specification or an endorsement by their authors. Source walkthroughs link to upstream material and explain selected mechanisms; the upstream code retains its own license, including [Odin’s zlib license](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/LICENSE).
+- The procedures companion demonstrates bare returns, deferred cleanup, and independent type inference; four tests passed with memory tracking.
+- The parallel companion built and produced checksum `83333335000`; seven tests passed with memory tracking. This is correctness evidence, not a speedup claim or exhaustive schedule coverage.
+- HTTP parsing, Docker state parsing, and CLI records tests passed. Eighteen loopback HTTP/CLI scenarios passed, including filtering, malformed/oversized input, timeout cleanup, launch failure, and refusal to publish partial upstream success.
+- Native decode/remux passed sixteen generated-fixture scenarios, including ffprobe comparisons, timestamp preservation, frame budgets, protocol/path rejection, non-overwrite behavior, and no Valgrind-reported errors/definite leaks in the tested decode/remux paths.
+- The pointer and memory examples and TCP/UDP loopback demonstrations were checked separately. The earlier 26-chapter edition also had eight checked/built programs, eight focused tests, and nineteen runtime scenarios.
+
+These results do not claim every exercise, codec, platform, Docker recipe, or arbitrary input has been validated. Docker runtime execution, deployment permissions, and the GitHub-hosted workflow remain separate verification obligations.
+
+## Cover and attribution
+
+The original SVG cover depicts the mythological Odin and two ravens beside a code page. It reflects the name's origin, not language-design symbolism. Ginger Bill describes Odin as [a mythological codename that stuck](https://forum.odin-lang.org/t/origin-of-the-name-odin/794).
+
+This is an independent learning book, not an official Odin/FFmpeg specification or endorsement. Upstream source retains its own license, including [Odin's zlib license](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/LICENSE).
