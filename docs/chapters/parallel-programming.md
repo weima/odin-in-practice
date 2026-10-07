@@ -8,7 +8,7 @@ Chapter 19 · Work, ownership, and completion
 
 You have a million independent records. Can four workers process them faster than one? Odin can express that computation with native threads. The difficult part is not spelling “start”: it is proving that each worker touches the right memory, that the memory remains alive, that failures invalidate the right results, and that every worker eventually stops.
 
-The examples target Linux and Odin `dev-2026-09-nightly:a2fb372`. The mechanisms come from the installed [`core:thread`](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/thread) and [`core:sync`](https://github.com/odin-lang/Odin/tree/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/sync), rather than APIs guessed from Go, Rust, or JavaScript. Check `thread.IS_SUPPORTED` and the platform implementation before assuming another target has the same facilities.
+The examples target Linux and Odin's official monthly `dev-2026-10` release (`dev-2026-10-nightly:84bc3fc`). The mechanisms come from the installed [`core:thread`](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/thread) and [`core:sync`](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sync), rather than APIs guessed from Go, Rust, or JavaScript. Check `thread.IS_SUPPORTED` and the platform implementation before assuming another target has the same facilities.
 
 <a id="promises"></a>
 
@@ -118,7 +118,7 @@ Forcibly terminating a thread can abandon locks, heap operations, or foreign-lib
 
 ### 8. A fixed worker count is not a bounded queue
 
-`core:thread` also supplies `Pool`. In the pinned [thread\_pool.odin](https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/thread/thread_pool.odin), tasks hold procedure/data/allocator fields, workers consume a synchronized waiting queue, and completed tasks remain in a dynamic collection until removed. Creating four workers does not prevent a producer from submitting millions of tasks or retaining millions of completions.
+`core:thread` also supplies `Pool`. In the pinned [thread\_pool.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/thread/thread_pool.odin), tasks hold procedure/data/allocator fields, workers consume a synchronized waiting queue, and completed tasks remain in a dynamic collection until removed. Creating four workers does not prevent a producer from submitting millions of tasks or retaining millions of completions.
 
 Task payload pointers remain borrowed unless your application explicitly transfers ownership. The pool and its allocator state must remain at stable addresses, and allocator use must meet the source’s thread-safety requirements. Admission must bound outstanding count *and* retained bytes; completion handling must retire payloads and results. Reject, wait, or apply a documented overload policy when capacity is reached.
 

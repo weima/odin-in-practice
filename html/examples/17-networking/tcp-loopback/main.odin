@@ -1,4 +1,4 @@
-// Original companion; API/source baseline: core/net/socket.odin and socket_linux.odin at a2fb372.
+// Original companion; API/source baseline: core/net/socket.odin and socket_linux.odin at 84bc3fc.
 package main
 
 import "core:fmt"

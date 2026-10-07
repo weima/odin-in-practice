@@ -582,6 +582,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#runnable-starting-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runnable starting points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -674,6 +685,12 @@
 </ol>
 <h2 id="output-contract">Output Contract<a class="headerlink" href="#output-contract" title="Permanent link">&para;</a></h2>
 <p>Return changed paths, verified behavior and remaining limits. Label fragments, intentional compile failures and complete runnable programs distinctly. Do not claim visibility is a security boundary or claim dependency reproducibility without recording the source/version.</p>
+<h2 id="runnable-starting-points">Runnable starting points<a class="headerlink" href="#runnable-starting-points" title="Permanent link">&para;</a></h2>
+<p>The <a href="examples/cli/main.odin">CLI example</a> uses <code>core:flags</code> to parse a required positional name and a boolean option. The <a href="examples/network/main.odin">network example</a> performs a bounded TCP round trip on loopback, checks the exact byte count, and defers socket cleanup. Both are complete programs, not production templates.</p>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>run<span class="w"> </span>examples/cli<span class="w"> </span>--<span class="w"> </span>Ada<span class="w"> </span>--loud
+odin<span class="w"> </span>run<span class="w"> </span>examples/network
+</code></pre></div>
+<p>The network example binds only to loopback and uses operation timeouts. It is a local exercise, not an Internet-facing server. CI compiles and runs both examples with the book's pinned official monthly <code>dev-2026-10</code> release.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="references/packages.html">Package boundaries, visibility and dependencies</a></li>

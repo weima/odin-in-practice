@@ -1,6 +1,6 @@
 # Parallel programming lab
 
-This is one complete Linux/native-thread package: `main.odin`, `parallel.odin`, and `parallel_test.odin`. The teaching baseline is Odin `dev-2026-09-nightly:a2fb372`.
+This is one complete Linux/native-thread package: `main.odin`, `parallel.odin`, and `parallel_test.odin`. The teaching baseline is Odin's official monthly `dev-2026-10` release (reported by the compiler as `dev-2026-10-nightly:84bc3fc`).
 
 From the book root:
 
