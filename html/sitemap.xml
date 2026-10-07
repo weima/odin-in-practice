@@ -45,6 +45,10 @@
          <lastmod>2026-10-07</lastmod>
     </url>
     <url>
+         <loc>https://weima.github.io/odin-in-practice/examples/05-packages/index.html</loc>
+         <lastmod>2026-10-07</lastmod>
+    </url>
+    <url>
          <loc>https://weima.github.io/odin-in-practice/examples/19-parallel/index.html</loc>
          <lastmod>2026-10-07</lastmod>
     </url>
@@ -61,7 +65,15 @@
          <lastmod>2026-10-07</lastmod>
     </url>
     <url>
+         <loc>https://weima.github.io/odin-in-practice/skills/odin-companion/examples/05-packages/index.html</loc>
+         <lastmod>2026-10-07</lastmod>
+    </url>
+    <url>
          <loc>https://weima.github.io/odin-in-practice/skills/odin-companion/references/checklist.html</loc>
+         <lastmod>2026-10-07</lastmod>
+    </url>
+    <url>
+         <loc>https://weima.github.io/odin-in-practice/skills/odin-companion/references/packages.html</loc>
          <lastmod>2026-10-07</lastmod>
     </url>
 </urlset>

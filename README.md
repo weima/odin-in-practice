@@ -37,6 +37,7 @@ python3 -m venv .venv
 python -m pip install --require-hashes -r requirements.txt
 npm ci
 npm run diagrams
+python tools/package-skill.py
 mkdocs build --strict
 python tools/check-book.py
 python tools/package-offline.py
@@ -56,7 +57,7 @@ One-time repository setup:
 4. If a protected `github-pages` environment requires approval, approve that deployment under your repository's policy.
 5. Check the deployment URL shown by the workflow and download the offline reader from the book.
 
-The build job installs the locked dependencies, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
+The build job installs the locked dependencies, renders Mermaid SVGs, packages and verifies the companion-skill ZIP, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
 
 Publishing dependencies currently report a low-severity transitive KaTeX advisory (GHSA-238p-pmpm-9mq7). The diagrams are trusted repository inputs with strict Mermaid security, and KaTeX is not shipped as a reader runtime. Do not use this build as an arbitrary untrusted-diagram rendering service; dependency updates need a fresh rendering check rather than a forced automatic downgrade.
 
@@ -68,13 +69,16 @@ Reference compiler: **`dev-2026-09-nightly:a2fb372`**, corresponding to [`a2fb37
 
 ```sh
 odin version
+odin check docs/examples/05-packages/cli
+odin run docs/examples/05-packages/cli -- Ada
+TZ=UTC odin test docs/examples/05-packages/label
 odin run docs/examples/04-procedures
 TZ=UTC odin test docs/examples/04-procedures
 odin run docs/examples/19-parallel
 TZ=UTC odin test docs/examples/19-parallel
 ```
 
-Each complete program has its own package directory. Inline fragments, pseudocode, and intentional compiler-failure experiments are labeled. Tests and reusable helpers stay alongside the relevant program.
+Each complete program has its own package directory. Inline fragments, pseudocode, and intentional compiler-failure experiments are labeled. Tests and reusable helpers stay alongside the relevant program. The multi-file CLI example also ships inside the Odin companion skill folder and ZIP.
 
 The loopback/CLI integration lab builds the HTTP adapter and four CLI commands, then runs `python3 docs/examples/verify_systems.py`. The Docker recipes are explicit local exercises; no image pull, container launch, or daemon operation is implied by the book build. The read-only Odin Docker companion defaults to a dry run.
 

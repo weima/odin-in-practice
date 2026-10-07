@@ -91,6 +91,33 @@ One boundary remains file-local: an import name is not automatically available i
 
 The `core:` prefix selects a library collection; it is not a network package download. Here `::` binds the procedure as a compile-time entity. Splitting the source can improve navigation, but does not create the isolation that a separate package provides.
 
+### Grow a CLI without growing one file
+
+An Odin package is a directory, not a project-wide module assembled from arbitrary source paths. The compiler compiles the `.odin` files in the selected directory together when they declare the same package. Start with a few focused files in one directory—such as `main.odin`, `args.odin`, and `output.odin`—when they implement one cohesive command and share internal declarations. This improves navigation without adding an import boundary.
+
+Create a subdirectory package when a piece of the program has a clear responsibility, can be named and tested independently, or should expose a small API while hiding implementation. Import its package by path; the imported source is compiled as a separate package. Do not split every file into a package: extra boundaries mean explicit imports and an API to maintain. Keep command parsing, orchestration, and CLI-specific errors near the entry point; move reusable domain operations out only when that separation pays for itself.
+
+Odin declarations are public by default. That includes procedures, types, constants, variables, and other declarations; use an explicit visibility attribute to narrow access. This is a visibility fragment; procedure bodies are placeholders:
+
+```odin
+// In package `labels`: callers in other packages can use this procedure.
+greeting :: proc(name: string) -> string { /* implementation */ }
+
+// Other files in `labels` can use this helper; importers cannot.
+@(private="package")
+normalize_name :: proc(name: string) -> string { /* implementation */ }
+
+// Only this source file can refer to this declaration.
+@(private="file")
+PREFIX :: "Hello, "
+```
+
+`@(private="package")` is useful for package-internal helpers shared by multiple files. `@(private="file")` keeps a declaration local to its source file. There is no `protected` inheritance visibility: Odin does not use class inheritance as a package organization mechanism. This is compile-time access control, not a security boundary.
+
+Keep imports explicit in each file that uses them. A package line identifies the package; it does not import sibling or standard-library packages. The built-in collections have paths such as `core:fmt`; local package imports use a package path relative to the importing package (see `../label` in the example). A test file also declares its own imports. The complete [multi-file CLI example](../examples/05-packages/README.md) demonstrates the boundary, public API, hidden implementation, output ownership, and a focused test.
+
+Odin has no official package manager that resolves and pins third-party dependencies for you. For a small tool, prefer the standard library or a dependency already present in the project's controlled source tree. If you vendor third-party Odin source, record its upstream URL, exact release or commit, license, and local changes; keep the import path stable and update it deliberately. Do not depend on a moving branch, unrecorded machine-local checkout, or a downloaded dependency whose version cannot be reproduced. Review updates and run the compiler and tests against the pinned dependency source.
+
 That greeting is only a toolchain smoke test. For real work, ask which build target and configuration you are producing, which packages are included, and which platform assumptions the code makes. Use `odin help build` and `odin help run` for the installed compiler’s flags; do not copy a target or optimization switch from a different compiler release without checking it.
 
 | Command | What it does |
