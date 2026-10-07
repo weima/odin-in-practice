@@ -12,7 +12,8 @@
 <main><section id="cli-contract" class="chapter">
 <p class="chapter-no">Part II · Command-line programs</p>
 <h2>5. The command-line contract</h2>
-<p>A command-line program is a small protocol between a human, a shell, and other programs. A useful CLI has documented inputs, predictable output, clear failures, and an exit status that scripts can inspect.</p>
+<p>Imagine a byte-counting tool that prints <code>Opening file…</code> followed by <code>42</code>. It looks friendly in a terminal. Now put it in a pipeline whose next stage expects an integer. The program has not become less correct internally; we have discovered that its interface was never defined carefully enough.</p>
+<p>A CLI has several independent channels. The first design task is to decide what each means. In this book, stdout carries results, stderr carries diagnostics, and a nonzero exit status says that the requested operation did not succeed. Help requested explicitly is a successful operation, not an invalid-argument error.</p>
 <table><thead><tr><th>Channel</th><th>Purpose</th><th>Typical use</th></tr></thead><tbody>
 <tr><td>Arguments</td><td>Values supplied when the program starts.</td><td>Paths, modes, and short options.</td></tr>
 <tr><td>stdin</td><td>Input stream from a pipe, redirect, or terminal.</td><td>Large or composable data input.</td></tr>
@@ -29,12 +30,20 @@
 <li>Do not print a success-shaped result after an error.</li>
 <li>Use a stable, documented output format when scripts consume the result.</li>
 </ul>
-<p>These are interface decisions. Changing them later can break shell scripts even if the internal implementation is better.</p>
+<p>These are interface decisions. Changing them can break scripts even if the new implementation is faster. Specify a successful empty result separately from a failed operation: zero bytes in an empty file is real data; zero bytes because opening failed is not.</p>
+<h3>The library makes a similar distinction</h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin">core/flags/util.odin</a>. <code>print_errors</code> writes parsing and validation diagnostics to stderr, but sends explicitly requested usage to stdout. <code>parse_or_exit</code> selects exit status zero for a <code>Help_Request</code> and one for the other errors. No arguments plus a missing requirement gets usage on stderr.</p>
+<p>That is not an arbitrary distinction between two print procedures. The same-looking usage text can answer a successful help request or explain a failed invocation. The context determines the channel and status. If you introduce your own convention of status two for invalid input, do not assume the library’s convenience wrapper follows it.</p>
+<pre><code>./tool &gt; result.txt 2&gt; diagnostics.txt
+status=$?
+printf 'status=%s\n' "$status"</code></pre>
+<p>Capture <code>$?</code> immediately: another command replaces it. For a pipeline, the default status normally comes from its final command. A producer can fail while a consumer succeeds; in Bash or Zsh, consider <code>set -o pipefail</code> when testing that composite behavior. A terminal transcript alone cannot establish any of these contracts.</p>
 </section>
 <section id="arguments" class="chapter">
 <p class="chapter-no">Chapter 6 · Your first CLI</p>
 <h2>6. Arguments and a first useful tool</h2>
-<p><code>os.args</code> holds the current process arguments. Element zero is the executable name, so user-supplied positional values begin at index one. This complete example prints a greeting and reports a useful usage error:</p>
+<p>What is an argument: a word, a string, or part of a command line? By the time an ordinary Linux program starts, the shell has already interpreted quoting and constructed an argument vector. <code>"Ada Lovelace"</code> is one string. The quote characters are normally no longer present. Splitting that string again would undo the caller’s work.</p>
+<p><code>os.args</code> exposes that vector. Index zero conventionally identifies the invocation; it need not be an absolute path or a trustworthy executable identity. User arguments start at index one. This complete program uses the distinction:</p>
 <pre><code>package main
 
 import "core:fmt"
@@ -54,7 +63,10 @@ odin build . -out:hello
 ./hello Ada
 ./hello</code></pre>
 <p>The compiler's <code>--</code> separates compiler options from the program arguments in the run command. The built program receives the program arguments, not that separator. When invoking the executable directly, pass the arguments normally.</p>
-<p>The sample uses <code>os.exit(2)</code> to return a non-zero status immediately. Choose statuses deliberately if another program will depend on them; use a small documented convention rather than a pile of arbitrary numbers.</p>
+<h3>Where those strings came from</h3>
+<p>Follow <code>get_args</code> in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">core/os/process.odin</a>. On the ordinary Unix route it makes a slice of Odin string headers from <code>runtime.args__</code>. The runtime entry code saved the C argument vector before invoking our application. This path allocates the slice of headers; converting each C string does not imply a separate clone of all its bytes.</p>
+<p>For this initial example <code>os.exit(2)</code> is safe to use before we acquire any resources. It exits the process directly; it is not a return from <code>main</code>. Later examples will keep work in a procedure that returns a status, allowing deferred cleanup to finish before the top-level exit. This small structural choice prevents a large class of misleading cleanup examples.</p>
+<div class="exercise"><strong>Predict, then run.</strong> Compare <code>./hello Ada Lovelace</code>, <code>./hello "Ada Lovelace"</code>, and <code>./hello ""</code>. The last invocation supplies an argument of length zero; it is not the same as supplying no argument.</div>
 <div class="exercise"><strong>Exercise 6.1.</strong> Change the tool so it joins and prints every name from <code>os.args[1:]</code>. Try zero, one, and several names. Do not assume there is exactly one positional argument.</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> <code>os.args[0]</code> is the executable name. With no user arguments, the user slice is empty; indexing it before checking length is an out-of-bounds bug. Preserve spaces inside each argument—shell tokenization already happened before Odin starts.</p>
 <details><summary>One possible direction</summary><p>Iterate over <code>os.args[1:]</code> with a <code>for</code> loop and print one name per line. This avoids adding a custom string-joining utility before you need one.</p></details>
@@ -62,7 +74,7 @@ odin build . -out:hello
 <section id="flags" class="chapter">
 <p class="chapter-no">Chapter 7 · A maintainable interface</p>
 <h2>7. A real flag parser</h2>
-<p>Manual argument inspection is useful for learning, but a growing CLI needs parsing, help, type conversion, and validation. Odin's <code>core:flags</code> package uses a struct as the declaration of the interface. Fields are inputs; tags describe names, positions, and requirements.</p>
+<p>Our greeting now needs a boolean switch and a positional name. We could write another loop over strings. The cost is not the loop itself; it is the expanding collection of rules about missing values, unknown options, help, and type conversion. <code>core:flags</code> already supplies that machinery. Its model is an annotated struct, so the interface has a representation we can inspect and test.</p>
 <pre><code>package main
 
 import "core:flags"
@@ -87,12 +99,23 @@ main :: proc() {
 <p>Try:</p>
 <pre><code>odin run . -- Ada
 odin run . -- Ada --loud
-odin run . --help
+odin run . -- --help
 odin run . --</code></pre>
 <p>With Unix-style parsing, options commonly look like <code>--name=value</code>, <code>--name value</code>, or a boolean switch such as <code>--loud</code>. The package also supports Odin-style arguments. Pick a style and document it; the two formats are not mixed in one parse.</p>
 <h3>Read the struct as user documentation</h3>
 <p>The <code>required</code> tag expresses an input contract. The <code>usage</code> tag becomes help text. The struct field name provides the default flag name; underscores in flag names map to dashes. You can add a field such as <code>limit: int</code> and the parser converts the text to an integer or reports a parse error.</p>
-<p>Additional positional arguments can be collected in the conventional <code>overflow</code> field. The package supports validation tags and custom type setters, but do not add those until your CLI needs them. Start with required arguments, booleans, and a typed limit.</p>
+<p>Additional positional arguments can be collected in the conventional <code>overflow</code> field. A successful conversion to <code>int</code> establishes syntax and representability, not the domain rule that a preview limit must be nonnegative and reasonably small.</p>
+<h3>Two parsers? No: a parser and its boundary wrapper</h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/parsing.odin">parsing.odin</a> alongside <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/flags/util.odin">util.odin</a>. <code>parse</code> receives user arguments, normally <code>os.args[1:]</code>, and returns an error union. <code>parse_or_exit</code> receives the whole vector, extracts the program name, drops element zero, then invokes <code>parse</code>. Giving the wrapper an already-sliced vector makes the first user argument masquerade as the executable name.</p>
+<p>Inside <code>parse</code>, the parser validates the struct, tracks supplied fields and positional slots in bit arrays, then dispatches to the selected parsing style. Unix parsing also tracks how many following arguments a flag consumes. After syntactic parsing, <code>validate_arguments</code> checks requirements if validation is enabled and no earlier error remains. This sequence explains why required fields are checked at the end, rather than being treated as a property of the initial zero-valued struct.</p>
+<p>For package tests and reusable code, call the returning parser. For a tiny executable, the exit wrapper can be convenient:</p>
+<pre><code>// Fragment with the Options type and flags import above.
+options: Options
+err := flags.parse(&amp;options, []string{"Ada", "--loud"}, .Unix)
+// Examine err before using options as validated input.</code></pre>
+<h3>Parsing has an ownership boundary too</h3>
+<p>The parser’s comment says persistent model allocations occur when appending to a dynamic array, setting a map value, or setting a C string. The caller must free allocations stored in the model. Do not generalize “the parser cleans up its bit arrays” into “the parser frees every field it populated.” Plain string fields may refer to argument storage rather than owning new copies; consult the relevant assignment path before extending their lifetime.</p>
+<p>Keep the initial interface small: typed values, required arguments, and help. Add custom setters only when a real domain representation requires them.</p>
 <div class="exercise"><strong>Exercise 7.1.</strong> Add <code>limit: int</code> with help text. Choose a default. What should happen when the user supplies a negative number? Add a rule and test it.</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> successful integer parsing does not mean the value is valid for your domain. Test both <code>--limit -1</code> and the zero boundary; parser syntax and your semantic range check are separate concerns.</p>
 <div class="checkpoint"><strong>Design question.</strong> Is a path positional or a named <code>--input</code> option? Choose based on whether the tool naturally processes one main input or many independent options. Consistency matters more than fashion.</div>
@@ -100,25 +123,40 @@ odin run . --</code></pre>
 <section id="errors" class="chapter">
 <p class="chapter-no">Part III · Failure and ownership</p>
 <h2>8. Errors, cleanup, and ownership</h2>
-<p>Many Odin core procedures return a value and an error. Check the error before using the value. When an operation fails, choose to report it, recover, or return it to the caller. Do not translate failure into a plausible success value.</p>
-<pre><code>data, err := os.read_entire_file_from_path(path, context.allocator)
+<p>A familiar rule says “check the error before using the result.” It is a good rule, but incomplete. What if a procedure allocated some data and then failed? The result may be invalid as an answer yet still matter as a resource that must be released. Odin’s multiple return values let an API represent both facts at once.</p>
+<pre><code>allocator := context.allocator
+data, err := os.read_entire_file_from_path(path, allocator)
+defer delete(data, allocator)
 if err != nil {
     fmt.eprintln("cannot read input: ", err)
-    os.exit(1)
+    return 1
 }
-defer delete(data)</code></pre>
-<p>This fragment assumes <code>path</code>, <code>fmt</code>, and <code>os</code> are already in scope. It demonstrates a resource pattern:</p>
-<ol><li>Request a resource.</li><li>Check whether acquisition succeeded.</li><li>Immediately register the matching cleanup.</li><li>Use the resource while its owner is alive.</li></ol>
+// Use data only after establishing success.</code></pre>
+<p>This fragment belongs in a procedure returning <code>int</code>; <code>path</code>, <code>fmt</code>, and <code>os</code> must be in scope. Cleanup is deliberately registered before interpreting the error, because the whole-file reader can return allocated partial data on a read failure. For other APIs, register cleanup only when their returned resource is valid. The resource pattern is:</p>
+<ol><li>Read the procedure’s failure and ownership contract.</li><li>Request the resource and determine what was acquired, including on failure.</li><li>Register the matching cleanup for resources the caller owns.</li><li>Use the result only when its success preconditions hold.</li></ol>
 <p><code>defer</code> schedules a statement until the surrounding scope exits. Multiple deferred statements execute in reverse declaration order. The closer the cleanup appears to acquisition, the easier it is to audit early returns.</p>
 <blockquote>Resource question: “If this line returns early, who closes or frees what I already acquired?”</blockquote>
-<p>Odin errors are not automatically exceptions. The call site sees a result and explicitly chooses the next step. This makes failure paths visible during code review and keeps the program's behavior under your control.</p>
+<h3>A return unwinds a scope; process exit does not</h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">os.exit</a>. It calls the runtime’s direct process exit and explicitly warns that <code>@(fini)</code> procedures are not run. It also does not return through the active Odin scopes, so their deferred statements are not executed. This is why resource-owning examples should not call it in the middle of their work.</p>
+<pre><code>// Structural fragment: work owns resources; main owns the process boundary.
+run :: proc() -&gt; int {
+    // Acquire resources, defer their cleanup, return a status.
+    return 0
+}
+main :: proc() {
+    status := run() // run's cleanup completes before this returns.
+    os.exit(status)
+}</code></pre>
+<p>The distinction matters even when the OS eventually reclaims heap memory and descriptors. A deferred flush, removal of a temporary file, or publication of a finished output is application behavior, not something the kernel can infer.</p>
+<p>In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin">file_util.odin</a>, the path-based whole-file helper opens, defers close, and delegates to the file-based reader. A partial byte slice may survive a read error. This gives us two separate audits: who closes the handle, and who releases returned bytes? The answer is the helper for the first and the caller for the second.</p>
 <h3>Report the right amount</h3>
 <p>A user should learn what failed and what to try next. Avoid dumping internal implementation details or printing both a low-level error and a second confusing wrapper message. In a reusable procedure, return a useful error to the caller; at the CLI boundary, turn it into stderr output and a non-zero exit.</p>
 </section>
 <section id="memory" class="chapter">
 <p class="chapter-no">Chapter 9 · Storage and lifetime</p>
 <h2>9. Memory and allocators</h2>
-<p>Systems code is easier to reason about when allocation and lifetime are explicit. Odin provides an implicit <code>context</code> to procedures; it includes the current allocator. Many core APIs accept an allocator so the caller can choose where returned storage comes from.</p>
+<p>Suppose a parser allocates a result without an allocator parameter. Where did the memory come from? “The heap” is too vague an answer in Odin. An Odin-convention call carries a scope-local context, and allocation often uses <code>context.allocator</code>. The visible arguments are not the whole policy.</p>
+<p>Start with lifetime rather than allocator fashion. A returned result must survive until its last consumer is finished. Scratch may be discarded together. A long-lived container must not retain views into scratch that was reset after a call.</p>
 <p>A practical first rule: data that must outlive the current operation uses an allocator whose lifetime covers that use; short-lived scratch data can use temporary storage; owned dynamic arrays and maps are deleted when no longer needed. Always check each API's ownership contract.</p>
 <pre><code>items := make([dynamic]string)
 defer delete(items)
@@ -132,7 +170,15 @@ for item in items {
 <p>This snippet assumes <code>core:fmt</code> is imported. The dynamic array owns backing memory; <code>append</code> may move or grow that backing storage, so keep using the array value rather than holding an old pointer into its storage across a growth.</p>
 <h3>Follow the lifetime</h3>
 <p>Before allocating, ask three questions: who owns the result, how long is it needed, and where is it freed? For <code>os.read_entire_file_from_path</code>, the supplied allocator receives the bytes, and the caller releases them with <code>delete</code>. For <code>os.lookup_env</code>, the chosen allocator owns the returned string when the variable is found.</p>
-<p>Do not optimize allocation strategy before measuring. First make ownership correct. Then use a profiler or allocation tracker if memory use or throughput shows a real problem. The core library includes allocator tools; the official overview explains the implicit context system.</p>
+<h3>The allocator is a protocol represented by two fields</h3>
+<p>In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">runtime/core.odin</a>, <code>Allocator</code> contains a procedure and a data pointer. Its procedure receives an allocation mode, size, alignment, old memory and size, and source location. The modes include allocation, freeing, resizing, freeing everything, and feature queries. A request can fail with <code>Out_Of_Memory</code> or <code>Mode_Not_Implemented</code>; an allocator is not obliged to implement every strategy.</p>
+<p>This explains why an arena and a heap can share the interface without sharing individual-free behavior. It also explains why “I called delete” and “the allocator reclaimed these bytes immediately” are different claims.</p>
+<h3>One container remembers; one view does not</h3>
+<p>Compare <code>delete_dynamic_array</code> and <code>delete_slice</code> in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin">core_builtin.odin</a>. The dynamic-array overload uses the allocator stored in the array header and a capacity-based allocation size. The slice overload receives an allocator, defaulting to the current context, and uses the slice length. Changing the context between allocating a slice and deleting it can therefore select the wrong allocator. Save the chosen allocator or pass it explicitly.</p>
+<p>The same file’s <code>_append_elems</code> grows capacity geometrically in this version, copies incoming elements, and returns an appended count plus an optional allocator error. Its growth formula is an observation, not a promised factor for all future releases. If allocation fails, partial progress is possible; code that requires every element must inspect both results rather than relying on the convenient form that omits the error.</p>
+<p>A copied dynamic-array header still names the same backing storage. Two headers are not two independent owners. Growing one can leave the other describing old memory; deleting both can double-free. Keep one owner and pass borrowed views only while it remains stable.</p>
+<p>A dynamic array of strings adds another layer: deleting the array releases the element storage, not every independently allocated string target. Literal strings in our example need no such cleanup. Owned cloned strings would. Ownership follows allocations, not punctuation.</p>
+<div class="exercise"><strong>Source experiment.</strong> Print length and capacity after each append; compare the observed growth with <code>_append_elems</code>. Do not assert those capacities as your application’s API. Then explain why <code>clear(&amp;items)</code> retains capacity while <code>delete(items)</code> releases backing storage without automatically resetting every copied header.</div>
 <figure class="diagram">
 <svg viewBox="0 0 960 250" role="img" aria-labelledby="allocator-title allocator-desc">
 <title id="allocator-title">How an Odin allocator context flows through calls</title>
@@ -152,28 +198,36 @@ for item in items {
 <section id="files" class="chapter">
 <p class="chapter-no">Part IV · The operating system</p>
 <h2>10. Files are bytes</h2>
-<p>Files do not inherently contain lines, words, or characters. They contain bytes. A text program interprets those bytes as an encoding such as UTF-8; a binary program interprets them according to its own format.</p>
+<p>We want to count a file. The obvious approach is to ask the operating system for its size. Does that count its readable bytes? For a normal immutable disk file, often yes. For <code>/proc</code>, a pipe, or a file being changed concurrently, the question is different. Metadata is a report about an object; reading observes a sequence of bytes.</p>
+<p>Our first implementation reads the input and counts what it receives. That makes the result easy to explain, at the cost of retaining the whole input. Text interpretation comes later: a byte count must not be labeled a character count.</p>
 <p>For a small input, <code>os.read_entire_file_from_path</code> is direct and readable. It returns bytes and an error. This complete tool reports the byte count:</p>
 <pre><code>package main
 
 import "core:fmt"
 import "core:os"
 
-main :: proc() {
-    if len(os.args) &lt; 2 {
+run :: proc() -&gt; int {
+    if len(os.args) != 2 {
         fmt.eprintln("usage: count-bytes &lt;path&gt;")
-        os.exit(2)
+        return 2
     }
 
     path := os.args[1]
-    data, err := os.read_entire_file_from_path(path, context.allocator)
+    allocator := context.allocator
+    data, err := os.read_entire_file_from_path(path, allocator)
+    defer delete(data, allocator)
     if err != nil {
         fmt.eprintln("read failed: ", err)
-        os.exit(1)
+        return 1
     }
-    defer delete(data)
 
     fmt.printfln("%s: %d bytes", path, len(data))
+    return 0
+}
+
+main :: proc() {
+    status := run()
+    os.exit(status)
 }</code></pre>
 <p>Build and use it:</p>
 <pre><code>odin check .
@@ -183,13 +237,19 @@ odin build . -out:count-bytes
 <p>The last path is Linux-specific. It reads a kernel-provided view of the current process through <code>procfs</code>; it is not a normal disk file. Run <code>cat /proc/self/status</code> to compare. Some fields vary with the kernel and environment.</p>
 <h3>Whole-file or streaming?</h3>
 <p>Whole-file reading is simple, but uses memory proportional to file size. It fits configuration files and modest inputs. For large files, open a file and process bounded chunks. Each read can return fewer bytes than the buffer length. Track exactly how many bytes were returned, handle end-of-file, and do not assume a single read fills the buffer.</p>
-<p>The lower-level <code>os.open</code>, <code>os.read</code>, and <code>os.close</code> APIs expose the resource lifecycle more directly. Pair a successful open with a deferred close. Check the current package docs for the exact read and EOF convention in your Odin version.</p>
+<h3>The whole-file helper has two algorithms</h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin">read_entire_file_from_file</a>. It first asks for a size that fits in <code>int</code>. If the size is positive, it allocates that many bytes and reads until the slice is filled or a read reports an error. EOF becomes successful completion with the slice shortened to the bytes actually read.</p>
+<p>If no usable positive size exists, it reads with a 1024-byte local buffer and appends to a dynamic array until completion. This is how a zero-size-reporting procfs file can still produce data. But a small <em>read buffer</em> does not imply bounded <em>total memory</em>: the accumulating dynamic array can grow for as long as input arrives.</p>
+<p>Now challenge the positive-size branch. What if the file grows after the size query? This version’s loop fills the original allocation and stops; it does not promise to keep reading newly appended bytes. If the file shrinks, EOF shortens the result. The helper is useful, but it does not provide an atomic snapshot of a mutating file. State whether your application accepts that behavior.</p>
+<p>The fallback also treats <code>Broken_Pipe</code> as completion in this revision. Do not silently apply that normalization to every lower-level read loop. The abstraction boundary decides which events count as normal completion.</p>
+<p><code>os.read</code> in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin">file.odin</a> returns a count and an error; ordinary file EOF is <code>0, .EOF</code>. Opening establishes handle ownership, and a successful open should be paired with close. The count describes this read, not the buffer’s capacity.</p>
 <div class="exercise"><strong>Exercise 10.1.</strong> Compare the result for an empty file, a short text file, and a multi-megabyte file. Which approach should your real tool use, and what evidence supports that choice?</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> a successful read call may return fewer bytes than requested without reaching EOF. Streaming code must process the returned count and continue; a fixed buffer is not a promise of a full read.</p>
 </section>
 <section id="streams" class="chapter">
 <h2>11. Streams, pipes, and bounded work</h2>
-<p>A Unix pipeline connects streams rather than asking one program to know everything about another. A small command should be useful by itself and useful as one stage in a pipeline.</p>
+<p>The file-counting example has one uncomfortable property: a ten-gigabyte input asks us to retain ten gigabytes even though the answer is a single number. We do not need a more ingenious allocator. We need an algorithm that forgets bytes after counting them.</p>
+<p>A Unix pipeline supplies bytes over time rather than handing us a complete array. The read boundaries depend on buffering and scheduling, not on our records. Let us separate the amount of data processed from the amount retained.</p>
 <pre><code>./count-bytes main.odin
 ./count-bytes main.odin &gt;result.txt
 ./count-bytes missing.txt 2&gt;error.txt
@@ -208,7 +268,27 @@ cat main.odin | wc -l</code></pre>
 </svg>
 <figcaption>Use the returned byte count, not the buffer capacity. A read may be short without reaching EOF, and a logical record can cross a buffer boundary.</figcaption>
 </figure>
-<h3>Why bounded reads matter</h3>
+<h3>A count-only loop with a fixed memory budget</h3>
+<p>This procedure is an extractable Odin example requiring <code>core:os</code>. It borrows a handle: the caller closes it if the caller opened it, but should not close inherited stdin merely because a helper has finished counting.</p>
+<pre><code>count_stream :: proc(input: ^os.File) -&gt; (total: u64, err: os.Error) {
+    buffer: [4096]u8
+    for {
+        n, read_err := os.read(input, buffer[:])
+        if u64(n) &gt; max(u64) - total {
+            return total, .Invalid_Argument
+        }
+        total += u64(n)
+        if read_err == .EOF { return total, nil }
+        if read_err != nil { return total, read_err }
+        if n == 0 { return total, .Unexpected_EOF }
+    }
+}</code></pre>
+<p>The buffer is reused; only the total survives an iteration. The no-progress branch avoids an accidental infinite loop for an unusual stream that returns zero without EOF. The overflow check ensures our counter cannot silently wrap on an extraordinarily long input. Here it reports a general invalid-argument error; a larger application could define a more descriptive domain error.</p>
+<p>A byte counter need not interpret <code>buffer[:n]</code>. A parser must. Never inspect the unfilled tail as if it were new input: it contains old or irrelevant bytes. If you retain a preview, copy at most the remaining preview budget before the next read reuses the buffer.</p>
+<h3>What the OS wrapper actually does</h3>
+<p><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin">os.read</a> delegates through the file’s stream procedure. The POSIX implementation in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_posix.odin">file_posix.odin</a> caps a request, calls <code>posix.read</code>, maps zero to EOF, and maps a negative result to an error. Its shown read branch does not supply an automatic retry loop for every interruption. Do not import assumptions about another language’s I/O library.</p>
+<p>The count loop above adds bytes before interpreting the error. That structure also accommodates interfaces that can return useful bytes with a terminal condition. It is not an invitation to ignore the error; success is reported only on the completion condition we chose.</p>
+<h3>Bounded memory is not bounded time</h3>
 <p>A file can be larger than memory, a pipe may never close, and a producer may send data more slowly than expected. Bounded processing keeps memory use predictable. For network or pipe programs, also decide how to handle partial messages, cancellation, and broken pipes; a stream boundary is not automatically a record boundary.</p>
 <p>Keep diagnostics on stderr so they do not contaminate machine-readable stdout. Test the behavior with a pipe and redirection, not only by watching the terminal.</p>
 <div class="exercise"><strong>Exercise 11.1.</strong> Add stdin support to <code>count-bytes</code>. Preserve path mode, document how <code>-</code> selects stdin, and test a short pipeline plus a large stream.</div>
@@ -216,7 +296,8 @@ cat main.odin | wc -l</code></pre>
 </section>
 <section id="environment" class="chapter">
 <h2>12. Environment and process context</h2>
-<p>A process starts with more context than its arguments: environment variables, working directory, inherited file handles, and user identity. Treat this as external input. Values may be missing or empty and may not be trustworthy.</p>
+<p>Suppose a tool uses <code>HOME</code> to find configuration. An empty value and an absent variable might both print as nothing. Should they mean the same thing? Only if we have deliberately chosen that contract. Checking the text alone throws away the distinction before we can decide.</p>
+<p>Environment, working directory, inherited handles, and identity are inputs too. Odin’s implicit allocator context is a separate concept; it is not the process environment with a different name.</p>
 <pre><code>package main
 
 import "core:fmt"
@@ -237,17 +318,23 @@ main :: proc() {
 env -u HOME ./your-program
 pwd
 id</code></pre>
-<p>These commands let you test empty versus unset input, and inspect working-directory and identity context. Avoid using an environment value as a path, command, or permission decision until you have validated it.</p>
+<p>These commands let you test empty versus unset input. Do not infer trust from the fact that a value arrived through the environment. A working directory also changes the interpretation of every relative path; repeat your test from a different directory before declaring the path contract complete.</p>
+<h3>Allocation is part of this overload</h3>
+<p><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env.odin">env.odin</a> groups two <code>lookup_env</code> overloads. The allocating overload takes a key and allocator and returns a string plus <code>found</code>. The buffer overload instead takes a backing buffer and returns a string plus an error. Similar names do not imply identical failure shapes or ownership.</p>
+<p>For the no-CRT Linux implementation in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/env_linux.odin">env_linux.odin</a>, the lookup scans stored key/value entries and uses an index of minus one to signal absence. An empty value can still have a valid index. The allocating path clones the found string; the buffer path copies into the supplied buffer or reports <code>Buffer_Full</code>. The returned buffer-backed string is a borrowed view, not an owner.</p>
+<p>That file also contains a warning about synchronizing the no-CRT environment implementation with third-party code linked to libc. We should not turn one platform branch into a universal claim about environment mutation across all foreign libraries. Prefer stable startup configuration when possible, and isolate environment-changing tests from concurrent consumers.</p>
+<div class="exercise"><strong>Explain the difference.</strong> Design three results for a configuration key: absent, present but empty, and present with text. Then choose deliberately which results trigger a default. Run both shell cases above rather than simulating absence with an empty string.</div>
 </section>
 <section id="child-process" class="chapter">
 <h2>13. Starting child processes</h2>
-<p>A program often needs to invoke another program. Odin's process descriptor represents the command as an argument vector: each string is one argument. It starts the executable directly, not through a shell.</p>
+<p>We already have programs that count, probe, and transform files. Invoking them can be simpler than rebuilding them as libraries. The important boundary is not “inside or outside Odin”; it is the contract for arguments, output, completion, and ownership.</p>
+<p><code>Process_Desc.command</code> is an argument vector, not a shell script. A filename containing a semicolon remains one argument when passed as one string. That removes shell interpretation, but does not prevent the child from interpreting a leading dash as its own option.</p>
 <pre><code>package main
 
 import "core:fmt"
 import "core:os"
 
-main :: proc() {
+run :: proc() -&gt; int {
     desc := os.Process_Desc{
         command = []string{"printf", "child says hello\n"},
     }
@@ -257,7 +344,7 @@ main :: proc() {
 
     if err != nil {
         fmt.eprintln("could not run child: ", err)
-        os.exit(1)
+        return 1
     }
 
     fmt.printfln("exit=%d success=%t", state.exit_code, state.success)
@@ -265,17 +352,31 @@ main :: proc() {
     if len(stderr) &gt; 0 {
         fmt.eprintln(string(stderr))
     }
+    return 0 if state.success &amp;&amp; state.exit_code == 0 else 1
+}
+
+main :: proc() {
+    status := run()
+    os.exit(status)
 }</code></pre>
 <p>Try running it and then change the command to a missing executable. A spawn error differs from a child process that starts successfully and exits with a non-zero code; inspect both the returned error and <code>state.exit_code</code>.</p>
 <div class="callout"><strong>Security rule:</strong> do not concatenate untrusted input into a shell command. Pass an executable and separate arguments. If a shell is genuinely required, make that boundary explicit and validate every value for the shell language being used.</div>
 <h3>Captured output has a cost</h3>
 <p><code>process_exec</code> captures stdout and stderr in memory until the child exits. That is convenient for short commands with bounded output. For long-running commands, large output, or interactive processes, use the lower-level process and pipe APIs so output can be consumed as it arrives. Decide who owns each pipe end and close unused ends; otherwise a reader may never observe EOF.</p>
-<p>A nil environment in <code>Process_Desc</code> means the child inherits the current environment. If you construct an environment explicitly, remember that it represents the child's environment, not a small patch unless the API says otherwise.</p>
+<h3>Read the capture helper as a resource graph</h3>
+<p>In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">process_exec</a>, two pipes are created, one per output channel. A nested scope installs their write ends in a copy of the descriptor and starts the child. The parent closes its write ends when that scope exits, including on failure. Why so early? An extra open write end can stop a reader from observing EOF even after the child is finished.</p>
+<p>The helper alternates checking the two read ends and appends received bytes to two dynamic arrays. This avoids simply reading stdout to completion while ignoring a full stderr pipe, but it still accumulates both outputs without a built-in size budget. Its 1024-byte scratch buffer is not a cap on captured output. The final byte slices belong to the supplied allocator, including when an error is returned; register their deletion before interpreting the error.</p>
+<p>The descriptor’s stdout and stderr must remain nil when using capture: the helper asserts that you have not simultaneously requested redirection. Lower-level <code>process_start</code> uses those handles differently; nil there shuts a channel down rather than automatically inheriting a terminal. Convenience and primitive APIs are not interchangeable.</p>
+<h3>Finding the executable is another input boundary</h3>
+<p>Read the Linux <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process_linux.odin">_process_start</a> path. In this revision, a name without a slash searches the parent’s PATH, then checks the current directory as a fallback. It converts each argument and environment entry into a C string before execution. A supplied environment replaces the child environment; it is not a patch. The executable search occurs using the parent’s environment, so a child-only PATH does not necessarily control that search.</p>
+<p>For a controlled service, an approved absolute executable path is clearer than relying on a mutable PATH and working directory. Reject embedded NUL bytes before crossing a C-string boundary. Also check both the API error and the child exit code; on Linux <code>success</code> reflects a zero normal exit, while its meaning is not identical on every platform.</p>
+<p>Do not treat <code>process_exec</code> as a timeout mechanism. Its synchronous capture waits for completion. Choose lower-level supervision when cancellation or an output budget is a requirement, and drain both output channels while the child is running.</p>
 </section>
 <section id="linux" class="chapter">
 <p class="chapter-no">Part V · Linux systems thinking</p>
 <h2>14. Linux as a systems-programming lab</h2>
-<p>Start with Odin's <code>core:os</code> package for ordinary operating-system work. It wraps common operations—files, environment, paths, process execution—in APIs that communicate intent and may work across operating systems. Use Linux-specific APIs when you need a Linux facility that the wrapper does not expose.</p>
+<p>Opening <code>/proc/self/status</code> is a useful trap for our intuition. We may expect a file’s contents to belong to a persistent object and its size metadata to predict what a read returns. Procfs challenges both assumptions: the kernel generates a view, and <code>self</code> identifies the process performing the open.</p>
+<p>Start with <code>core:os</code>. Going below it should answer a concrete requirement, such as retrieving a Linux-specific status structure or using an event facility. Lower-level code adds obligations; it does not automatically add correctness.</p>
 <h3>Think in resources and boundaries</h3>
 <div class="grid">
 <div class="card"><h3>Process</h3><p>A running program has an identity, arguments, environment, working directory, and exit status. A child process is a separate program with its own lifetime.</p></div>
@@ -286,13 +387,18 @@ main :: proc() {
 <p>Linux exposes useful interfaces through filesystems such as <code>/proc</code> and <code>/sys</code>, but those are interfaces, not promises that every file behaves like ordinary persistent storage. Document when a tool depends on a Linux-specific path or kernel facility.</p>
 <h3>When to go below <code>core:os</code></h3>
 <ol><li>Write down the capability you need.</li><li>Search the current Odin package docs and source for an existing wrapper.</li><li>Prefer the wrapper when it covers your requirement.</li><li>If direct Linux APIs are needed, read the version-matched <code>core:sys/linux</code> declarations and examples.</li><li>Record argument types, ownership, return values, error handling, and platform limits in your code or design notes.</li></ol>
-<p>Do not copy syscall numbers or signatures from an old blog post and assume they still match. Linux architecture matters, the ABI matters, and Odin's system packages are versioned with the compiler. Inspect the source corresponding to the compiler you are using.</p>
+<h3>Trace one abstraction boundary, not the entire kernel</h3>
+<p>Follow <code>os.read</code> from <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file.odin">file.odin</a> into the selected stream procedure. Then compare <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_posix.odin">the POSIX implementation</a> with <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/sys/linux">core/sys/linux</a>. A portable procedure can delegate to different target code. Its name alone does not establish which path you compiled.</p>
+<p>A useful trace records the handle representation, request buffer and length, platform call, and translated error. Notice what is lost at the translation boundary: the shown POSIX read path maps negative results to a general error rather than exposing every errno as a distinct language-level value. If an application genuinely needs to distinguish interruption from another event, first find an API that preserves the required information.</p>
+<p><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin">Runtime entry code</a> supplies another concrete lesson: target branches contain different syscall numbers and startup forms. Copying an amd64 number into another architecture is not portable low-level programming. Read the selected declarations and test the actual target you claim to support.</p>
+<p>A read from procfs is also not a whole-system snapshot. Values can change between reads, kernel versions add fields, and access permissions can differ in containers. When inspecting PID text, test your own parsing rule with a small fixture, then test the live path separately.</p>
 <div class="exercise"><strong>Lab 14.1.</strong> Read <code>/proc/self/status</code> with the file-reading example. Find the process ID with <code>grep '^Pid:'</code>. Repeat after invoking the program from a shell pipeline. Which details are stable, and which are environment-dependent?</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> <code>/proc/self</code> means the process that opens the path. When your Odin program opens it, the PID is the Odin process—not necessarily the shell, the pipeline producer, or the process that later reads the captured output.</p>
 </section>
 <section id="testing" class="chapter">
 <h2>15. Build, test, debug, and inspect</h2>
-<p>Short feedback loops make systems programming less mysterious. Check syntax and types early, then test observable behavior at the program boundary.</p>
+<p>A program can type-check, pass package tests, and still fail when someone runs it from another directory. None of those observations contradicts the others. They answer different questions. Debugging becomes easier when we stop treating “the tests passed” as a single universal certificate.</p>
+<p>First identify the boundary that failed: compilation, package behavior, process behavior, linking, or runtime loading. Then choose the smallest experiment that can distinguish your competing explanations.</p>
 <pre><code>odin check .
 odin run .
 odin test .
@@ -306,12 +412,20 @@ odin build . -out:tool</code></pre>
 <tr><td>Is memory proportional to input?</td><td>Compare whole-file reading with a bounded streaming design on a large file.</td></tr>
 <tr><td>Does the child run safely?</td><td>Pass arguments containing spaces and punctuation as separate strings.</td></tr>
 </tbody></table>
-<p>When behavior is wrong, reduce the input and program until one cause remains. Preserve the smallest failing case as a repeatable test.</p>
+<h3>Build the experiment before choosing the explanation</h3>
+<p>Read the startup sequence in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/entry_unix.odin">entry_unix.odin</a> and the process boundary in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">process.odin</a>. A missing executable, a failed child, and a successfully executed program whose output violates our format are three different failures. A link failure occurs before any of those runtime paths. Make the classification before changing code.</p>
+<p>For an allocation suspicion, isolate a package-level operation and use the test runner’s allocator tracking. For a pipeline failure, build the executable and capture stdout, stderr, and status. For a library-loading failure, inspect the linked artifact with <code>ldd</code> only for executables you trust, and compare installed development libraries with runtime libraries. Debug information makes breakpoints and stack traces more useful, but it does not add a test oracle.</p>
+<pre><code>odin build . -debug -out:tool
+./tool 'path with spaces' &gt; out.txt 2&gt; err.txt
+status=$?
+printf '%s\n' "$status"</code></pre>
+<p>Change one input or one implementation decision at a time. If a large file triggers the problem, reduce its size or structure until the trigger is clear. Preserve that case as a fixture. “It stopped happening after three unrelated edits” is weaker evidence than a failure that disappears after one targeted change and returns when that change is reversed.</p>
 </section>
 <section id="testing-specs" class="chapter">
 <p class="chapter-no">Part VI · Tests and specifications</p>
 <h2>16. Tests as executable specifications</h2>
-<p>A test is a small, repeatable example of a package contract: given this input, these observable results should hold. Good tests protect behavior at important boundaries, not the spelling of an implementation.</p>
+<p>Our preview function promises to return at most a requested number of bytes. Four length checks sound convincing. But an implementation that always returns the <em>last</em> bytes could pass those checks too. The first question in test design is therefore not “how many tests?” It is “which incorrect implementations would this assertion allow?”</p>
+<p>We will specify both content and lifetime. A preview is a view over the first bytes, not a newly allocated copy. That is a deliberate API choice; callers must keep the input alive.</p>
 <p>Odin discovers tests by the <code>@(test)</code> attribute, not by a special filename. Keep production code and test procedures in the same package directory; a name such as <code>preview_test.odin</code> is a useful convention, while every file still declares the same package.</p>
 <figure class="diagram">
 <svg viewBox="0 0 1000 240" role="img" aria-labelledby="test-title test-desc">
@@ -370,7 +484,26 @@ test_preview_is_empty_for_nonpositive_limit :: proc(t: ^testing.T) {
     testing.expect_value(t, len(preview(bytes[:], 0)), 0)
     testing.expect_value(t, len(preview(bytes[:], -1)), 0)
 }</code></pre>
-<p>Run the package tests with <code>odin test .</code>. Use <code>testing.expect</code> for a condition and <code>testing.expect_value</code> when comparing values. Give tests names that say which behavior they specify, and split unrelated cases so a failure points to one contract.</p>
+<p>Run the package tests with <code>odin test .</code>. These four tests specify length boundaries; they do not yet prove that the prefix bytes are correct. Add the following test to the same test file:</p>
+<pre><code>@(test)
+test_preview_borrows_the_prefix :: proc(t: ^testing.T) {
+    bytes := [3]u8{1, 2, 3}
+    result := preview(bytes[:], 2)
+    if !testing.expect_value(t, len(result), 2) { return }
+    testing.expect_value(t, result[0], u8(1))
+    testing.expect_value(t, result[1], u8(2))
+    result[0] = 9
+    testing.expect_value(t, bytes[0], u8(9))
+}</code></pre>
+<p>The length guard matters: expectations report failures but normally continue execution. Indexing after a failed length expectation would produce a secondary bounds fault that obscures the original contract violation. The mutation check deliberately specifies aliasing; it would be the wrong assertion for an API that promised an independent copy.</p>
+<h3>How an expectation becomes a failed test</h3>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/testing.odin">testing.odin</a>. <code>expect</code> logs an error when its condition is false, then returns that condition. <code>expect_value</code> compares suitable values and logs the expression, expected value, and observed value. Neither function directly increments <code>T.error_count</code> in its body.</p>
+<p>Follow the next boundary into <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/logging.odin">logging.odin</a>: <code>test_logger_proc</code> increments the test error count for error-level or higher messages, clones log text using a runner-owned allocator, and sends a reporting event. <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/testing/runner.odin">runner.odin</a> installs that logger in the test context before invoking the test procedure.</p>
+<p>This is the context system doing useful work. It lets ordinary library calls report through a test-specific logger. It also explains why replacing <code>context.logger</code> casually inside a test can interfere with the failure-recording mechanism. An assertion is not magic simply because its function is named <code>expect</code>; the surrounding runner supplies part of its meaning.</p>
+<h3>Memory tracking has a defined reach</h3>
+<p>In this revision the runner enables tracking by default, creates task allocators and tracking wrappers, and checks remaining tracked allocations and bad frees after the test and its registered cleanups. The feature can find missing cleanup along the tracked allocation path. It cannot certify every foreign allocator, borrowed pointer lifetime, race, or dangling view. FFmpeg allocations are not automatically accounted for by Odin’s tracking allocator.</p>
+<p><code>testing.cleanup</code> records a procedure, data pointer, and a copy of the registration context. The runner executes those cleanups in reverse order, with special handling for faulted tests. The source recommends ordinary <code>defer</code> for usual cases; stronger cleanup has stricter requirements because a fault in it can take down the runner.</p>
+<p>The test seed is another explicit contract: <code>T.seed</code> lets randomized tests repeat a recorded seed. Tests may run concurrently, so file paths, process environment, and mutable globals are not implicitly isolated. A serial run can diagnose sharing, but does not make a shared-state design safe.</p>
 <h3>Make the specification useful</h3>
 <ul><li>Test ordinary results and boundaries: empty input, the smallest and largest accepted values, and limits just below or above the boundary.</li><li>Test rejected input and failure results, not only the happy path.</li><li>Keep each test independent; the runner may execute tests on multiple threads.</li><li>Use <code>defer</code> for ordinary cleanup and avoid shared mutable state between tests.</li><li>When a package has nested packages, use <code>-all-packages</code> only when you intend to run their tests too.</li></ul>
 <p>These are package-level tests. For observable process behavior—stdout, stderr, exit status, pipes, and child-process failures—use the CLI checks from Chapter 15 as well. A unit test can specify a function’s result; it cannot prove that the executable’s external contract is correct.</p>
@@ -380,7 +513,8 @@ test_preview_is_empty_for_nonpositive_limit :: proc(t: ^testing.T) {
 <section id="capstone" class="chapter">
 <p class="chapter-no">Part VII · Put the pieces together</p>
 <h2>17. Capstone: a small file inspector</h2>
-<p>Build <code>odin-inspect</code>, a utility that accepts one file path and reports its size. Then add a bounded preview mode. The point is not to create a full-featured clone of <code>file</code> or <code>hexdump</code>; it is to practice a complete, explicit CLI boundary.</p>
+<p>We can now build a tool whose implementation we can explain rather than merely operate. <code>odin-inspect</code> reports the number of bytes actually read and a bounded preview. It is intentionally not a replacement for <code>file</code> or <code>hexdump</code>. The exercise is to join contracts we have already examined without losing their distinctions.</p>
+<p>Keep one vertical slice working at each stage. A perfect preview parser is not useful if the executable silently reports success on a missing file. Conversely, a good process boundary does not prove that the preview contains the first bytes.</p>
 <h3>Stage A: define the contract</h3>
 <ul><li>Required positional path.</li><li><code>-</code> means stdin in a later stage.</li><li><code>--limit N</code> caps the preview size.</li><li>Normal result goes to stdout; errors go to stderr.</li><li>Invalid arguments and failed reads produce non-zero exit status.</li></ul>
 <h3>Stage B: implement the simplest useful version</h3>
@@ -389,6 +523,17 @@ test_preview_is_empty_for_nonpositive_limit :: proc(t: ^testing.T) {
 <p>Replace whole-file loading with a fixed-size buffer and streaming reads. Keep a running byte count. Store only the first <code>limit</code> bytes for display; continue reading or stop early according to the contract you choose. Write down that trade-off: stopping early is faster, while reading to EOF gives the full byte count.</p>
 <h3>Stage D: make it testable</h3>
 <ol><li>Test a zero-byte file.</li><li>Test a short ASCII file.</li><li>Test UTF-8 text and verify byte count is not described as character count.</li><li>Test a large file and observe memory behavior.</li><li>Test a path containing spaces.</li><li>Test a missing path and an invalid limit.</li><li>Test redirected stdout and stderr separately.</li></ol>
+<h3>A resource and evidence ledger</h3>
+<table><thead><tr><th>Resource or claim</th><th>Owner or evidence</th><th>Common mistaken assumption</th></tr></thead><tbody>
+<tr><td>Opened input handle</td><td>The input-opening scope closes it.</td><td>A borrowed stdin handle is owned in the same way.</td></tr>
+<tr><td>Fixed read buffer</td><td>One local buffer reused by the loop.</td><td>A retained view stays unchanged after the next read.</td></tr>
+<tr><td>Preview allocation</td><td>One explicit allocator and one release path.</td><td>Deleting a subslice is equivalent to freeing its original owner.</td></tr>
+<tr><td>Byte count</td><td>Sum of successful returned ranges.</td><td>The size reported before reading is an immutable snapshot.</td></tr>
+<tr><td>CLI success</td><td>Output channels and exit status tested together.</td><td>Printing the expected number establishes the whole contract.</td></tr>
+</tbody></table>
+<p>Use the <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/file_util.odin">whole-file helper</a> as a deliberately simple Stage B baseline, then replace retention with Chapter 11’s streaming approach. Do not merely change its scratch-buffer size: the accumulating container is what makes whole-file memory proportional to input.</p>
+<p>The peak input-memory budget is the fixed buffer plus preview capacity, with small bookkeeping. Counting to EOF still performs work proportional to input and can wait forever on a producer that never closes. If you choose to stop after the preview is full, label the result as a preview, not a complete byte count.</p>
+<div class="exercise"><strong>Adversarial fixture.</strong> Feed a stream whose first read ends halfway through a UTF-8 sequence, then a stream whose record delimiter crosses the buffer boundary. Byte preview mode may display hex without decoding. Text mode needs a different contract and retained decoder state. Do not quietly turn one into the other.</div>
 <h3>Stage E: add Linux-specific learning</h3>
 <p>Try the inspector against <code>/proc/self/status</code>. Make Linux-only assumptions explicit in help or docs. If you add a Linux-specific API, explain why <code>core:os</code> was not sufficient and tie the code to the Odin source version you tested.</p>
 <div class="checkpoint"><strong>Capstone done when:</strong> another developer can run it from the README, predict its output and exit status, understand who owns every buffer and handle, and reproduce the tests without your terminal history.</div>
