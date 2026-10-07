@@ -197,7 +197,7 @@ for item in items {
 </section>
 <section id="files" class="chapter">
 <p class="chapter-no">Part IV · The operating system</p>
-<h2>10. Files are bytes</h2>
+<h2>12. Files are bytes</h2>
 <p>We want to count a file. The obvious approach is to ask the operating system for its size. Does that count its readable bytes? For a normal immutable disk file, often yes. For <code>/proc</code>, a pipe, or a file being changed concurrently, the question is different. Metadata is a report about an object; reading observes a sequence of bytes.</p>
 <p>Our first implementation reads the input and counts what it receives. That makes the result easy to explain, at the cost of retaining the whole input. Text interpretation comes later: a byte count must not be labeled a character count.</p>
 <p>For a small input, <code>os.read_entire_file_from_path</code> is direct and readable. It returns bytes and an error. This complete tool reports the byte count:</p>
@@ -247,7 +247,7 @@ odin build . -out:count-bytes
 <p class="watch-out"><strong>Subtle watch-out:</strong> a successful read call may return fewer bytes than requested without reaching EOF. Streaming code must process the returned count and continue; a fixed buffer is not a promise of a full read.</p>
 </section>
 <section id="streams" class="chapter">
-<h2>11. Streams, pipes, and bounded work</h2>
+<h2>13. Streams, pipes, and bounded work</h2>
 <p>The file-counting example has one uncomfortable property: a ten-gigabyte input asks us to retain ten gigabytes even though the answer is a single number. We do not need a more ingenious allocator. We need an algorithm that forgets bytes after counting them.</p>
 <p>A Unix pipeline supplies bytes over time rather than handing us a complete array. The read boundaries depend on buffering and scheduling, not on our records. Let us separate the amount of data processed from the amount retained.</p>
 <pre><code>./count-bytes main.odin
@@ -295,7 +295,7 @@ cat main.odin | wc -l</code></pre>
 <p class="watch-out"><strong>Subtle watch-out:</strong> pipes carry arbitrary chunks, not lines or complete records. A single read can split a logical record—or combine several—so parse state must survive buffer boundaries.</p>
 </section>
 <section id="environment" class="chapter">
-<h2>12. Environment and process context</h2>
+<h2>14. Environment and process context</h2>
 <p>Suppose a tool uses <code>HOME</code> to find configuration. An empty value and an absent variable might both print as nothing. Should they mean the same thing? Only if we have deliberately chosen that contract. Checking the text alone throws away the distinction before we can decide.</p>
 <p>Environment, working directory, inherited handles, and identity are inputs too. Odin’s implicit allocator context is a separate concept; it is not the process environment with a different name.</p>
 <pre><code>package main
@@ -326,7 +326,7 @@ id</code></pre>
 <div class="exercise"><strong>Explain the difference.</strong> Design three results for a configuration key: absent, present but empty, and present with text. Then choose deliberately which results trigger a default. Run both shell cases above rather than simulating absence with an empty string.</div>
 </section>
 <section id="child-process" class="chapter">
-<h2>13. Starting child processes</h2>
+<h2>15. Starting child processes</h2>
 <p>We already have programs that count, probe, and transform files. Invoking them can be simpler than rebuilding them as libraries. The important boundary is not “inside or outside Odin”; it is the contract for arguments, output, completion, and ownership.</p>
 <p><code>Process_Desc.command</code> is an argument vector, not a shell script. A filename containing a semicolon remains one argument when passed as one string. That removes shell interpretation, but does not prevent the child from interpreting a leading dash as its own option.</p>
 <pre><code>package main
@@ -374,7 +374,7 @@ main :: proc() {
 </section>
 <section id="linux" class="chapter">
 <p class="chapter-no">Part V · Linux systems thinking</p>
-<h2>14. Linux as a systems-programming lab</h2>
+<h2>16. Linux as a systems-programming lab</h2>
 <p>Opening <code>/proc/self/status</code> is a useful trap for our intuition. We may expect a file’s contents to belong to a persistent object and its size metadata to predict what a read returns. Procfs challenges both assumptions: the kernel generates a view, and <code>self</code> identifies the process performing the open.</p>
 <p>Start with <code>core:os</code>. Going below it should answer a concrete requirement, such as retrieving a Linux-specific status structure or using an event facility. Lower-level code adds obligations; it does not automatically add correctness.</p>
 <h3>Think in resources and boundaries</h3>
@@ -396,7 +396,7 @@ main :: proc() {
 <p class="watch-out"><strong>Subtle watch-out:</strong> <code>/proc/self</code> means the process that opens the path. When your Odin program opens it, the PID is the Odin process—not necessarily the shell, the pipeline producer, or the process that later reads the captured output.</p>
 </section>
 <section id="testing" class="chapter">
-<h2>15. Build, test, debug, and inspect</h2>
+<h2>20. Build, test, debug, and inspect</h2>
 <p>A program can type-check, pass package tests, and still fail when someone runs it from another directory. None of those observations contradicts the others. They answer different questions. Debugging becomes easier when we stop treating “the tests passed” as a single universal certificate.</p>
 <p>First identify the boundary that failed: compilation, package behavior, process behavior, linking, or runtime loading. Then choose the smallest experiment that can distinguish your competing explanations.</p>
 <pre><code>odin check .
@@ -423,7 +423,7 @@ printf '%s\n' "$status"</code></pre>
 </section>
 <section id="testing-specs" class="chapter">
 <p class="chapter-no">Part VI · Tests and specifications</p>
-<h2>16. Tests as executable specifications</h2>
+<h2>21. Tests as executable specifications</h2>
 <p>Our preview function promises to return at most a requested number of bytes. Four length checks sound convincing. But an implementation that always returns the <em>last</em> bytes could pass those checks too. The first question in test design is therefore not “how many tests?” It is “which incorrect implementations would this assertion allow?”</p>
 <p>We will specify both content and lifetime. A preview is a view over the first bytes, not a newly allocated copy. That is a deliberate API choice; callers must keep the input alive.</p>
 <p>Odin discovers tests by the <code>@(test)</code> attribute, not by a special filename. Keep production code and test procedures in the same package directory; a name such as <code>preview_test.odin</code> is a useful convention, while every file still declares the same package.</p>
@@ -506,13 +506,13 @@ test_preview_borrows_the_prefix :: proc(t: ^testing.T) {
 <p>The test seed is another explicit contract: <code>T.seed</code> lets randomized tests repeat a recorded seed. Tests may run concurrently, so file paths, process environment, and mutable globals are not implicitly isolated. A serial run can diagnose sharing, but does not make a shared-state design safe.</p>
 <h3>Make the specification useful</h3>
 <ul><li>Test ordinary results and boundaries: empty input, the smallest and largest accepted values, and limits just below or above the boundary.</li><li>Test rejected input and failure results, not only the happy path.</li><li>Keep each test independent; the runner may execute tests on multiple threads.</li><li>Use <code>defer</code> for ordinary cleanup and avoid shared mutable state between tests.</li><li>When a package has nested packages, use <code>-all-packages</code> only when you intend to run their tests too.</li></ul>
-<p>These are package-level tests. For observable process behavior—stdout, stderr, exit status, pipes, and child-process failures—use the CLI checks from Chapter 15 as well. A unit test can specify a function’s result; it cannot prove that the executable’s external contract is correct.</p>
-<div class="exercise"><strong>Exercise 16.1.</strong> Add a function that validates a preview limit. Write tests for a valid value, zero, a negative value, and a value beyond the allowed maximum. Make the test names describe the contract, then run <code>odin test .</code>.</div>
+<p>These are package-level tests. For observable process behavior—stdout, stderr, exit status, pipes, and child-process failures—use the CLI checks from Chapter 20 as well. A unit test can specify a function’s result; it cannot prove that the executable’s external contract is correct.</p>
+<div class="exercise"><strong>Exercise 21.1.</strong> Add a function that validates a preview limit. Write tests for a valid value, zero, a negative value, and a value beyond the allowed maximum. Make the test names describe the contract, then run <code>odin test .</code>.</div>
 <p class="watch-out"><strong>Subtle watch-out:</strong> an assertion that the compiler removes is not a test result. Use <code>core:testing</code> expectations for test outcomes, and check the test command’s exit status in automation.</p>
 </section>
 <section id="capstone" class="chapter">
 <p class="chapter-no">Part VII · Put the pieces together</p>
-<h2>17. Capstone: a small file inspector</h2>
+<h2>22. Capstone: a small file inspector</h2>
 <p>We can now build a tool whose implementation we can explain rather than merely operate. <code>odin-inspect</code> reports the number of bytes actually read and a bounded preview. It is intentionally not a replacement for <code>file</code> or <code>hexdump</code>. The exercise is to join contracts we have already examined without losing their distinctions.</p>
 <p>Keep one vertical slice working at each stage. A perfect preview parser is not useful if the executable silently reports success on a missing file. Conversely, a good process boundary does not prove that the preview contains the first bytes.</p>
 <h3>Stage A: define the contract</h3>

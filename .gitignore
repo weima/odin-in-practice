@@ -1,0 +1,9 @@
+# Generated companion binaries, fixtures, and native bridge artifacts.
+examples/**/.build/
+examples/**/.fixtures/
+docs/examples/**/.build/
+docs/examples/**/.fixtures/
+.venv/
+node_modules/
+site/
+__pycache__/

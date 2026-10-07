@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Pointers and borrowed views · Odin in Practice</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="subpage-header"><p class="eyebrow"><a href="../index.html">Odin in Practice</a> · Offline book</p><h1>Pointers and borrowed views</h1><nav class="book-nav" aria-label="Book navigation"><a href="../index.html">Book contents</a><a href="odin-foundations.html">Odin foundations</a><a href="cli-linux.html">CLI and Linux</a><a href="pointers.html">Pointers</a><a href="memory-philosophy.html">Memory philosophy</a><a href="ffmpeg-libav.html">FFmpeg and libav</a><a href="workbook.html">Workbook and references</a></nav></header>
+<main><section id="pointers" class="chapter">
+<p class="chapter-no">Chapter 10 · Identity, aliasing, and lifetime</p>
+<h2>10. Pointers, references, and borrowed views</h2>
+<p>Suppose a procedure changes a counter, but the caller still sees the old number. Your first instinct might be to “pass it by reference.” Before changing the declaration, ask what was actually copied. Was it the number? A pointer to the number? A slice header that points to many numbers? These are different values with different consequences.</p>
+<p>The useful mental model is not “pointers are complicated integers.” A pointer names a location where a suitably typed object must still exist when you use it. Its type describes how to interpret that location; it does not establish who owns the object, how long it survives, or whether another procedure is using it at the same time. Those missing facts form the rest of the contract.</p>
+<p>This chapter uses the language’s <a href="https://odin-lang.org/docs/overview/#pointers">pointer rules</a> and the runtime shipped with <code>dev-2026-09-nightly:a2fb372</code>. Put each complete program below in its own directory as <code>main.odin</code>, then run <code>odin check .</code> and <code>odin run .</code>. Do not combine their <code>main</code> declarations. Deliberately invalid fragments are labeled separately; they are diagnostic exercises, not programs to execute.</p>
+<h3>1. A value, an address, and an object are three different things</h3>
+<p>In <code>count := 41</code>, the variable holds an integer value. <code>&amp;count</code> takes the address of that variable. The address is a value too, with type <code>^int</code>. Reading <code>p^</code> accesses the integer at the address stored in <code>p</code>. Writing <code>p^ = 42</code> changes that integer, not the pointer’s address.</p>
+<table><thead><tr><th>Expression</th><th>Meaning</th><th>Does it allocate an object?</th></tr></thead><tbody>
+<tr><td><code>copy := count</code></td><td>A separate integer variable initialized with the same value.</td><td>No allocator request is implied.</td></tr>
+<tr><td><code>p := &amp;count</code></td><td>A pointer value naming the existing variable.</td><td>No new integer is created.</td></tr>
+<tr><td><code>q := p</code></td><td>A second pointer value naming the same integer.</td><td>No copy of the target is made.</td></tr>
+<tr><td><code>p^</code></td><td>The target integer, accessed through <code>p</code>.</td><td>No ownership is transferred.</td></tr>
+<tr><td><code>p = &amp;other</code></td><td>Change which object <code>p</code> names.</td><td>The old target and <code>q</code> are unchanged.</td></tr>
+</tbody></table>
+<p>The caret occurs before the type in <code>^int</code> and after the expression in <code>p^</code>. This keeps the declaration and use distinct; it is not C’s <code>*</code> syntax with a cosmetic spelling change. Address-taking requires an addressable operand. A computed temporary such as <code>&amp;(2 + 3)</code> is not a request to allocate a persistent integer.</p>
+<figure class="diagram"><svg viewBox="0 0 900 240" role="img" aria-labelledby="pointer-title pointer-desc">
+<title id="pointer-title">Two pointer copies name one integer</title><desc id="pointer-desc">Pointer variables p and q both point to count. Changing the target through either pointer changes count. An independent integer copy has separate storage and keeps its original value.</desc>
+<defs><marker id="pointer-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect class="box" x="20" y="25" width="190" height="70" rx="10"/><text class="label" x="40" y="55">p: ^int</text><text class="note" x="40" y="79">address of count</text>
+<rect class="box" x="20" y="140" width="190" height="70" rx="10"/><text class="label" x="40" y="170">q := p</text><text class="note" x="40" y="194">same address</text>
+<rect class="box" x="370" y="80" width="190" height="80" rx="10"/><text class="label" x="390" y="112">count</text><text class="note" x="390" y="139">41 → 42 via p^</text>
+<path class="flow" d="M215 60 H295 V105 H358" marker-end="url(#pointer-arrow)"/><path class="flow" d="M215 175 H295 V140 H358" marker-end="url(#pointer-arrow)"/>
+<rect class="box" x="680" y="80" width="195" height="80" rx="10"/><text class="label" x="700" y="112">copy: int</text><text class="note" x="700" y="139">still 41</text>
+</svg><figcaption>Copying an address copies the relationship to the target. Copying an integer copies the integer. Neither operation is a recursive clone of an object graph.</figcaption></figure>
+<h3>2. Passing a pointer is still passing a value</h3>
+<p>Odin procedure parameters are immutable values. A parameter of type <code>^int</code> receives a pointer value; its target may remain mutable. The parameter’s immutability does not spread through the pointer and freeze the integer. Conversely, a pointer parameter is not a reference to the caller’s pointer variable.</p>
+<pre><code>package main
+
+import "core:fmt"
+
+increment :: proc(target: ^int) -&gt; bool {
+    if target == nil { return false }
+    target^ += 1
+    return true
+}
+
+retarget :: proc(slot: ^^int, target: ^int) {
+    slot^ = target
+}
+
+main :: proc() {
+    count := 41
+    copy := count
+    p := &amp;count
+    q := p
+    assert(increment(p))
+    assert(count == 42 &amp;&amp; q^ == 42 &amp;&amp; copy == 41)
+
+    other := 99
+    p = &amp;other
+    assert(p^ == 99 &amp;&amp; q^ == 42)
+    retarget(&amp;p, &amp;count)
+    assert(p == q)
+    assert(!increment(nil))
+    fmt.println("value copies, aliases, retargeting, and nil: checked")
+}</code></pre>
+<p>Predict the values before running. <code>increment(p)</code> changes <code>count</code> because the copied address still names it. Assigning a new address to <code>p</code> leaves <code>q</code> alone. <code>retarget</code> needs <code>^^int</code> because it changes the <em>pointer slot</em> owned by the caller, not the integer target. <code>&amp;p</code> is the address of a pointer variable; <code>slot^</code> is that variable.</p>
+<p>The nil check is an API choice, not a universal pointer idiom. <code>increment</code> accepts absence and returns <code>false</code>. A different procedure could require a non-nil argument and document that precondition. What it must not do is silently claim that every pointer-shaped value is valid.</p>
+<pre><code>// Deliberately invalid fragment: inspect the compiler diagnostic.
+bad_retarget :: proc(p: ^int, other: ^int) {
+    p = other // p is an immutable procedure parameter.
+}</code></pre>
+<p>Even if a language let that assignment change a local parameter copy, it would not change the caller’s pointer slot. The distinction is about which object is mutated, not just which spelling the compiler accepts. The <a href="https://odin-lang.org/docs/overview/#procedures">procedure overview</a> also explains that the ABI may pass a large immutable value indirectly for efficiency. An ABI optimization does not change the source-language value semantics or grant the caller mutable reference semantics.</p>
+<h3>3. What does “reference” mean in Odin?</h3>
+<p>People use “reference” for several things: a C++ reference type, a Rust borrow, a pointer to mutable storage, or simply two values sharing the same target. Odin does not give an ordinary <code>^T</code> a Rust-style lifetime proof or C++’s distinct <code>T&amp;</code> reference declaration. In this book, a <em>borrow</em> means access to storage someone else keeps alive. It is an ownership contract, not a new pointer type.</p>
+<p>There are reference-like language conveniences, including by-reference range iteration. With <code>for &amp;item in items</code>, updates to <code>item</code> update an element of the iterated collection. Ordinary <code>for item in items</code> obtains element values instead. This convenience does not give the element a longer lifetime or authorize resizing the backing container while using its element references.</p>
+<pre><code>// Fragment inside a procedure.
+items := [3]int{1, 2, 3}
+for item in items {
+    _ = item // Reading a value does not update items.
+}
+for &amp;item in items {
+    item *= 2 // Updates the actual element.
+}
+assert(items == [3]int{2, 4, 6})</code></pre>
+<p>Use explicit pointers when a procedure must mutate an object, and use slices when a procedure needs a bounded range. Avoid saying “everything is passed by reference” merely because elements remain shared. That phrase erases the most useful distinction: the small value can be copied while the storage it names stays shared.</p>
+<h3>4. Struct copies stop at their fields</h3>
+<p>A struct with integer fields copies those integers. A struct with a pointer field copies an address. A struct with a slice field copies a header. There is no automatic traversal that discovers and duplicates every target. Such a traversal would also need an answer for cycles, shared identity, allocation policy, and error handling.</p>
+<pre><code>package main
+
+import "core:fmt"
+
+Record :: struct {
+    count: int,
+    values: []int,
+    selected: ^int,
+}
+
+main :: proc() {
+    backing := [3]int{10, 20, 30}
+    a := Record{count = 3, values = backing[:], selected = &amp;backing[1]}
+    b := a
+    b.count = 99
+    b.values[0] = 7
+    b.selected^ = 8
+    assert(a.count == 3 &amp;&amp; b.count == 99)
+    assert(a.values[0] == 7 &amp;&amp; backing[1] == 8)
+
+    b.values = b.values[:1]
+    assert(len(a.values) == 3 &amp;&amp; len(b.values) == 1)
+    fmt.println("separate headers, shared targets: checked")
+}</code></pre>
+<p>The two <code>count</code> fields are independent. The <code>values</code> headers are independent too: shortening <code>b.values</code> does not shorten <code>a.values</code>. But their data pointers still name the same backing array, so an element mutation is visible through both. The <code>selected</code> field adds another route to the same data.</p>
+<p>For a fixed array of these records, copying the array copies each record value, including its addresses and slice headers. It does not clone the pointed-to integers. “Arrays copy their elements” remains true; “all data reachable from those elements becomes independent” does not follow.</p>
+<p>Read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">runtime/core.odin</a>: <code>Raw_Slice</code> stores a data pointer and length; <code>Raw_Dynamic_Array</code> additionally stores capacity and allocator. These implementation representations explain the sharing. They do not encode a borrow checker, reference count, or a recursively applied destructor.</p>
+<h3>5. A slice checks an index, not the history of its storage</h3>
+<p>A slice supplies the extent missing from a bare pointer. Under normal bounds checking, <code>view[i]</code> checks that <code>i</code> lies in the slice’s range. That is valuable, but separate from asking whether the range still refers to live memory. A dangling slice can have a plausible pointer and a correct-looking length.</p>
+<p>Likewise, a subslice preserves access to part of the same allocation; it does not become a new allocation owner. If <code>owner</code> names an allocated slice, <code>middle := owner[1:3]</code> starts at an interior address. Deleting <code>middle</code> as though it were the original allocation can pass an invalid pointer or size to the allocator. Keep the original owner and release it with its original allocator.</p>
+<p>Strings are another pointer-and-length value, but language strings are immutable byte sequences. A mutable byte slice does not become a safe independent string merely because you construct a string view of it. If the bytes are later overwritten or freed, the view’s contract is broken. Clone when independence is required, and distinguish a byte length from a Unicode character count.</p>
+<h3>6. Single pointers and multi-pointers solve different problems</h3>
+<p><code>^T</code> names a single target accessed with <code>p^</code>. <code>[^]T</code> describes a C-like pointer to successive values and supports indexing without storing a length. It cannot be dereferenced with <code>p^</code>; use an index or a suitable conversion. The type does not mean “infinite array” or “the compiler knows the allocation size.”</p>
+<pre><code>package main
+
+import "core:fmt"
+
+main :: proc() {
+    values := [3]int{10, 20, 30}
+    p: [^]int = raw_data(values[:])
+    assert(p[1] == 20) // We know this index is valid from values.
+    view := p[:len(values)]
+    view[2] = 99
+    assert(values[2] == 99)
+    fmt.println("multi-pointer plus trusted extent becomes a view")
+}</code></pre>
+<p><code>raw_data</code> extracts the backing address; it does not allocate, clone, or pin it. Creating <code>p[:n]</code> constructs a slice with a claimed length. The compiler cannot discover whether a foreign pointer actually covers <code>n</code> valid elements. Even where slice construction checks the order of low/high indices, that does not validate the foreign allocation’s extent.</p>
+<p>For a C API returning pointer-plus-count, validate the count, multiplication overflow, element layout, alignment, and the pointer’s documented lifetime before constructing a view. A non-zero count with a nil pointer is not a usable range. A count in bytes is not automatically a count of elements. Passing a pointer to the wrong struct layout can be invalid even when the address is aligned and non-nil.</p>
+<p>Odin does not let you write ordinary <code>p + 1</code> pointer arithmetic. Multi-pointer indexing and <code>core:mem</code> offset utilities support the cases that genuinely need it; removing the infix syntax does not remove the obligation to stay within valid storage. Prefer a slice at an Odin-facing API boundary when a known range is the real contract.</p>
+<h3>7. Nil, valid, and owned are independent questions</h3>
+<p>The zero value of a pointer is <code>nil</code>. Comparing a pointer with nil tells you that its address value is absent; it does not tell you whether a non-nil address is still live, properly aligned, or yours to free. A freed pointer does not automatically turn every alias into nil. Assigning <code>owner = nil</code> changes only that variable.</p>
+<table><thead><tr><th>Pointer state</th><th>May access the target?</th><th>May release it?</th></tr></thead><tbody>
+<tr><td>Nil</td><td>No.</td><td>Follow the allocator/API’s nil-release contract.</td></tr>
+<tr><td>Live borrowed pointer into another object</td><td>Only while the owner and mutation rules permit.</td><td>No, not merely because the address is non-nil.</td></tr>
+<tr><td>Live allocation owner</td><td>Within its extent and synchronization contract.</td><td>Exactly once, using the matching release operation.</td></tr>
+<tr><td>Stale non-nil pointer after free/reset/reallocation</td><td>No.</td><td>No second release.</td></tr>
+</tbody></table>
+<p>Never test a dangling pointer by dereferencing it to “see if it still works.” Reclaimed bytes can retain their old contents; another allocation may reuse the same address. A successful-looking read is not evidence that the lifetime is valid. A numeric address equal to an earlier address also does not prove object identity survived.</p>
+<h3>8. Returning a pointer does not extend a local lifetime</h3>
+<pre><code>// Intentionally unsafe lifetime sketch. Do not run this.
+bad_result :: proc() -&gt; ^int {
+    local := 42
+    return &amp;local
+}</code></pre>
+<p>The local object belongs to the activation of <code>bad_result</code>. Odin does not promise to keep it alive by moving it to a garbage-collected heap because its address escaped. A compiler diagnostic, if one catches a particular case, is helpful but not a general static lifetime proof. Optimizations can change the manifestation of a misuse without changing the misuse itself.</p>
+<p>The safe alternatives depend on the real requirement: return an integer value; accept caller-owned output storage; or allocate a result whose owner and allocator are explicit. Do not start with heap allocation when a small value return already solves the problem.</p>
+<pre><code>package main
+
+import "core:fmt"
+import "core:mem"
+
+Counter :: struct { value: int }
+
+create_counter :: proc(allocator: mem.Allocator) -&gt;
+    (result: ^Counter, err: mem.Allocator_Error) {
+    result = new(Counter, allocator) or_return
+    result.value = 42
+    return
+}
+
+run :: proc() -&gt; mem.Allocator_Error {
+    allocator := context.allocator
+    owner, err := create_counter(allocator)
+    if err != nil { return err }
+    defer free(owner, allocator)
+    borrowed := owner
+    borrowed.value += 1
+    assert(owner.value == 43)
+    fmt.println("one allocation owner; borrowed access ends before free")
+    return nil
+}
+
+main :: proc() {
+    err := run()
+    assert(err == nil, "allocation failed in pointer example")
+}</code></pre>
+<p>The field selector can follow a pointer to a struct, so <code>owner.value</code> reads a field in the pointed-to <code>Counter</code>. The procedure’s named results allow <code>or_return</code> to propagate allocation failure before dereferencing. The returned pointer owns a new allocation by this API’s documented contract, not by virtue of its <code>^Counter</code> type. <code>borrowed</code> must not be freed separately.</p>
+<p><code>new</code> requests zero-initialized storage in this runtime. The “stack versus heap” distinction alone is not enough: the supplied allocator could be an arena, so even allocated storage can have a short bulk-reset lifetime. The next chapter explains that policy choice.</p>
+<h3>9. Reallocation invalidates a relationship, not just an address</h3>
+<p>A dynamic array’s header may remain in a stable local variable while its element storage moves. A pointer to the header, <code>&amp;items</code>, is not a pointer to an element, <code>&amp;items[0]</code>. Appending can update the header to name a new allocation while an old element pointer still names reclaimed storage.</p>
+<pre><code>// Ownership sketch, not a complete program.
+items := make([dynamic]int)
+append(&amp;items, 10)
+old_element := &amp;items[0]
+append(&amp;items, 20) // May grow/reallocate; do not rely on old_element.
+// Reacquire &amp;items[0] after operations that can move the storage.</code></pre>
+<p>In <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core_builtin.odin">core_builtin.odin</a>, the append path checks capacity and asks the allocator to resize before copying elements. Whether a particular allocator grows in place is an implementation outcome, not a caller-side lifetime guarantee. Reserving enough capacity can avoid a particular growth, but deletion, later reservation changes, and reordering still need their own reasoning.</p>
+<p>Use indices when the container can move and an index remains a meaningful identity. An index is not automatically a stable handle either: removing or sorting elements changes what that position means. If the application needs identity across moves and deletion, design a handle with a checked validity rule rather than treating the old address as that rule.</p>
+<h3>10. Foreign pointers bring a foreign release contract</h3>
+<p>The libav chapters use <code>^rawptr</code> to model a C API that writes a handle through a pointer-to-pointer. The library may allocate the object internally, and its close function may also clear the caller’s handle. That does not make <code>free(handle)</code> through Odin’s default allocator correct. Match acquisition with the foreign API’s release procedure.</p>
+<p>A <code>rawptr</code> loses the pointed-to type. A cast back to <code>^T</code> restores a type description for the compiler, not proof that the address actually contains a live <code>T</code>. Check the ABI, callback lifetime, alignment, and ownership contract. A C callback has no automatically supplied Odin context; code that enters Odin from a foreign convention must establish the appropriate context before invoking context-dependent procedures.</p>
+<p>Also distinguish a pointer passed only for the duration of a call from one retained by the library. A C function that stores your callback data needs that data to survive future calls; handing it a pointer to a local record that soon goes out of scope breaks the contract. Foreign code is not obliged to understand your arena reset schedule.</p>
+<h3>11. Shared access needs a synchronization contract too</h3>
+<p>Two pointers to one live object establish possible aliasing, not thread safety. If concurrent procedures read and write that object without the required synchronization, a correct allocator and a correct lifetime do not make the program correct. Publishing a pointer also publishes whatever lifetime and mutation assumptions its consumer needs.</p>
+<p>The simplest ownership rule is often one mutable owner, short borrowed access, and no container growth while a view is in use. That is a design discipline rather than a theorem enforced by the language. Odin provides useful types and runtime checks, but an ordinary pointer does not carry a unique-owner certificate.</p>
+<h3>12. Tests that distinguish copies from aliases</h3>
+<p>Save this complete package separately as <code>pointers_test.odin</code> and run <code>odin test .</code>. Each assertion rules out a different wrong mental model; none deliberately dereferences invalid memory.</p>
+<pre><code>package pointer_specs
+
+import "core:testing"
+
+@(test)
+test_pointer_copy_shares_target :: proc(t: ^testing.T) {
+    value := 1
+    independent := value
+    p := &amp;value
+    q := p
+    q^ = 9
+    testing.expect_value(t, value, 9)
+    testing.expect_value(t, independent, 1)
+}
+
+@(test)
+test_slice_headers_are_separate_but_elements_are_shared :: proc(t: ^testing.T) {
+    backing := [3]int{1, 2, 3}
+    a := backing[:]
+    b := a[:1]
+    b[0] = 7
+    testing.expect_value(t, len(a), 3)
+    testing.expect_value(t, len(b), 1)
+    testing.expect_value(t, a[0], 7)
+}
+
+@(test)
+test_retargeting_one_pointer_leaves_the_other :: proc(t: ^testing.T) {
+    first, second := 1, 2
+    p := &amp;first
+    q := p
+    p = &amp;second
+    testing.expect_value(t, p^, 2)
+    testing.expect_value(t, q^, 1)
+}
+
+@(test)
+test_multi_pointer_view_borrows_array :: proc(t: ^testing.T) {
+    backing := [2]int{4, 5}
+    p := raw_data(backing[:])
+    view := p[:len(backing)]
+    view[1] = 8
+    testing.expect_value(t, backing[1], 8)
+}
+
+@(test)
+test_reference_iteration_mutates_elements :: proc(t: ^testing.T) {
+    backing := [3]int{1, 2, 3}
+    for &amp;item in backing { item *= 2 }
+    testing.expect_value(t, backing, [3]int{2, 4, 6})
+}</code></pre>
+<div class="exercise"><strong>Exercise 10.1 · Explain every arrow.</strong> Extend <code>Record</code> with a fixed array and another slice. Copy the record, mutate one field of each kind, and predict exactly which observations change. Draw storage boxes separately from header values.</div>
+<div class="exercise"><strong>Exercise 10.2 · Choose the lifetime, then the interface.</strong> A procedure must provide a three-byte preview to its caller. Design a borrowed return, a caller-buffer version, and an allocated independent copy. State who releases storage in each version and whether another read may overwrite it. Pick the simplest interface that satisfies a stated use case.</div>
+<div class="exercise"><strong>Exercise 10.3 · Diagnose without invoking a dangling read.</strong> Compile separate fragments for assigning an immutable pointer parameter, writing <code>p + 1</code>, and dereferencing a multi-pointer with <code>p^</code>. Record the rejection. Then audit an append loop on paper: mark the last valid use of every element pointer before a possible resize.</div>
+<div class="checkpoint"><strong>Checkpoint.</strong> For any address or view, answer five questions: what object does it name, what is its valid extent, who keeps it alive, what can invalidate it, and who may mutate it? If your answer is only “it is non-nil,” the contract is incomplete.</div>
+<p>Continue with <a href="memory-philosophy.html#memory-philosophy">Chapter 11: why Odin gives you these lifetime decisions instead of hiding them</a>.</p>
+</section></main>
+<footer><nav class="book-nav" aria-label="Chapter progression"><a href="cli-linux.html#memory">Previous: memory and allocators</a><a href="memory-philosophy.html#memory-philosophy">Next: memory and error philosophy</a><a href="../index.html#contents">Book contents</a></nav></footer>
+</body>
+</html>

@@ -1,0 +1,10 @@
+flowchart TB
+  accTitle: Disjoint writes followed by joining every worker
+  accDescr: Stable descriptors and immutable input remain live until all workers join. Each worker writes a separate output range.
+  Parent["Parent: stable descriptors and immutable input"] --> W0["Worker 0: output 0 to a"]
+  Parent --> W1["Worker 1: output a to b"]
+  Parent --> W2["Worker 2: output b to n"]
+  W0 --> Join["Join every started worker"]
+  W1 --> Join
+  W2 --> Join
+  Join --> Consume["Check errors, consume output, release storage"]

@@ -1,0 +1,61 @@
+site_name: Odin in Practice
+site_url: https://weima.github.io/odin-in-practice/
+site_description: A source-guided Odin book for practical systems programming.
+docs_dir: docs
+site_dir: html
+use_directory_urls: false
+theme:
+  name: material
+  font: false
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+plugins:
+  - search
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - tables
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+extra_css:
+  - assets/book.css
+nav:
+  - Book contents: index.md
+  - Foundations: chapters/odin-foundations.md
+  - CLI and Linux: chapters/cli-linux.md
+  - Pointers: chapters/pointers.md
+  - Memory philosophy: chapters/memory-philosophy.md
+  - Networking: chapters/networking.md
+  - Docker: chapters/containers.md
+  - Parallel programming: chapters/parallel-programming.md
+  - FFmpeg and libav: chapters/ffmpeg-libav.md
+  - Workbook and sources: chapters/workbook.md
+not_in_nav: |
+  /examples/**
+  /skills/**
+exclude_docs: |
+  **/.build/**
+  **/.fixtures/**
+  **/__pycache__/**
+validation:
+  links:
+    not_found: warn
+    anchors: warn
+    unrecognized_links: warn

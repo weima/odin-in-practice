@@ -1,0 +1,5 @@
+flowchart LR
+  accTitle: How an Odin allocator context flows through calls
+  accDescr: The caller selects an allocator. Nested parsing allocations use that context. A returned slice does not extend the backing arena lifetime.
+  Caller["Caller scope selects request allocator"] --> Parser["parse input: implicit Odin context"] --> Allocation["make slice of Token: context.allocator"] --> Borrow["Returned slice refers to arena storage"]
+  Borrow --> Use["Consume before arena reset"]

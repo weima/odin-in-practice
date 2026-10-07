@@ -1,0 +1,6 @@
+flowchart LR
+  accTitle: The foreign-call ownership boundary
+  accDescr: Odin declares a C ABI, calls the native library, and explicitly releases library-owned handles through that library.
+  Odin["Odin values and foreign declarations"] -->|"compatible ABI"| Native["C library"]
+  Native -->|"opaque handle or result"| Owner["Odin caller tracks ownership"]
+  Owner -->|"library release procedure"| Native

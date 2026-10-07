@@ -1,0 +1,9 @@
+.md-typeset figure { margin: 1.5rem 0; }
+.md-typeset figure svg { display: block; width: 100%; height: auto; }
+.md-typeset figure img, .md-typeset img[src*="/diagrams/"] { background: #fff; border-radius: .4rem; padding: .6rem; }
+.md-typeset figcaption { font-size: .8rem; color: var(--md-default-fg-color--light); margin-top: .5rem; }
+.md-typeset .exercise, .md-typeset .checkpoint, .md-typeset .callout { border-left: .2rem solid var(--md-primary-fg-color); padding: .6rem 1rem; margin: 1rem 0; background: var(--md-code-bg-color); }
+.md-typeset .chapter-no { color: var(--md-default-fg-color--light); font-size: .75rem; }
+.md-typeset img.cover-art { max-height: 30rem; width: auto; }
+.md-typeset p:has(> img[src*="/diagrams/"]) { overflow-x: auto; }
+.md-typeset img[src*="/diagrams/"] { min-width: 36rem; max-width: none; }

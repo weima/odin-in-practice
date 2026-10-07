@@ -1,0 +1,6 @@
+flowchart TB
+  accTitle: Streamcopy and transcoding paths
+  accDescr: Streamcopy keeps packets compressed and muxes them without decoding. Transcoding decodes frames, optionally filters, then encodes new packets for muxing.
+  Input["Input container"] --> Demux["Demux streams"] --> Select["Select streams and packets"]
+  Select -->|"streamcopy"| Copy["Keep packets compressed; no decode or encode"] --> Mux["Mux compatible packets into output container"]
+  Select -->|"transcode"| Decode["Decode packets into raw frames"] --> Filter["Optionally filter frames"] --> Encode["Encode new packets"] --> Mux

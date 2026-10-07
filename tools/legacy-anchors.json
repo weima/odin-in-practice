@@ -1,0 +1,60 @@
+{
+  "index.html": [
+    "how-to-read",
+    "contents"
+  ],
+  "chapters/cli-linux.html": [
+    "cli-contract",
+    "arguments",
+    "flags",
+    "errors",
+    "memory",
+    "files",
+    "streams",
+    "environment",
+    "child-process",
+    "linux",
+    "testing",
+    "testing-specs",
+    "capstone"
+  ],
+  "chapters/containers.html": [
+    "containers"
+  ],
+  "chapters/ffmpeg-libav.html": [
+    "ffmpeg-cli",
+    "odin-ffprobe",
+    "libav-model",
+    "libav-probe",
+    "libav-decode",
+    "libav-design"
+  ],
+  "chapters/memory-philosophy.html": [
+    "memory-philosophy"
+  ],
+  "chapters/networking.html": [
+    "networking"
+  ],
+  "chapters/odin-foundations.html": [
+    "setup",
+    "first-program",
+    "syntax",
+    "procedures",
+    "independent-type-parameters",
+    "bare-returns",
+    "advanced-odin",
+    "design-decisions"
+  ],
+  "chapters/parallel-programming.html": [
+    "parallel-programming",
+    "promises"
+  ],
+  "chapters/pointers.html": [
+    "pointers"
+  ],
+  "chapters/workbook.html": [
+    "workbook",
+    "glossary",
+    "sources"
+  ]
+}

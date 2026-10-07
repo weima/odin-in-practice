@@ -1,0 +1,17 @@
+name: odin-book-compose
+services:
+  web:
+    image: python:3.13-alpine
+    command: [python, -m, http.server, '1333', --bind, 0.0.0.0, --directory, /srv]
+    ports:
+      - '127.0.0.1:11333:1333'
+    volumes:
+      - type: bind
+        source: ./lab-share
+        target: /srv
+        read_only: true
+    networks:
+      - lab
+networks:
+  lab:
+    name: odin-book-compose-net

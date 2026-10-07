@@ -1,0 +1,6 @@
+flowchart LR
+  accTitle: A bounded stream-reading loop
+  accDescr: Reuse a fixed-size buffer for arbitrarily chunked input. Process only the returned byte count, keep parser state, and repeat until EOF without accumulating the entire stream.
+  Input["File or pipe: arbitrary chunks"] --> Read["Read into fixed-size buffer"] --> Process["Process data up to returned n; keep parser state"]
+  Process -->|"next chunk"| Read
+  Read -->|"EOF"| Done["Finish parser; release resources"]

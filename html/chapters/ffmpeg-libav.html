@@ -1,0 +1,1811 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
+      
+      
+      
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/ffmpeg-libav.html">
+      
+      
+        <link rel="prev" href="parallel-programming.html">
+      
+      
+        <link rel="next" href="workbook.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>FFmpeg and libav - Odin in Practice</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../assets/book.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ffmpeg-and-libav" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Odin in Practice
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FFmpeg and libav
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Odin in Practice
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book contents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="odin-foundations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foundations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="cli-linux.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI and Linux
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pointers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pointers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="memory-philosophy.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory philosophy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="networking.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="containers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parallel-programming.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallel programming
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="ffmpeg-libav.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FFmpeg and libav
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#23-ffmpeg-and-ffprobe-from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        23. FFmpeg and ffprobe from the command line
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="23. FFmpeg and ffprobe from the command line">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#media-is-several-nested-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media is several nested things
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copy-packets-or-transcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copy packets or transcode?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-copy-means-identical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge “copy means identical”
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#odins-boundary-preserves-arguments-not-ffmpeg-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Odin’s boundary preserves arguments, not FFmpeg semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-command-output-a-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make command output a contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-compose-ffprobe-with-odin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        24. Compose ffprobe with Odin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="24. Compose ffprobe with Odin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-json-parser-also-has-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The JSON parser also has a policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-recursive-cleanup-is-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why recursive cleanup is needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-outcomes-not-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three outcomes, not one
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-how-the-libav-libraries-fit-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25. How the libav libraries fit together
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="25. How the libav libraries fit together">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-a-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-memory-management-worlds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two memory-management worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-a-real-odin-to-libav-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26. A real Odin-to-libav binding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="26. A real Odin-to-libav binding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-every-type-against-the-c-prototype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read every type against the C prototype
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-extra-byte-changes-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One extra byte changes the contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-a-pointer-to-the-handle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a pointer to the handle?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-decoding-is-a-sendreceive-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27. Decoding is a send/receive state machine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="27. Decoding is a send/receive state machine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-both-send-and-receive-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why both send and receive exist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-the-state-transitions-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write the state transitions down
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-odin-parallel-headers-are-not-the-payload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Odin parallel: headers are not the payload
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-bounded-decoder-then-inspect-its-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the bounded decoder, then inspect its implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packets-and-frames-have-explicit-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packets and frames have explicit ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-encoding-ownership-timestamps-and-design-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28. Encoding, ownership, timestamps, and design choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="28. Encoding, ownership, timestamps, and design choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transcoding-is-a-pipeline-not-a-single-codec-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transcoding is a pipeline, not a single codec call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-bases-and-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time bases and timestamps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-dimensional-analysis-before-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use dimensional analysis before conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-the-smallest-version-sensitive-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the smallest version-sensitive interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remux-a-new-artifact-without-changing-its-compression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remux a new artifact without changing its compression
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors-versions-and-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors, versions, and threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-binding-or-c-shim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct binding or C shim?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="workbook.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workbook and sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#23-ffmpeg-and-ffprobe-from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        23. FFmpeg and ffprobe from the command line
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="23. FFmpeg and ffprobe from the command line">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#media-is-several-nested-things" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Media is several nested things
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copy-packets-or-transcode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copy packets or transcode?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#challenge-copy-means-identical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Challenge “copy means identical”
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#odins-boundary-preserves-arguments-not-ffmpeg-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Odin’s boundary preserves arguments, not FFmpeg semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-command-output-a-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make command output a contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#24-compose-ffprobe-with-odin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        24. Compose ffprobe with Odin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="24. Compose ffprobe with Odin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-json-parser-also-has-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The JSON parser also has a policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-recursive-cleanup-is-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why recursive cleanup is needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#three-outcomes-not-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Three outcomes, not one
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#25-how-the-libav-libraries-fit-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        25. How the libav libraries fit together
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="25. How the libav libraries fit together">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-a-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-memory-management-worlds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two memory-management worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#26-a-real-odin-to-libav-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        26. A real Odin-to-libav binding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="26. A real Odin-to-libav binding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-every-type-against-the-c-prototype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read every type against the C prototype
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-extra-byte-changes-the-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One extra byte changes the contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-a-pointer-to-the-handle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a pointer to the handle?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#27-decoding-is-a-sendreceive-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        27. Decoding is a send/receive state machine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="27. Decoding is a send/receive state machine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-both-send-and-receive-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why both send and receive exist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-the-state-transitions-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write the state transitions down
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-odin-parallel-headers-are-not-the-payload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Odin parallel: headers are not the payload
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-bounded-decoder-then-inspect-its-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the bounded decoder, then inspect its implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packets-and-frames-have-explicit-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packets and frames have explicit ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#28-encoding-ownership-timestamps-and-design-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        28. Encoding, ownership, timestamps, and design choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="28. Encoding, ownership, timestamps, and design choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transcoding-is-a-pipeline-not-a-single-codec-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transcoding is a pipeline, not a single codec call
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-bases-and-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time bases and timestamps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-dimensional-analysis-before-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use dimensional analysis before conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-the-smallest-version-sensitive-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the smallest version-sensitive interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remux-a-new-artifact-without-changing-its-compression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remux a new artifact without changing its compression
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#errors-versions-and-threading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors, versions, and threading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-binding-or-c-shim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct binding or C shim?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ffmpeg-and-libav">FFmpeg and libav<a class="headerlink" href="#ffmpeg-and-libav" title="Permanent link">&para;</a></h1>
+<p><a id="ffmpeg-cli"></a></p>
+<p>Part VIII · Media tools</p>
+<h2 id="23-ffmpeg-and-ffprobe-from-the-command-line">23. FFmpeg and ffprobe from the command line<a class="headerlink" href="#23-ffmpeg-and-ffprobe-from-the-command-line" title="Permanent link">&para;</a></h2>
+<p>We want to extract audio from a video file. Should we start by declaring C structs? Not yet. The first question is whether an existing executable already implements the operation we need. <code>ffprobe</code> inspects inputs; <code>ffmpeg</code> builds processing pipelines. Calling either from Odin can be a complete solution rather than a temporary embarrassment before a “real” binding.</p>
+<p>Begin with a disposable local fixture and a question you can verify: which streams exist, which stream do we want, and do we need to change its samples? A container name alone cannot answer those questions.</p>
+<p><strong>Name check.</strong> In this book, “libav” means FFmpeg’s libraries whose names start with <code>libav</code>—not the separate historical Libav fork. FFmpeg’s command-line programs and libraries are related but distinct interfaces.</p>
+<h3 id="media-is-several-nested-things">Media is several nested things<a class="headerlink" href="#media-is-several-nested-things" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A <strong>container</strong> such as MP4 or Matroska stores one or more streams plus metadata and timing.</li>
+<li>A <strong>stream</strong> is an audio, video, subtitle, data, or attachment track.</li>
+<li>A <strong>codec</strong> describes how a stream is represented, such as H.264 video or AAC audio.</li>
+<li>A <strong>packet</strong> is compressed stream data as demuxed from a container.</li>
+<li>A <strong>frame</strong> is decoded media data—pixels or audio samples.</li>
+</ul>
+<div class="highlight"><pre><span></span><code>ffprobe<span class="w"> </span>-v<span class="w"> </span>error<span class="w"> </span>-show_format<span class="w"> </span>-show_streams<span class="w"> </span>-of<span class="w"> </span>json<span class="w"> </span>input.mp4
+ffmpeg<span class="w"> </span>-hide_banner<span class="w"> </span>-i<span class="w"> </span>input.mp4<span class="w"> </span>-f<span class="w"> </span>null<span class="w"> </span>-
+</code></pre></div>
+<p>The first command emits machine-readable JSON for container and stream properties; metadata strings are still untrusted input. The second prints a readable summary while decoding to FFmpeg’s null output, so it reads the media rather than merely probing it and may take as long as a real decode. FFmpeg’s option ordering is meaningful.</p>
+<h3 id="copy-packets-or-transcode">Copy packets or transcode?<a class="headerlink" href="#copy-packets-or-transcode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Repackage selected streams without decoding or re-encoding:</span>
+ffmpeg<span class="w"> </span>-i<span class="w"> </span>input.mkv<span class="w"> </span>-map<span class="w"> </span><span class="m">0</span>:v:0<span class="w"> </span>-map<span class="w"> </span><span class="m">0</span>:a:0<span class="w"> </span>-c<span class="w"> </span>copy<span class="w"> </span>output.mp4
+
+<span class="c1"># Decode, resize, and encode video; copy audio packets:</span>
+ffmpeg<span class="w"> </span>-i<span class="w"> </span>input.mkv<span class="w"> </span>-map<span class="w"> </span><span class="m">0</span>:v:0<span class="w"> </span>-map<span class="w"> </span><span class="m">0</span>:a:0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-vf<span class="w"> </span><span class="nv">scale</span><span class="o">=</span><span class="m">1280</span>:-2<span class="w"> </span>-c:v<span class="w"> </span>libx264<span class="w"> </span>-crf<span class="w"> </span><span class="m">23</span><span class="w"> </span>-c:a<span class="w"> </span>copy<span class="w"> </span>output.mp4
+</code></pre></div>
+<p><code>-map</code> makes stream selection explicit. <code>-c copy</code> is streamcopy: packets bypass decoders and encoders, so it is fast and does not reduce quality, but filters cannot be applied and the destination container may not accept the source codec. Transcoding decodes to frames, optionally filters them, then encodes new packets; it costs CPU and often loses quality. Choose streamcopy when it satisfies the task.</p>
+<p><img alt="Streamcopy and transcoding paths" src="../assets/diagrams/media-pipeline.svg" /></p>
+<p>Streamcopy avoids codec work but cannot filter. Transcoding creates new encoded packets and can change quality, timestamps, and metadata.</p>
+<p><a href="../diagrams/media-pipeline.mmd">Editable Mermaid source</a>.</p>
+<h3 id="challenge-copy-means-identical">Challenge “copy means identical”<a class="headerlink" href="#challenge-copy-means-identical" title="Permanent link">&para;</a></h3>
+<p>Streamcopy preserves encoded media without a new lossy encode, but it does not promise a byte-identical file. Muxing can change headers, timestamps, metadata, packet arrangement, and stream selection. Compare the property your task actually requires rather than comparing file hashes and concluding the copy failed.</p>
+<p>A destination container may reject a codec, or a copied stream may require container-specific adaptation. A successful process exit is useful evidence, but it does not certify that your intended stream was selected. Probe the result and test the selection explicitly. If audio is optional, a required audio selector should fail on video-only input; use an optional map only if that matches your contract.</p>
+<h3 id="odins-boundary-preserves-arguments-not-ffmpeg-semantics">Odin’s boundary preserves arguments, not FFmpeg semantics<a class="headerlink" href="#odins-boundary-preserves-arguments-not-ffmpeg-semantics" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/os/process.odin">Process_Desc</a> makes each string a separate child argument. It does not know whether an FFmpeg option belongs before or after an input. Input options, output options, and stream specifiers remain FFmpeg’s language. First establish the exact command with a known fixture; only then translate its argument vector into Odin.</p>
+<p>For repeatable unattended experiments, use explicit input and output paths, choose an overwrite policy, and prevent an unexpected terminal-input prompt. Never experiment by overwriting the only copy of a media file. The command interface is stable enough to compose, but its capabilities and available codecs still depend on the installed build.</p>
+<h3 id="make-command-output-a-contract">Make command output a contract<a class="headerlink" href="#make-command-output-a-contract" title="Permanent link">&para;</a></h3>
+<p>For a script, use <code>-v error</code> when you need quiet machine output, check the process exit status, keep diagnostics on stderr, and request JSON with <code>ffprobe -of json</code>. Do not parse FFmpeg’s human progress lines as a stable API. For long-running jobs, use the documented <code>-progress</code> option or consume stderr deliberately; always test cancellation and partial output behavior.</p>
+<p><strong>Lab 23.1.</strong> Probe a file with JSON output. List every stream index, type, codec, dimensions or sample rate, and time base. Then use <code>-map</code> and <code>-c copy</code> to copy just one stream. Compare duration and stream properties with the source.</p>
+<p><strong>Subtle watch-out:</strong> stream indices are zero-based and <code>-map</code> selectors refer to input/stream indices, not “audio first” assumptions. Streamcopy cannot apply filters or guarantee that every target container accepts the copied codec.</p>
+<p><a id="odin-ffprobe"></a></p>
+<h2 id="24-compose-ffprobe-with-odin">24. Compose ffprobe with Odin<a class="headerlink" href="#24-compose-ffprobe-with-odin" title="Permanent link">&para;</a></h2>
+<p>Let us turn “run ffprobe” into a precise Odin operation. Its result is not merely a text string: it is a managed process outcome plus an output document that still needs validation. Keeping those layers separate prevents a missing executable from becoming a mysterious JSON error.</p>
+<p>Pass the path as a single argument. A path containing spaces needs no shell quotes inside that string. Quotes in the Odin string would become part of the argument rather than instructions to a shell.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">desc</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">os</span><span class="err">.P</span><span class="nc">rocess_Desc</span><span class="err">{</span>
+<span class="w">    </span><span class="nc">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="nc">string</span><span class="err">{</span>
+<span class="w">        </span><span class="s">"ffprobe"</span><span class="p">,</span><span class="w"> </span><span class="s">"-v"</span><span class="p">,</span><span class="w"> </span><span class="s">"error"</span><span class="p">,</span><span class="w"> </span><span class="s">"-show_format"</span><span class="p">,</span><span class="w"> </span><span class="s">"-show_streams"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"-of"</span><span class="p">,</span><span class="w"> </span><span class="s">"json"</span><span class="p">,</span><span class="w"> </span><span class="nc">input_path</span><span class="p">,</span>
+<span class="w">    </span><span class="err">}</span><span class="p">,</span>
+<span class="err">}</span>
+<span class="nc">state</span><span class="p">,</span><span class="w"> </span><span class="nc">stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">os</span><span class="err">.</span><span class="nc">process_exec</span><span class="p">(</span><span class="nc">desc, context.allocator</span><span class="p">)</span>
+<span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">stdout</span><span class="p">)</span>
+<span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">stderr</span><span class="p">)</span>
+<span class="nc">if</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="p">//</span><span class="w"> </span><span class="err">T</span><span class="nc">he</span><span class="w"> </span><span class="nc">executable</span><span class="w"> </span><span class="nc">could</span><span class="w"> </span><span class="nc">not</span><span class="w"> </span><span class="nc">be</span><span class="w"> </span><span class="nc">started</span><span class="w"> </span><span class="nc">or</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">process</span><span class="w"> </span><span class="nc">operation</span><span class="w"> </span><span class="nc">failed</span><span class="err">.</span>
+<span class="err">}</span><span class="w"> </span><span class="nc">else</span><span class="w"> </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">state</span><span class="err">.</span><span class="nc">success</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="p">//</span><span class="w"> </span><span class="nc">ffprobe</span><span class="w"> </span><span class="nc">ran</span><span class="w"> </span><span class="nc">but</span><span class="w"> </span><span class="nc">rejected</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">input</span><span class="p">;</span><span class="w"> </span><span class="nc">inspect</span><span class="w"> </span><span class="nc">stderr</span><span class="w"> </span><span class="nc">and</span><span class="w"> </span><span class="nc">exit_code</span><span class="err">.</span>
+<span class="err">}</span><span class="w"> </span><span class="nc">else</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="p">//</span><span class="w"> </span><span class="err">P</span><span class="nc">arse</span><span class="w"> </span><span class="nc">stdout</span><span class="w"> </span><span class="nc">as</span><span class="w"> </span><span class="err">JSON</span><span class="p">,</span><span class="w"> </span><span class="nc">then</span><span class="w"> </span><span class="nc">validate</span><span class="w"> </span><span class="nc">fields</span><span class="w"> </span><span class="nc">before</span><span class="w"> </span><span class="nc">using</span><span class="w"> </span><span class="nc">them</span><span class="err">.</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>This is a focused fragment; it assumes <code>os</code> is imported and <code>input_path</code> is a validated string. <code>process_exec</code> captures output in memory until the child exits, so keep it for bounded probe results. For untrusted or potentially enormous inputs, use streaming process APIs, impose time/output limits at the surrounding service boundary, and avoid accumulating all output.</p>
+<h3 id="the-json-parser-also-has-a-policy">The JSON parser also has a policy<a class="headerlink" href="#the-json-parser-also-has-a-policy" title="Permanent link">&para;</a></h3>
+<p>The installed <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/types.odin">core:encoding/json source</a> sets <code>DEFAULT_SPECIFICATION</code> to JSON5. That is a useful default for some configuration files, but we are consuming ffprobe’s strict JSON. Pass <code>.JSON</code> rather than silently accepting a broader syntax. The parser’s integer handling is also selectable; choose it deliberately when stream indices must remain integer values.</p>
+<p>Here is a complete document-inspection example. It illustrates parsing and cleanup, not the full media schema:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:encoding/json"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">text</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="err">`{</span><span class="s">"streams"</span><span class="err">:</span><span class="p">[</span><span class="err">{</span><span class="s">"index"</span><span class="err">:</span><span class="mi">0</span><span class="err">,</span><span class="s">"codec_type"</span><span class="err">:</span><span class="s">"video"</span><span class="err">}</span><span class="p">]</span><span class="err">}`</span>
+<span class="w">    </span><span class="nc">allocator</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="w">    </span><span class="nc">value</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">json</span><span class="err">.</span><span class="nc">parse</span><span class="p">(</span><span class="nc">text, spec=.JSON, parse_integers=true,</span>
+<span class="nc">                            allocator=allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">json</span><span class="err">.</span><span class="nc">destroy_value</span><span class="p">(</span><span class="nc">value, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintln</span><span class="p">(</span><span class="nc">"invalid probe document: ", err</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">return</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">object</span><span class="p">,</span><span class="w"> </span><span class="nc">is_object</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">value</span><span class="err">.</span><span class="p">(</span><span class="nc">json.Object</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="err">!</span><span class="nc">is_object</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintln</span><span class="p">(</span><span class="nc">"expected an object"</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">return</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">streams</span><span class="p">,</span><span class="w"> </span><span class="nc">present</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">object</span><span class="p">[</span><span class="s">"streams"</span><span class="p">]</span>
+<span class="w">    </span><span class="nc">_</span><span class="p">,</span><span class="w"> </span><span class="nc">is_array</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">streams</span><span class="err">.</span><span class="p">(</span><span class="nc">json.Array</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">printfln</span><span class="p">(</span><span class="nc">"streams present=%t array=%t", present, is_array</span><span class="p">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The map lookup and the union assertion answer different questions: did a key exist, and did its value have the expected kind? A present null value is not an array. Even a present array might be empty or contain malformed entries. Validate each layer that the next operation relies on.</p>
+<h3 id="why-recursive-cleanup-is-needed">Why recursive cleanup is needed<a class="headerlink" href="#why-recursive-cleanup-is-needed" title="Permanent link">&para;</a></h3>
+<p><code>Value</code> in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/types.odin">types.odin</a> is a union of scalar values, strings, arrays, and objects. <code>destroy_value</code> walks arrays recursively; for objects it releases keys, recursively destroys values, then deletes the map. Deleting only the root map would not release every nested allocation. This is the same distinction we met with dynamic arrays of strings, now applied to a tree.</p>
+<p>If you choose typed unmarshalling instead, read <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/encoding/json/unmarshal.odin">unmarshal.odin</a>. Successful assignment into a struct still does not establish domain requirements such as “exactly one video stream.” Nested typed allocations require their own ownership plan; <code>destroy_value</code> is not a generic destructor for any user struct.</p>
+<h3 id="three-outcomes-not-one">Three outcomes, not one<a class="headerlink" href="#three-outcomes-not-one" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Spawn error: the process could not be started or managed.</li>
+<li>Non-zero child status: <code>ffprobe</code> ran and reported failure.</li>
+<li>Zero exit status but malformed/unexpected JSON: the tool succeeded, but the caller’s data contract was not met.</li>
+</ol>
+<p>Keep these distinctions in your error messages and tests. A zero exit code does not establish that a duration exists, that it is positive, or that a file contains video. Probe metadata can include absent fields and numeric-looking strings. Treat <code>"N/A"</code> and missing values as representations to handle, not as numbers to cast blindly.</p>
+<p>There is a fourth practical boundary: the selected executable. As Chapter 15 showed, this Odin revision searches the parent’s PATH and may fall back to the current directory for an unqualified name. For a controlled deployment, choose the executable path and version explicitly. Argument-vector invocation removes shell injection; it does not establish a trusted executable, a timeout, an output budget, or a protocol policy for media URLs.</p>
+<p><strong>Lab 24.1.</strong> Put spaces and shell punctuation in a test filename. Pass the path as one process argument. Confirm that the file is probed correctly, then test a missing executable, a corrupt file and a file with multiple streams.</p>
+<p><strong>Subtle watch-out:</strong> argument-vector invocation prevents shell parsing; it does not make media metadata trustworthy. Treat tags, titles and JSON strings from the file as untrusted data, and remember captured output consumes memory proportional to its size.</p>
+<p><a id="libav-model"></a></p>
+<h2 id="25-how-the-libav-libraries-fit-together">25. How the libav libraries fit together<a class="headerlink" href="#25-how-the-libav-libraries-fit-together" title="Permanent link">&para;</a></h2>
+<p>Suppose the next requirement is to inspect every decoded frame. JSON metadata is no longer enough: we need a boundary that exposes frame data. Before binding functions, we need a model of what flows through them. “A video file goes into a codec” is too coarse to explain multiple streams, delayed frames, or muxing.</p>
+<p>The FFmpeg libraries divide responsibilities. The usual transformation path is:</p>
+<div class="highlight"><pre><span></span><code>input bytes
+  → libavformat demuxer
+  → compressed AVPacket values, tagged with stream indices
+  → libavcodec decoder
+  → raw AVFrame values
+  → libavfilter and/or application processing
+  → libavcodec encoder
+  → compressed AVPacket values
+  → libavformat muxer
+  → output bytes
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Role</th>
+<th>Typical reason to call it directly</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>libavformat</code></td>
+<td>Open media input/output, inspect containers, demux and mux streams.</td>
+<td>Custom IO, stream metadata, precise packet routing.</td>
+</tr>
+<tr>
+<td><code>libavcodec</code></td>
+<td>Decode compressed packets and encode raw frames.</td>
+<td>Per-frame access or an application-owned codec pipeline.</td>
+</tr>
+<tr>
+<td><code>libavutil</code></td>
+<td>Shared types, buffers, timestamps, dictionaries, errors and utilities.</td>
+<td>Required support for most other FFmpeg libraries.</td>
+</tr>
+<tr>
+<td><code>libavfilter</code></td>
+<td>Connect frame-processing filters as graphs.</td>
+<td>Embed a configurable audio/video filtergraph in an application.</td>
+</tr>
+<tr>
+<td><code>libswscale</code></td>
+<td>Scale or convert video pixel formats.</td>
+<td>Convert decoded frames to the pixel format a renderer needs.</td>
+</tr>
+<tr>
+<td><code>libswresample</code></td>
+<td>Convert audio sample formats, rates and layouts.</td>
+<td>Feed audio to a device or application format.</td>
+</tr>
+<tr>
+<td><code>libavdevice</code></td>
+<td>Capture and output through supported devices.</td>
+<td>Integrate supported capture or playback devices.</td>
+</tr>
+</tbody>
+</table>
+<p>These libraries are not a single “codec API.” A container can carry multiple streams; packets belong to a particular stream; decoders transform packets into frames; frames may be delayed, reordered or absent for some input packets. Streamcopy is the shorter route: demux packets, map them to output streams, rescale timestamps as required, then mux them without decoding.</p>
+<p><strong>Subtle watch-out:</strong> libavformat inputs are URLs, not only local filenames; supported protocols can include network and device access. Treat an input URL as a capability boundary. If an untrusted caller supplies it, apply an explicit protocol/path policy instead of assuming it points to a harmless local file.</p>
+<h3 id="choosing-a-boundary">Choosing a boundary<a class="headerlink" href="#choosing-a-boundary" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <code>ffprobe</code> for inspection and JSON metadata.</li>
+<li>Use <code>ffmpeg</code> for ordinary conversion, filtering and streamcopy.</li>
+<li>Use libav when your program must inspect or transform frames itself, supply custom IO, integrate with an existing event loop, or avoid a separate process for a justified reason.</li>
+<li>Use a narrow C shim when the C structures and version-sensitive setup are more complex than the behavior you need to expose to Odin.</li>
+</ul>
+<h3 id="two-memory-management-worlds">Two memory-management worlds<a class="headerlink" href="#two-memory-management-worlds" title="Permanent link">&para;</a></h3>
+<p>An Odin allocation uses the allocator selected by its API or context. An FFmpeg object uses the allocation and reference-management rules of the FFmpeg API. They are not unified because the program has linked both libraries. Passing an <code>AVFrame</code> to Odin does not make <code>delete</code> its destructor; passing Odin bytes to C does not transfer ownership unless the C API says so.</p>
+<p>Compare the allocator protocol in <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">runtime/core.odin</a> with the opaque pointers we will declare next. A raw pointer contains no allocator provenance, no release function, and no lifetime proof. Our application must supply those facts.</p>
+<p>Native binding is not automatically faster or more maintainable. It removes a process boundary but moves ABI compatibility, lifetime, error translation, and threading obligations into our process. A C shim can keep version-sensitive structures on the side whose compiler already understands their headers. It is often less work than writing a large partial binding in Odin.</p>
+<p><strong>Exercise 25.1 · Boundary choice.</strong> For “copy one audio stream,” “read video dimensions,” and “measure the brightness of every decoded frame,” choose the smallest adequate interface. Name the requirement that rules out the simpler interface, if any. “It feels lower-level” is not a requirement.</p>
+<p><a id="libav-probe"></a></p>
+<h2 id="26-a-real-odin-to-libav-binding">26. A real Odin-to-libav binding<a class="headerlink" href="#26-a-real-odin-to-libav-binding" title="Permanent link">&para;</a></h2>
+<p>We will bind exactly enough to open an input, discover stream information, print a summary, and close it. We will not copy an <code>AVFormatContext</code> definition from a different release. Its pointer is sufficient for this operation; its fields are not.</p>
+<p>Keeping a type opaque is a positive design choice, not a missing lesson. It prevents our example from depending on fields it never needs to inspect. It does not prove that a wrong handle is safe to pass; the compiler cannot enforce the semantic type of a <code>rawptr</code>.</p>
+<p>Install the FFmpeg development libraries and linker metadata (Debian/Ubuntu package names commonly include <code>libavformat-dev</code>, <code>libavcodec-dev</code>, <code>libavutil-dev</code>, and <code>pkg-config</code>). Check the actual installed development package and <code>pkg-config --modversion libavformat</code>; the command-line tool and libraries can come from different builds.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">package</span><span class="w"> </span><span class="nc">main</span>
+
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:c"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:fmt"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:os"</span>
+<span class="nc">import</span><span class="w"> </span><span class="s">"core:strings"</span>
+
+<span class="nc">foreign</span><span class="w"> </span><span class="nc">import</span><span class="w"> </span><span class="nc">libavformat</span><span class="w"> </span><span class="s">"system:avformat"</span>
+
+<span class="nc">foreign</span><span class="w"> </span><span class="nc">libavformat</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">avformat_open_input</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">ctx: ^rawptr, url: cstring, format: rawptr, options: ^rawptr</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">c</span><span class="err">.</span><span class="nc">int</span><span class="w"> </span><span class="c">---</span>
+<span class="w">    </span><span class="nc">avformat_find_stream_info</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">ctx: rawptr, options: ^rawptr</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">c</span><span class="err">.</span><span class="nc">int</span><span class="w"> </span><span class="c">---</span>
+<span class="w">    </span><span class="nc">av_dump_format</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">ctx: rawptr, index: c.int, url: cstring, is_output: c.int</span><span class="p">)</span><span class="w"> </span><span class="c">---</span>
+<span class="w">    </span><span class="nc">avformat_close_input</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">ctx: ^rawptr</span><span class="p">)</span><span class="w"> </span><span class="c">---</span>
+<span class="err">}</span>
+
+<span class="nc">probe</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">path: string</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">int</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="nc">b</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">transmute</span><span class="p">(</span><span class="nc">[]u8</span><span class="p">)</span><span class="nc">path</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">b</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintln</span><span class="p">(</span><span class="nc">"input contains a NUL byte"</span><span class="p">)</span>
+<span class="w">            </span><span class="nc">return</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">allocator</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">context</span><span class="err">.</span><span class="nc">allocator</span>
+<span class="w">    </span><span class="nc">url</span><span class="p">,</span><span class="w"> </span><span class="nc">allocation_error</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">clone_to_cstring</span><span class="p">(</span><span class="nc">path, allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">allocation_error</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintln</span><span class="p">(</span><span class="nc">"cannot allocate input URL: ", allocation_error</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">delete</span><span class="p">(</span><span class="nc">url, allocator</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nc">format_ctx</span><span class="err">:</span><span class="w"> </span><span class="nc">rawptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span>
+<span class="w">    </span><span class="nc">status</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">avformat_open_input</span><span class="p">(</span><span class="nc">&amp;format_ctx, url, nil, nil</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">status</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintfln</span><span class="p">(</span><span class="nc">"avformat_open_input failed: %d", status</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">avformat_close_input</span><span class="p">(</span><span class="nc">&amp;format_ctx</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nc">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">avformat_find_stream_info</span><span class="p">(</span><span class="nc">format_ctx, nil</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">status</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintfln</span><span class="p">(</span><span class="nc">"avformat_find_stream_info failed: %d", status</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="err">}</span>
+
+<span class="w">    </span><span class="nc">av_dump_format</span><span class="p">(</span><span class="nc">format_ctx, 0, url, 0</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="mi">0</span>
+<span class="err">}</span>
+
+<span class="nc">main</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">os.args</span><span class="p">)</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">eprintln</span><span class="p">(</span><span class="nc">"usage: probe &lt;media-file&gt;"</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">os</span><span class="err">.</span><span class="nc">exit</span><span class="p">(</span><span class="nc">2</span><span class="p">)</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">os</span><span class="err">.</span><span class="nc">exit</span><span class="p">(</span><span class="nc">probe(os.args[1]</span><span class="p">)</span><span class="err">)</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>On a machine with the headers and shared-library link available, check and run it from this package directory:</p>
+<div class="highlight"><pre><span></span><code>pkg-config<span class="w"> </span>--modversion<span class="w"> </span>libavformat
+odin<span class="w"> </span>check<span class="w"> </span>.
+odin<span class="w"> </span>run<span class="w"> </span>.<span class="w"> </span>--<span class="w"> </span>sample.mp4
+</code></pre></div>
+<p>This example targets the FFmpeg 6.x library interface. The summary is written by FFmpeg’s C library, normally to stderr; it is not a machine-readable data model. Negative return values are FFmpeg errors. Keep the numerical result during diagnosis, and translate it with <code>av_strerror</code> for useful production diagnostics. Check the installed headers before adapting the example to another major library version.</p>
+<h3 id="read-every-type-against-the-c-prototype">Read every type against the C prototype<a class="headerlink" href="#read-every-type-against-the-c-prototype" title="Permanent link">&para;</a></h3>
+<p><code>c.int</code> matches C <code>int</code>; <code>cstring</code> supplies NUL-terminated input; <code>^rawptr</code> is used here for pointer-to-pointer out parameters; <code>rawptr</code> is an opaque handle, not a license to dereference it. The <code>foreign</code> declaration ends each function with <code>---</code> because the implementation is in the shared library. The <code>system:avformat</code> import asks the Linux linker to find the system library. On another OS or non-system prefix, library naming, link flags and runtime search paths differ.</p>
+<h3 id="one-extra-byte-changes-the-contract">One extra byte changes the contract<a class="headerlink" href="#one-extra-byte-changes-the-contract" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin">strings.clone_to_cstring</a> allocates <code>len(s)+1</code> bytes, copies the input bytes, and writes a trailing zero. The error result is optional in the convenient syntax, but we inspect it here because a foreign call needs a valid URL buffer. Cloning supplies storage and termination; it does not reject an embedded NUL, which C would treat as an earlier end of the string.</p>
+<p>A plain cast cannot invent the extra byte. A borrowed string-to-pointer conversion cannot extend the input’s lifetime. The clone makes our owner explicit, and its saved allocator ensures that cleanup uses the same policy even if the current context changes later.</p>
+<h3 id="why-a-pointer-to-the-handle">Why a pointer to the handle?<a class="headerlink" href="#why-a-pointer-to-the-handle" title="Permanent link">&para;</a></h3>
+<p>The installed <code>avformat.h</code> declares <code>avformat_open_input(AVFormatContext **ps, ...)</code>. The function can create a context and write its address into our handle variable. Closing also takes a pointer to the handle. That is why we pass <code>&amp;format_ctx</code> to open and close, but pass <code>format_ctx</code> to functions using the existing object.</p>
+<p>The header says opening reads the input header; it does not open the decoders. It also says a supplied context is freed on open failure. Our example starts with nil and registers close only after successful acquisition, rather than imposing a generic cleanup rule that contradicts the C API.</p>
+<p>Compare the normal return path with a failure in stream discovery: both execute the deferred close before the deferred URL deletion, because the close was registered later. The top-level <code>os.exit(probe(...))</code> occurs only after <code>probe</code> returns and its cleanup finishes. Moving <code>os.exit</code> into <code>probe</code> would break that reasoning.</p>
+<p><strong>Safety boundary.</strong> This example does not enumerate streams, decode media, define version-sensitive structures, or restrict FFmpeg’s supported input protocols. An externally supplied URL needs a separate capability policy; a valid C string is not proof of a safe input.</p>
+<p><strong>Exercise 26.1.</strong> Run the complete probe with a valid local file, a missing path, and a corrupt file. Trace which resources were acquired before each failure and the order of deferred releases. Add an embedded NUL to a test input and explain why it must be rejected before a C call. Do not confuse correct C-string lifetime with a policy limiting FFmpeg protocols.</p>
+<p><a id="libav-decode"></a></p>
+<h2 id="27-decoding-is-a-sendreceive-state-machine">27. Decoding is a send/receive state machine<a class="headerlink" href="#27-decoding-is-a-sendreceive-state-machine" title="Permanent link">&para;</a></h2>
+<p>A naive decoder reads a packet, asks for a frame, and repeats. It is attractive because it mirrors a loop over records. It is wrong because a packet is not a promise of exactly one frame. The decoder may need more input, have several outputs ready, or retain delayed frames until the end.</p>
+<p>Opening the container is only preparation. Select a stream, find its decoder, allocate a codec context, copy the stream parameters into it, and open the decoder. Packet and frame wrappers can then be reused, provided we release their previous contents correctly.</p>
+<div class="highlight"><pre><span></span><code>for each packet returned by av_read_frame(input):
+    if packet.stream_index is the selected stream:
+        send packet to decoder
+        receive frames repeatedly until EAGAIN or EOF
+        process every received frame
+    unreference packet
+
+send a null packet to signal end of input
+receive frames until EOF
+</code></pre></div>
+<p>The outline omits C declarations, error handling and cleanup; use it as a map while reading the matching FFmpeg example, not as compilable code. The important rule is that one compressed packet can produce zero, one, or multiple decoded frames. Do not assume one input packet means one output frame.</p>
+<h3 id="why-both-send-and-receive-exist">Why both send and receive exist<a class="headerlink" href="#why-both-send-and-receive-exist" title="Permanent link">&para;</a></h3>
+<p><code>avcodec_send_packet</code> submits compressed input. <code>avcodec_receive_frame</code> drains available decoded output. A receive result of <code>AVERROR(EAGAIN)</code> means the decoder needs more input; it is not a fatal error. Conversely, if send returns EAGAIN, drain output before retrying input. The API is a bounded state machine: it must not report EAGAIN on both directions at once.</p>
+<p>At input EOF, send a null packet to enter draining mode and continue receiving until <code>AVERROR_EOF</code>. First make sure that the end-of-input marker has actually been accepted; a send-side EAGAIN still requires draining available output and retrying the same submission. Once draining mode is entered correctly, receive should finish with EOF rather than asking for more ordinary input.</p>
+<h3 id="write-the-state-transitions-down">Write the state transitions down<a class="headerlink" href="#write-the-state-transitions-down" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation result</th>
+<th>Meaning</th>
+<th>Next action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Send succeeds</td>
+<td>The input was accepted.</td>
+<td>Receive every available frame.</td>
+</tr>
+<tr>
+<td>Send returns EAGAIN</td>
+<td>Output must make progress first.</td>
+<td>Receive, then retry this same packet; do not discard it.</td>
+</tr>
+<tr>
+<td>Receive succeeds</td>
+<td>One frame is available.</td>
+<td>Consume it, release or retain references correctly, and receive again.</td>
+</tr>
+<tr>
+<td>Receive returns EAGAIN during normal input</td>
+<td>More input is needed.</td>
+<td>Read and submit the next relevant packet.</td>
+</tr>
+<tr>
+<td>Receive returns EOF after draining</td>
+<td>Delayed output is exhausted.</td>
+<td>Finish this decoding session.</td>
+</tr>
+<tr>
+<td>Another negative result</td>
+<td>A failure occurred.</td>
+<td>Translate and propagate the error; clean up owned objects.</td>
+</tr>
+</tbody>
+</table>
+<p>The <a href="https://ffmpeg.org/doxygen/6.1/group__lavc__encdec.html">FFmpeg send/receive contract</a>, also documented in the installed <code>avcodec.h</code>, explicitly forbids both directions returning EAGAIN at once. Time is not an input to this state machine. Sleeping and trying the same send again does not replace the receive operation needed to change the state.</p>
+<p>Distinguish end-of-input draining from <code>avcodec_flush_buffers</code>. Draining asks for delayed output; resetting buffers prepares a decoder for a different continuation such as a seek. Resetting at the end instead of draining can discard the very frames we wanted to preserve.</p>
+<h3 id="the-odin-parallel-headers-are-not-the-payload">The Odin parallel: headers are not the payload<a class="headerlink" href="#the-odin-parallel-headers-are-not-the-payload" title="Permanent link">&para;</a></h3>
+<p>A slice can be copied while still sharing its bytes; an FFmpeg packet or frame can retain a reference-counted buffer while a wrapper is reused. The mechanisms differ, but both require us to identify the payload lifetime separately from the small value we pass around. Odin’s <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/base/runtime/core.odin">Raw_Slice representation</a> helps explain the analogy; it does not turn FFmpeg reference counting into Odin allocator ownership.</p>
+<p><img alt="The decoder send and receive protocol" src="../assets/diagrams/decoder-state.svg" /></p>
+<p>EAGAIN is a protocol transition, not a reason to sleep. At end of input, flushing and draining preserves delayed or reordered frames.</p>
+<p><a href="../diagrams/decoder-state.mmd">Editable Mermaid source</a>.</p>
+<h3 id="run-the-bounded-decoder-then-inspect-its-implementation">Run the bounded decoder, then inspect its implementation<a class="headerlink" href="#run-the-bounded-decoder-then-inspect-its-implementation" title="Permanent link">&para;</a></h3>
+<p>The <a href="../examples/26-libav-decode/index.html">native media companion</a> includes a complete <a href="../examples/26-libav-decode/main.odin">Odin caller</a>, <a href="../examples/26-libav-decode/bridge.c">C bridge</a>, <a href="../examples/26-libav-decode/build.sh">build script</a>, and <a href="../examples/26-libav-decode/verify.py">integration harness</a>. It uses the FFmpeg 6.x headers for structure access and exposes a narrow report, rather than duplicating <code>AVFrame</code> or <code>AVCodecContext</code> layouts in Odin.</p>
+<div class="highlight"><pre><span></span><code>sh<span class="w"> </span>docs/examples/26-libav-decode/build.sh
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/26-libav-decode
+docs/examples/26-libav-decode/.build/media<span class="w"> </span>decode<span class="w"> </span>/absolute/input.wav
+</code></pre></div>
+<p>The decode path bounds frames (10,000 by default) and execution (five seconds), preserves a packet until send accepts it, receives all available frames, and drains at EOF. Its report counts packets, frames, audio samples, and streams; it does not claim to display pixels or save decoded samples. A limit failure is a failed operation, not a successful count of the partial work performed.</p>
+<p>The integration harness creates synthetic WAV/MKV/MP4 inputs and compares counts with ffprobe, then checks missing/corrupt files, a frame budget, local-file restrictions, and memory errors. These are specific tests on a specific ABI—not a guarantee for all malformed media or a substitute for sandboxing untrusted uploads.</p>
+<p><strong>Exercise 27.2.</strong> Trace <code>book_decode</code> and its frame-receiving helper in the bridge. Mark packet acquisition, retry of the same packet, frame unreference, EOF draining, and cleanup. Compare a reordered-video fixture with its ffprobe frame count. Set the frame budget to one and explain why no partial-success report is emitted.</p>
+<h3 id="packets-and-frames-have-explicit-ownership">Packets and frames have explicit ownership<a class="headerlink" href="#packets-and-frames-have-explicit-ownership" title="Permanent link">&para;</a></h3>
+<p>FFmpeg objects often use reference-counted buffers. Reuse a packet or frame only after releasing/unreferencing its current contents according to the API; freeing the wrapper object and releasing its referenced data are distinct operations. A decoded frame’s pixel planes can be separate buffers with line sizes that include padding. Do not treat them as one tightly packed <code>width × height × 4</code> array unless the pixel format and line sizes prove that representation.</p>
+<p><strong>Lab 27.1.</strong> Trace the official <code>demuxing_decoding.c</code> example. Mark the open, parameter-copy, packet-send, frame-receive, flush and cleanup calls. Then explain where it handles EAGAIN and where it releases each packet/frame reference.</p>
+<p><strong>Subtle watch-out:</strong> EAGAIN means “the other side of the send/receive protocol must make progress,” not “sleep and retry.” At demuxer EOF, still flush the decoder and receive until EOF or delayed frames will be lost.</p>
+<p><a id="libav-design"></a></p>
+<h2 id="28-encoding-ownership-timestamps-and-design-choices">28. Encoding, ownership, timestamps, and design choices<a class="headerlink" href="#28-encoding-ownership-timestamps-and-design-choices" title="Permanent link">&para;</a></h2>
+<p>We have a frame and want to write a new file. The remaining work is not simply “call an encoder.” We need an output stream contract, a pixel or sample representation accepted by the encoder, a timestamp interpretation, and a container that can carry the encoded packets. Every boundary can be wrong while the others appear to work.</p>
+<h3 id="transcoding-is-a-pipeline-not-a-single-codec-call">Transcoding is a pipeline, not a single codec call<a class="headerlink" href="#transcoding-is-a-pipeline-not-a-single-codec-call" title="Permanent link">&para;</a></h3>
+<p>For video transcoding, packets from a demuxer go to a decoder; raw frames may pass through a filtergraph or pixel conversion; the encoder produces new packets; and a muxer writes those packets into an output container. Audio has the analogous sample-format and resampling concerns. Configure output streams and codec parameters, write the container header, send frames to the encoder, receive and mux every output packet, flush the encoder, and write the trailer. Preserve a clear cleanup path for every partially opened object.</p>
+<p>When the task only changes the container or stream selection, prefer streamcopy. When you must alter pixels or samples, decode/filter/encode. A new encode can change quality, bitrate, timestamps and metadata; test those as output properties rather than judging only by “file exists.”</p>
+<h3 id="time-bases-and-timestamps">Time bases and timestamps<a class="headerlink" href="#time-bases-and-timestamps" title="Permanent link">&para;</a></h3>
+<p>FFmpeg timestamps are integers interpreted in a stream or codec <em>time base</em>, a rational number of seconds per tick. A timestamp of 90000 can mean one second in a 1/90000 time base and something entirely different in another. Packet DTS (decode time) and PTS (presentation time) can differ when frames are reordered. Before writing a packet to an output stream, rescale timestamps from the encoder’s time base to the muxer stream’s time base with the library helper intended for that conversion. Do not compare raw timestamp integers from different streams as if they shared units.</p>
+<h3 id="use-dimensional-analysis-before-conversion">Use dimensional analysis before conversion<a class="headerlink" href="#use-dimensional-analysis-before-conversion" title="Permanent link">&para;</a></h3>
+<p>A timestamp of 48000 in a time base of <code>1/48000</code> is one second. In a time base of <code>1/1000</code>, one second is 1000 ticks. Copying 48000 unchanged between those streams describes 48 seconds, not one. Correcting the type from <code>int</code> to <code>i64</code> does not correct the unit.</p>
+<p>The <a href="https://ffmpeg.org/doxygen/6.1/group__lavc__packet.html">packet API</a> provides <code>av_packet_rescale_ts</code>. The installed <code>packet.h</code> says it converts valid timing fields and leaves unknown timestamps marked by <code>AV_NOPTS_VALUE</code> alone. A sentinel must not be treated as a very negative real timestamp. Use library helpers that preserve these conventions instead of a hand-written floating-point multiplication.</p>
+<p>After an output header is written, the muxer may have chosen an output stream time base. Rescale to the actual destination units. Frame rate, time base, and duration are related but not interchangeable: variable frame rate is one obvious counterexample to treating the reciprocal of a time base as the frame rate.</p>
+<h3 id="keep-the-smallest-version-sensitive-interface">Keep the smallest version-sensitive interface<a class="headerlink" href="#keep-the-smallest-version-sensitive-interface" title="Permanent link">&para;</a></h3>
+<p>A C shim can expose a procedure that returns copied width, height, and timestamp data without exporting a full <code>AVFrame</code> layout. If it returns a borrowed plane pointer instead, document how long it remains valid, its row stride, and how the caller retains or releases it. A view must not outlive a frame reuse operation that invalidates its buffers.</p>
+<p>Odin’s <a href="https://github.com/odin-lang/Odin/blob/a2fb372b76e81ef31fbbc8a2cf2b4fdf5ac6c924/core/strings/strings.odin">string_from_ptr</a> illustrates the same explicit borrowing rule: its comment says the view is valid only while the pointer and length are valid. An API returning a view must communicate that limit; naming it a string or slice is not sufficient.</p>
+<p>For a robust output operation, write to a new temporary destination, finish the encoder drain and muxer trailer, close resources, and only then publish a completed result under an application-defined policy. A partially written file can exist and even be nonempty without representing a successfully completed task. Do not turn an error into success just because bytes were produced.</p>
+<h3 id="remux-a-new-artifact-without-changing-its-compression">Remux a new artifact without changing its compression<a class="headerlink" href="#remux-a-new-artifact-without-changing-its-compression" title="Permanent link">&para;</a></h3>
+<p>The same companion's <code>remux</code> mode copies compressed packets rather than decoding/re-encoding them:</p>
+<div class="highlight"><pre><span></span><code>docs/examples/26-libav-decode/.build/media<span class="w"> </span>remux<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/absolute/input.mp4<span class="w"> </span>/absolute/output.part
+python3<span class="w"> </span>docs/examples/26-libav-decode/verify.py
+</code></pre></div>
+<p>The teaching implementation writes an explicit Matroska output, even when the output filename ends in <code>.part</code>; a file extension is not the muxer configuration. It records the output stream time bases after the muxer header, uses <code>av_packet_rescale_ts</code>, checks writing/trailer/flush/fsync/close, and publishes exclusively so an existing result is not overwritten. The output budget is 16 MiB and the deadline is five seconds. Temporary bytes are not permission to publish a failed artifact.</p>
+<p>The tests compare stream codecs, decoded frame counts, and timestamps across differing time bases, and verify preservation of an existing output. Valgrind reported no errors/definite leaks on the tested decode/remux paths. That evidence does not establish every codec/container, disk-full condition, concurrent filesystem race, or cross-platform publication behavior.</p>
+<p><strong>Exercise 28.2.</strong> Find where <code>book_remux</code> receives the muxer's actual time base. For one packet, convert its PTS/DTS into seconds before and after rescaling. Then attempt a second publication to the same destination and verify the first artifact's bytes remain unchanged.</p>
+<h3 id="errors-versions-and-threading">Errors, versions, and threading<a class="headerlink" href="#errors-versions-and-threading" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Translate negative library results with <code>av_strerror</code>; retain the numeric code for logs.</li>
+<li>Check every allocation and open call before using its output pointer.</li>
+<li>Follow the installed headers and versioned API documentation; FFmpeg keeps ABI and API versioning, and struct fields may change.</li>
+<li>Do not call cleanup twice or release a buffer while another reference still uses it.</li>
+<li>Respect thread-safety rules for each context; do not concurrently mutate one codec or format context without documented support.</li>
+<li>For callbacks, custom IO and cancellation, define which thread owns each callback and buffer before adding concurrency.</li>
+</ul>
+<h3 id="direct-binding-or-c-shim">Direct binding or C shim?<a class="headerlink" href="#direct-binding-or-c-shim" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Use when</th>
+<th>Trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Invoke <code>ffmpeg</code>/<code>ffprobe</code></td>
+<td>Standard conversion, filtering, probing or batch work.</td>
+<td>Simple and version-isolated; adds a process boundary and requires output/status handling.</td>
+</tr>
+<tr>
+<td>Bind a small set of C functions in Odin</td>
+<td>Opaque handles and a narrow, stable API are enough.</td>
+<td>Low ceremony, but declarations and link names must match the installed ABI.</td>
+</tr>
+<tr>
+<td>Write a C shim and bind the shim</td>
+<td>Complex structs, macros, callbacks or version adaptation dominate the application.</td>
+<td>One extra C file, but it keeps header-sensitive details on the C side and exposes a smaller Odin-facing contract.</td>
+</tr>
+<tr>
+<td>Use a maintained binding package</td>
+<td>A package explicitly supports your compiler and FFmpeg versions.</td>
+<td>Less handwritten FFI; verify its release cadence, licensing and supported platforms.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Design exercise 28.1.</strong> Choose one task: “extract the first audio stream,” “show frame-by-frame luminance,” or “resize every input from a watched directory.” Pick CLI, direct binding or C shim. State which requirement drives the choice, how errors propagate, who owns every buffer, and how you will test the output.</p>
+<p><strong>Subtle watch-out:</strong> frame timestamps are integers in a particular time base. Two streams’ timestamp integers cannot be compared directly until their units are reconciled; include timestamp rescaling and delayed output in your test plan.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
