@@ -1,3 +1,10 @@
+.md-content__inner { --book-font-size: 16px; }
+.md-typeset { font-size: var(--book-font-size); }
+.md-typeset pre, .md-typeset code { font-size: .85em; }
+.font-size-controls { display: flex; justify-content: flex-end; gap: .5rem; margin: 0 0 1rem; }
+.font-size-controls button { min-width: 2.75rem; min-height: 2.75rem; border: 1px solid var(--md-default-fg-color--light); border-radius: .25rem; background: var(--md-default-bg-color); color: var(--md-default-fg-color); font: inherit; cursor: pointer; }
+.font-size-controls button:focus-visible { outline: 3px solid var(--md-accent-fg-color); outline-offset: 2px; }
+.font-size-controls button:disabled { opacity: .5; cursor: not-allowed; }
 .md-typeset figure { margin: 1.5rem 0; }
 .md-typeset figure svg { display: block; width: 100%; height: auto; }
 .md-typeset figure img, .md-typeset img[src*="/diagrams/"] { background: #fff; border-radius: .4rem; padding: .6rem; }
