@@ -46,7 +46,7 @@ After editing a diagram, rerun `npm run diagrams`. Preview Markdown edits with `
 
 ## GitHub Actions and Pages
 
-The complete workflow is [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+The complete workflow is [`.github/workflows/pages.yml`](.github/workflows/pages.yml). CI selects the Ubuntu runner's preinstalled `/usr/bin/google-chrome` through `PUPPETEER_EXECUTABLE_PATH`, avoiding the downloaded Chrome-for-Testing sandbox failure. Chromium sandboxing remains enabled; the workflow does not disable AppArmor or use `--no-sandbox`. Puppeteer also skips its browser download when this executable is selected.
 
 One-time repository setup:
 

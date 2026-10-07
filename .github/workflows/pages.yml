@@ -17,6 +17,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Installed Chrome uses Ubuntu's supported sandbox, unlike the cached test build.
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v6
         with:
@@ -35,7 +38,9 @@ jobs:
           python -m pip install --require-hashes -r requirements.txt
           npm ci
       - name: Render Mermaid diagrams to offline SVGs
-        run: npm run diagrams
+        run: |
+          "$PUPPETEER_EXECUTABLE_PATH" --version
+          npm run diagrams
       - name: Build HTML from Markdown
         run: mkdocs build --strict
       - name: Check the generated book
