@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Trigger: Odin code, pointers, allocators, parallelism, CLI or libav. Ground changes in the installed compiler and Odin in Practice.">
+        <meta name="description" content="Trigger: Odin code, packages, pointers, allocators, parallelism, CLI or libav. Ground changes in the installed compiler and Odin in Practice.">
       
       
       
@@ -549,6 +549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#practical-package-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Package Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#execution-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -601,13 +612,15 @@
   <h1>SKILL</h1>
 
 <h2 id="activation-contract">Activation Contract<a class="headerlink" href="#activation-contract" title="Permanent link">&para;</a></h2>
-<p>Load for writing, debugging, reviewing or explaining Odin code alongside the book.</p>
+<p>Load for writing, debugging, reviewing or explaining Odin code alongside the book. Use the narrowest relevant reference; do not turn a focused change into a framework or a broad rewrite.</p>
 <h2 id="hard-rules">Hard Rules<a class="headerlink" href="#hard-rules" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Treat the installed compiler and library source as authority; distinguish the book's pinned edition from the reader's compiler.</li>
 <li>State ownership, borrowed lifetimes, release obligations and partial-failure behavior at each boundary.</li>
 <li>Use native threads and documented synchronization for parallel work; never invent built-in JavaScript Promise or async/await support.</li>
 <li>Keep demos separate from production claims. Request permission before installing tools, accessing credentials, contacting production or starting containers.</li>
+<li>Keep package boundaries deliberate. Odin directories define packages; names are public by default unless restricted with a visibility attribute.</li>
+<li>Do not assume Odin has an official package manager or silently use an unpinned external dependency.</li>
 </ul>
 <h2 id="decision-gates">Decision Gates<a class="headerlink" href="#decision-gates" title="Permanent link">&para;</a></h2>
 <table>
@@ -623,6 +636,10 @@
 <td>Installed declarations and target implementation</td>
 </tr>
 <tr>
+<td>Package layout, imports or visibility</td>
+<td><a href="references/packages.html">Package and dependency guide</a>, source directory and its imports</td>
+</tr>
+<tr>
 <td>Memory or threads</td>
 <td>Allocator state, publication, cancellation and joining</td>
 </tr>
@@ -636,18 +653,30 @@
 </tr>
 </tbody>
 </table>
+<h2 id="practical-package-workflow">Practical Package Workflow<a class="headerlink" href="#practical-package-workflow" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Start with one directory package. Split cohesive source across files when navigation helps; same-directory files share declarations, but each file needs its own imports.</li>
+<li>Create a subdirectory package only for a clear responsibility, independent reuse/testing, or an API boundary worth maintaining. Do not make a package for every file.</li>
+<li>Keep the CLI entry point, argument interpretation and process exit contract close together. Separate domain operations only when they can be named and tested independently.</li>
+<li>Treat declarations as public by default. Expose a small API; mark shared implementation <code>@(private="package")</code> and file-only details <code>@(private="file")</code>. There is no protected inheritance visibility.</li>
+<li>Keep imports explicit at file scope. Check the local path, package declaration and imported package's actual public API rather than guessing import resolution.</li>
+<li>Prefer built-in collections and project-controlled dependency source. Vendor dependencies deliberately, record upstream and exact version/commit plus license and local patches, and update/test them intentionally. Never use a moving branch or undocumented local checkout as a reproducible dependency.</li>
+<li>Treat the bundled <a href="examples/05-packages/index.html">complete package example</a> and its <code>.odin</code> source as a curated reference: inspect the code and test, then adapt its verified patterns instead of guessing Odin syntax or APIs. Check the CLI package, run the default and named cases, and test the imported package. Follow its cleanup for allocated return values.</li>
+</ol>
 <h2 id="execution-steps">Execution Steps<a class="headerlink" href="#execution-steps" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Read <a href="references/checklist.html">the source and verification checklist</a> for the relevant branch.</li>
-<li>Record <code>odin version</code> and locate libraries with <code>odin root</code>; inspect exact signatures before editing.</li>
-<li>Make the smallest change that satisfies the request. Reuse the project's conventions and dependencies.</li>
-<li>Check a complete package, run focused tests and exercise success plus the relevant failure boundary.</li>
+<li>Read <a href="references/checklist.html">the source and verification checklist</a> and any branch-specific reference.</li>
+<li>Record <code>odin version</code> and locate libraries with <code>odin root</code>; inspect exact signatures and source before editing.</li>
+<li>Trace package directories, declarations, imports, callers, ownership and error paths. Choose the smallest boundary that gives a real benefit.</li>
+<li>Make the smallest change that satisfies the request. Reuse project conventions and dependencies; do not add a package manager or general framework for a local package need.</li>
+<li>Check a complete package, run focused tests, and exercise success plus the relevant failure boundary. For package work, follow commands in the runnable example and test imported package behavior.</li>
 <li>Report compiler/platform, commands, results and untested obligations; attach measurements before claiming a speedup.</li>
 </ol>
 <h2 id="output-contract">Output Contract<a class="headerlink" href="#output-contract" title="Permanent link">&para;</a></h2>
-<p>Return changed paths, verified behavior and remaining limits. Label fragments, intentional compile failures and complete runnable programs distinctly.</p>
+<p>Return changed paths, verified behavior and remaining limits. Label fragments, intentional compile failures and complete runnable programs distinctly. Do not claim visibility is a security boundary or claim dependency reproducibility without recording the source/version.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
+<li><a href="references/packages.html">Package boundaries, visibility and dependencies</a></li>
 <li><a href="references/checklist.html">Source, ownership and verification checklist</a></li>
 </ul>
 

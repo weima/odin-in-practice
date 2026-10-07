@@ -41,6 +41,8 @@ jobs:
         run: |
           "$PUPPETEER_EXECUTABLE_PATH" --version
           npm run diagrams
+      - name: Package and verify the companion skill
+        run: python tools/package-skill.py
       - name: Build HTML from Markdown
         run: mkdocs build --strict
       - name: Check the generated book
