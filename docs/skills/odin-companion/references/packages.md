@@ -1,6 +1,6 @@
 # Odin packages and dependencies
 
-Use this when an Odin change adds files, creates an import boundary, exposes a helper, or introduces third-party source. The book's companion example is included at [`examples/05-packages/`](../examples/05-packages/README.md); its files can be run with the pinned compiler or adapted to the project's installed version.
+Use this when an Odin change adds files, creates an import boundary, exposes a helper, or introduces third-party source. The bundle includes the complete curated `.odin` source and focused test at [`examples/05-packages/`](../examples/05-packages/README.md), not only a link to the book. Inspect the relevant source and test as working reference code, then adapt it to the project and installed compiler rather than guessing at syntax or package behavior.
 
 ## Choose the smallest useful boundary
 

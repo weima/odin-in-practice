@@ -38,7 +38,7 @@ Load for writing, debugging, reviewing or explaining Odin code alongside the boo
 4. Treat declarations as public by default. Expose a small API; mark shared implementation `@(private="package")` and file-only details `@(private="file")`. There is no protected inheritance visibility.
 5. Keep imports explicit at file scope. Check the local path, package declaration and imported package's actual public API rather than guessing import resolution.
 6. Prefer built-in collections and project-controlled dependency source. Vendor dependencies deliberately, record upstream and exact version/commit plus license and local patches, and update/test them intentionally. Never use a moving branch or undocumented local checkout as a reproducible dependency.
-7. Apply the [runnable package example](examples/05-packages/README.md): check the CLI package, run the default and named cases, and test the imported package. Follow its cleanup for allocated return values.
+7. Treat the bundled [complete package example](examples/05-packages/README.md) and its `.odin` source as a curated reference: inspect the code and test, then adapt its verified patterns instead of guessing Odin syntax or APIs. Check the CLI package, run the default and named cases, and test the imported package. Follow its cleanup for allocated return values.
 
 ## Execution Steps
 

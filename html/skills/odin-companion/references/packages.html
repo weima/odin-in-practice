@@ -579,7 +579,7 @@
 
 
 <h1 id="odin-packages-and-dependencies">Odin packages and dependencies<a class="headerlink" href="#odin-packages-and-dependencies" title="Permanent link">&para;</a></h1>
-<p>Use this when an Odin change adds files, creates an import boundary, exposes a helper, or introduces third-party source. The book's companion example is included at <a href="../examples/05-packages/index.html"><code>examples/05-packages/</code></a>; its files can be run with the pinned compiler or adapted to the project's installed version.</p>
+<p>Use this when an Odin change adds files, creates an import boundary, exposes a helper, or introduces third-party source. The bundle includes the complete curated <code>.odin</code> source and focused test at <a href="../examples/05-packages/index.html"><code>examples/05-packages/</code></a>, not only a link to the book. Inspect the relevant source and test as working reference code, then adapt it to the project and installed compiler rather than guessing at syntax or package behavior.</p>
 <h2 id="choose-the-smallest-useful-boundary">Choose the smallest useful boundary<a class="headerlink" href="#choose-the-smallest-useful-boundary" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>One package, multiple files:</strong> keep cohesive CLI mechanics together when files share declarations and evolve together. A directory's <code>.odin</code> files with the same package declaration compile together. Split files by responsibility (entry point, argument handling, output) for navigation, not as a visibility trick.</li>

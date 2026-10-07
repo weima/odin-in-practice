@@ -17,6 +17,16 @@ required = (
 missing = [path for path in required if not (skill / path).is_file()]
 assert not missing, f"Skill bundle is incomplete: {', '.join(missing)}"
 
+canonical_example = ROOT / "docs/examples/05-packages"
+bundled_example = skill / "examples/05-packages"
+canonical_sources = {path.relative_to(canonical_example) for path in canonical_example.rglob("*.odin")}
+bundled_sources = {path.relative_to(bundled_example) for path in bundled_example.rglob("*.odin")}
+assert canonical_sources == bundled_sources, "Bundled Odin source files differ from the book example"
+for relative_path in canonical_sources:
+    assert (canonical_example / relative_path).read_bytes() == (bundled_example / relative_path).read_bytes(), (
+        f"Bundled Odin source is out of sync: {relative_path}"
+    )
+
 with ZipFile(archive, "w", compression=ZIP_DEFLATED) as output:
     for file in sorted(skill.rglob("*")):
         if file.is_file():
