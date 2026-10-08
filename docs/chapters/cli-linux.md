@@ -287,6 +287,82 @@ The scope-local context makes a cross-cutting choice available to nested Odin ca
 
 **Subtle watch-out:** a short process may appear to “work” without freeing memory because the OS reclaims it at exit. That does not make the ownership correct for a long-running CLI or service. Also, a `defer` runs at its lexical scope exit; check which scope contains it.
 
+<a id="dogfood-formatted-ownership"></a>
+### Formatted strings have owners too
+
+A formatted string is still an allocation—or a view into one. Its type does not tell you who must keep the bytes alive or release them. Read the contract for the specific formatter in [core/fmt/fmt.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/fmt/fmt.odin):
+
+| Family | Examples | Result storage | Who manages it? |
+| --- | --- | --- | --- |
+| `t` | `tprintf`, `tprintfln` | `context.temp_allocator` | Borrow it only until temporary storage is reset. Do not `delete` it. |
+| `a` | `aprintf`, `aprintfln` | The supplied allocator, default `context.allocator` | Caller must `delete` with that same allocator. |
+| `b` | `bprintf`, `bprintfln` | The supplied byte buffer | The result is a view into the buffer. Keep the buffer alive; do not delete the view. |
+| `s` | `sbprintf`, `sbprintfln` | The supplied `strings.Builder` | The builder owns its buffer; keep it alive and call `strings.builder_destroy` when done. |
+
+The paired non-formatting procedures (`tprint`, `aprint`, `bprint`, `sbprint`, and their newline forms) use the corresponding storage rule. `a` procedures let you select an allocator; the allocator defaults do not make the returned bytes caller-independent. See [core/strings/builder.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/builder.odin) for the builder lifecycle.
+
+**A `t` result is borrowed scratch.** In an isolated dev-2026-10 experiment, calling `delete` on a `fmt.tprintf` result produced no error and did not crash:
+
+```odin
+value := fmt.tprintf("delete me")
+delete(value)
+fmt.println("after delete")
+```
+
+```text
+after delete
+exit=0
+```
+
+That silent success does not make deletion valid: the result belongs to the temporary allocator, not the caller, and passing it to `delete` is undefined behaviour. It may crash, corrupt the heap, or appear to work. The same mistake crashed a larger program with a segfault in the free path (Coffee Shop, on its second Herdr tab), yet this small isolated program survived it. Surviving once proves nothing. A temporary result also becomes unusable after its allocator is reset. This experiment printed twelve zero bytes from a saved `tprintf` result after `mem.free_all(context.temp_allocator)`, while an independent clone still printed `survives? yes`:
+
+```text
+after free_all: doomed=[ <12 NUL bytes> ] saved=[ survives? yes ]
+```
+
+Clone when the value must outlive scratch, and make the owner’s destruction explicit. Here is the complete ownership flow; `runtime` is `base:runtime`, and the example package includes the matching `Owner` type and procedures:
+
+```odin
+use_order :: proc() -> runtime.Allocator_Error {
+    borrowed := fmt.tprintf("order=%d", 7)
+    owner, err := owner_make(borrowed, context.allocator)
+    if err != nil {
+        return err
+    }
+    defer owner_destroy(&owner)
+    return nil
+}
+```
+
+`owner_make` clones the bytes into the allocator the owner retains. `owner_destroy` deletes them through that allocator. The owner must not be copied into multiple independent owners. When a procedure returns a string, document whether its result is borrowed, which storage it borrows, how long it remains valid, or which allocator owns it and how the caller releases it. `temp_format`, `allocated_format`, `buffer_format`, and `builder_format` in the example package show those four contracts in their comments and signatures.
+
+**A format string is not a JSON template.** `fmt` interprets braces as format syntax. With `x == "7"`, this exact call:
+
+```odin
+fmt.tprintf("{\"order\":%s}", x)
+```
+
+returned the exact string `%!(MISSING CLOSE BRACE)order":7}` in the dev-2026-10 experiment. Double literal braces to emit braces:
+
+```odin
+fmt.tprintf("{{\"order\":%s}}", x) // {"order":7}
+```
+
+For hand-built fixed fragments, `strings.concatenate([]string{"{\"order\":", x, "}"})` avoids the format language; the caller owns and deletes its allocated result. For actual JSON, marshal a typed value instead. `json.marshal` returned `{"order":"7"}` for a struct with an `order: string` field, and returns bytes plus an error; the caller deletes the returned bytes:
+
+```odin
+import json "core:encoding/json"
+Order :: struct { order: string }
+data, err := json.marshal(Order{"7"})
+if err == nil {
+    defer delete(data)
+}
+```
+
+See [core/encoding/json/marshal.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/marshal.odin). Encoding also handles quotes, backslashes, and control characters in values; interpolation does not.
+
+**A leak report has a boundary.** The test runner’s per-test `mem.Tracking_Allocator` tracks allocations routed through its allocator, which is used as `context.allocator`. A direct experiment added one forgotten `fmt.aprintf` result and observed `tracked allocations=1`; making a `fmt.tprintf` call afterward left that count at `1`. The example tests verify the matching rule by freeing an `a` result and the owned clone, while checking that a `t` result does not appear in that separate allocator’s map. This proves only what that tracker observed: it does not prove the temporary result is unallocated, valid indefinitely, or leak-free under another lifetime. Tracking is evidence about an allocator boundary, not a universal ownership checker. The APIs are defined in [core/mem/tracking_allocator.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/mem/tracking_allocator.odin).
+
 <a id="files"></a>
 
 Part IV · The operating system
@@ -360,6 +436,42 @@ The fallback also treats `Broken_Pipe` as completion in this revision. Do not si
 **Exercise 12.1.** Compare the result for an empty file, a short text file, and a multi-megabyte file. Which approach should your real tool use, and what evidence supports that choice?
 
 **Subtle watch-out:** a successful read call may return fewer bytes than requested without reaching EOF. Streaming code must process the returned count and continue; a fixed buffer is not a promise of a full read.
+
+<a id="dogfood-durable-directory"></a>
+
+### Durable state starts with a directory race
+
+A directory that already exists is not necessarily an error. On the pinned Linux compiler, `os.make_directory_all` returns `nil` when it creates at least one path component, but returns `.Exist` when the requested directory already exists. The behavior follows `make_directory_all` in [core/os/path.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path.odin) and its Linux implementation in [core/os/path_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path_linux.odin).
+
+Running the call twice against a new path returned `nil`, then `Exist`. Launching 24 processes together against one absent path produced one `nil` and 23 `Exist` results. A caller that treats every non-`nil` result as fatal can therefore lose work even though the directory is ready. Coffee Shop hit this while Workers saved reports into a shared directory; `dispatch.odin` now creates shared directories before starting Workers, and `filter.odin` accepts an existing directory only after checking `os.is_dir`.
+
+```odin
+ensure_directory :: proc(path: string) -> bool {
+    if os.is_dir(path) { return true }
+    err := os.make_directory_all(path)
+    return err == nil || (err == .Exist && os.is_dir(path))
+}
+```
+
+Prefer creating shared directories once before launching concurrent work. If callers can race, check that `.Exist` names a directory rather than assuming it does; another process could have created a regular file at that path. The example package `docs/examples/12-durable-state/` tests the repeated-call case. It uses the check-after-error form; the process race above is a Linux observation, not a promise that every platform returns the same error.
+
+<a id="dogfood-atomic-replacement"></a>
+
+### Replace a state file without exposing a half-write
+
+To replace a small state file, write its complete new contents to a temporary sibling, flush and sync that file, close it, then rename it over the target. The sibling matters: a rename across filesystems fails rather than becoming an atomic copy-and-delete. On the pinned Linux compiler, renaming within `/tmp` returned `nil`; renaming from `/tmp` to `/dev/shm` (a different filesystem) returned `EXDEV`. Keep the temporary file in the target directory.
+
+The companion package's `atomic_write` is the complete checked example: it writes the sibling, checks `os.flush`, `os.sync`, and close, then renames and removes the temporary on failure. Its fixed `.tmp` name is intentionally for a single writer; concurrent writers need distinct temporary names or serialization. In the Coffee Shop implementation, `write_register_atomic` serializes the Register, writes a sibling temporary file through `write_all_to_file`, and renames it into place. That helper checks write, `os.sync`, and close errors. The standard library exposes `flush`, `sync`, and `rename` in [core/os/file.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin); its Linux sync and POSIX rename paths are in [core/os/file_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_linux.odin) and [core/os/file_posix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin).
+
+A successful rename replaces the visible name in one operation on the tested Linux filesystem, so readers opening the target do not observe the temporary file being written in pieces. A failed write or rename should leave the old target untouched; the companion test forces a temporary-file open failure and verifies the old bytes remain. This does not make a multi-file update transactional, prevent concurrent writers from clobbering one another, or prove that the renamed directory entry survives sudden power loss. Syncing the file does not sync its containing directory. Stronger power-loss durability needs a platform-appropriate directory sync and a carefully documented filesystem contract; this teaching example does not claim that guarantee.
+
+<a id="dogfood-event-log"></a>
+
+### Keep an event log and a snapshot in agreement
+
+A snapshot can make startup fast when recovery resumes from it, whereas this example replays the whole log to validate that the two agree; an append-only newline-delimited JSON log explains how it reached that state. Give each event a strictly increasing sequence number and validate every transition during replay. The companion `state` package keeps one small item so you can inspect the whole path: `transition` validates, appends and syncs the event, then atomically replaces the snapshot. The append comes first. If the process stops before the snapshot replacement, the log is ahead; the next load detects a sequence or status conflict instead of silently rewriting either record. Coffee Shop follows this Register/Receipt pattern in `state.odin` (`append_receipt_event`, `validate_receipt`, and `write_register_atomic`).
+
+A final line without `\n` is not a complete record. The validator reports it as a partial line and includes its one-based line number. Do not quietly drop it or pretend the preceding snapshot proves what the missing event said. Likewise, if replay and snapshot disagree, report a conflict and require an explicit recovery decision. The example tests a two-line log whose unfinished final line is reported as line 2, a snapshot/log sequence disagreement, a round trip, and a rejected transition that leaves the state unchanged.
 
 <a id="streams"></a>
 
@@ -471,6 +583,31 @@ That file also contains a warning about synchronizing the no-CRT environment imp
 
 **Exercise 14.1 · Explain the difference.** Design three results for a configuration key: absent, present but empty, and present with text. Then choose deliberately which results trigger a default. Run both shell cases above rather than simulating absence with an empty string.
 
+<a id="dogfood-state-location"></a>
+
+### Choose a state root once, then pass it in
+
+A CLI can accept an absolute `TOOL_STATE_DIR` override and otherwise use the user's state directory. Linux's `os.user_state_dir` follows `XDG_STATE_HOME` when set and otherwise uses `~/.local/state` on Linux, under `HOME`. Its contract is documented in [core/os/user.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/user.odin); environment lookup is in [core/os/env.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env.odin), and `filepath.is_abs` is declared in [core/path/filepath/path.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/path/filepath/path.odin).
+
+```odin
+state_root :: proc(allocator: runtime.Allocator) -> (string, os.Error) {
+    override, found := os.lookup_env("TOOL_STATE_DIR", allocator)
+    if found {
+        if !filepath.is_abs(override) { delete(override, allocator); return "", .Invalid_Argument }
+        return override, nil // caller owns the allocated string
+    }
+    delete(override, allocator)
+    base, err := os.user_state_dir(allocator)
+    if err != nil { return "", err }
+    path, join_err := filepath.join({base, "tool-name"}, allocator)
+    delete(base, allocator)
+    if join_err != nil { return "", .Invalid_Argument }
+    return path, nil
+}
+```
+
+The fragment requires `core:os`, `core:path/filepath`, and the `runtime` allocator type in scope. Check the override before using it; `TOOL_STATE_DIR=relative` was found but `filepath.is_abs` returned false in the pinned build. The caller owns whichever allocated path is returned and must free it. In tests, pass a temporary root directly to the state functions instead of mutating process environment: that keeps each test isolated and makes its filesystem effects explicit. The companion package follows that rule and never reads the environment.
+
 <a id="child-process"></a>
 
 ## 15. Starting child processes
@@ -535,6 +672,53 @@ Read the Linux [\_process\_start](https://github.com/odin-lang/Odin/blob/84bc3fc
 For a controlled service, an approved absolute executable path is clearer than relying on a mutable PATH and working directory. Reject embedded NUL bytes before crossing a C-string boundary. Also check both the API error and the child exit code; on Linux `success` reflects a zero normal exit, while its meaning is not identical on every platform.
 
 Do not treat `process_exec` as a timeout mechanism. Its synchronous capture waits for completion. Choose lower-level supervision when cancellation or an output budget is a requirement, and drain both output channels while the child is running.
+
+<a id="dogfood-supervision"></a>
+
+### Supervise, cancel, and confirm (Linux)
+
+Use `os.process_start` when you need a live handle instead of waiting for captured output. A start error means no child handle was obtained; once start succeeds, the child can still fail. In the observed Linux run, a missing executable returned `Not_Exist`, while `sh -c 'exit 7'` started, then `process_wait` returned `exited=true`, `exit_code=7`, and `success=false`.
+
+```odin
+package main
+import "core:os"
+import "core:time"
+
+wait_briefly :: proc(process: os.Process) -> (os.Process_State, os.Error) {
+    state, err := os.process_wait(process, timeout=100*time.Millisecond)
+    if err == .Timeout {
+        // This example chooses forced cancellation after the deadline.
+        _ = os.process_kill(process)
+        return os.process_wait(process) // No timeout: wait until reaped.
+    }
+    return state, err
+}
+
+main :: proc() {
+    process, err := os.process_start(os.Process_Desc{command = []string{"sleep", "30"}})
+    if err != nil { return } // Launch failure: no child handle exists.
+    _, _ = wait_briefly(process)
+}
+```
+
+`process_wait` reports `.Timeout` when its deadline expires; other errors leave the state undetermined. `process_terminate` requests termination (SIGTERM on this Linux implementation) and can be ignored. `process_kill` forces termination. After either signal, wait for the handle: the observed `process_kill` followed by an unbounded wait returned `exited=true` and `exit_code=9`. A handle is a resource; wait it on every path, including after a timeout. See [process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) and the Linux implementation in [process\_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin).
+
+A PID by itself is not durable identity: Linux can reuse it after a process exits. Pair it with field 22 (`starttime`) from `/proc/<pid>/stat`. The command name (`comm`) is parenthesized and may itself contain spaces or parentheses, so find the **last** `)` before splitting the remaining fields. From that suffix, field 3 (`state`) is token zero and field 22 (`starttime`) is token 19. Compare both PID and start time before acting on a saved identity. That narrows the window but does not close it: the check and the signal are still two steps, and a PID could be reused between them. For a child you started yourself, signal through the handle `process_start` returned, which on Linux is a pidfd that stays bound to that one process (see the note on `Process` in [core/os/process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin)). For an identity saved by an earlier run, a small window remains and must be accepted or avoided by design. This detects a different start time; the example test simulates reuse by changing the saved start time, rather than waiting for the kernel to recycle a PID.
+
+A zombie has already exited; it only remains for its parent to collect its status. Treat state `Z` as gone, not as a live process. The companion package `docs/examples/15-supervision/` implements `Process_Identity`, `parse_proc_stat`, and a three-way `identity_liveness`: `Gone` only for evidence of absence (no such entry, a zombie, or a different start time), `Alive` for a matching running process, and `Unknown` when the entry cannot be read or does not parse. `identity_alive` is true only for `Alive`, and `cancel` reports `Interrupted` for `Unknown` rather than claiming the process is gone. Its tests cover the current process, a deliberately wrong start time, a zombie, a synthetic command name containing `)`, and each classification. The `/proc` interface and this parser are Linux-specific. Coffee Shop's `src/process.odin` implements `read_proc_stat` and `identity_alive`; those are application helpers, not part of Odin's library. The companion shows the same parsing rule.
+
+Killing a process does not kill its descendants. In a reproduced shell run, killing a `setsid sh` child left its `sleep` grandchild in state `S`. The practical workaround here is to start a separate session with the external Linux `setsid` utility, then signal the process group (negative group ID):
+
+```sh
+setsid sh -c 'sleep 30 & wait' &
+pid=$!                         # setsid session/process-group leader
+kill -s TERM -- -"$pid"       # signal every member of that process group
+wait "$pid"
+```
+
+The reproduced group signal left the grandchild absent from `/proc`. Odin's `os.Process_Desc` has no session/process-group option or pre-exec callback. `core:sys/posix` provides `setsid` and `kill`/`killpg`, but `setsid` changes the *calling* process; calling it in the supervisor would change the supervisor, not the already-execed child. Launching the external `setsid` utility is the practical workaround when starting an ordinary `Process_Desc` child. See [unistd.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin) and [signal.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin). Keep unrelated work out of that process group: a group signal reaches every member.
+
+Cancellation is a protocol, not a successful signal call. Record the request, send a cooperative signal, then wait for confirmed exit within a deadline. Only confirmed exit supports a cancelled result; if the process remains live or its state cannot be established by the deadline, record `Interrupted` (unknown), not success. If it was already gone before the request, report `Already_Gone`. The companion's `cancel` procedure uses this result model. Coffee Shop's settle path follows the same evidence rule: a cancellation request is followed by an identity check or a recorded result; failure to confirm exit becomes interrupted rather than completed. A timed-out child still needs later cleanup, and its descendants need separate group handling.
 
 <a id="linux"></a>
 
@@ -747,6 +931,59 @@ These are package-level tests. For observable process behavior—stdout, stderr,
 **Exercise 21.1.** Add a function that validates a preview limit. Write tests for a valid value, zero, a negative value, and a value beyond the allowed maximum. Make the test names describe the contract, then run `odin test .`.
 
 **Subtle watch-out:** an assertion that the compiler removes is not a test result. Use `core:testing` expectations for test outcomes, and check the test command’s exit status in automation.
+
+### Black-box tests for a command-line tool
+
+A package test cannot prove what a user sees at the process boundary. Build the real executable from the test, start it as a separate process for each scenario, then assert stdout, stderr, and the exit code independently. This keeps the test honest: a command in a later step cannot accidentally use state that only existed in an earlier process. The small [e2e test source](../examples/21-e2e-cli/e2e_test.odin) package demonstrates the shape.
+
+The test builds with `odin build . -out:<temporary-path>` and sets `working_dir` to the example directory. It then runs the built binary directly. A fake `uppercase-tool` script lives in a temporary `bin` directory at the front of the child PATH. It writes every argument to a fixture file, prints canned output, and exits unsuccessfully when `FAKE_TOOL_DOWN` is set. The test passes `two words` and `say \"hi\"` as separate argv entries and compares the complete recording; neither the spaces nor the quote are reparsed by a shell. Run the test on Linux: its fake executable uses a POSIX shell script.
+
+`Process_Desc.env` is the **full** environment, not a set of additions. The descriptor comment in [core/os/process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) says so; the companion test exercises a child with an explicitly constructed environment. Start from `os.environ`, remove keys you will override, then append replacements. Passing only `PATH=...` also discards variables the child may need. A nil environment inherits the current environment, but then the test cannot control its PATH or fake-tool switches.
+
+```odin
+inherited, err := os.environ(context.temp_allocator)
+if err != nil { return }
+env := make([]string, len(inherited)+1, context.temp_allocator)
+n := 0
+for entry in inherited {
+    if strings.has_prefix(entry, "PATH=") { continue }
+    env[n] = entry
+    n += 1
+}
+env[n] = fmt.tprintf("PATH=%s:/usr/bin:/bin", fake_bin)
+```
+
+This fragment leaves room for any other explicit overrides. Use the same replacement rule for each override key. Linux executable lookup for a command without a slash uses the parent’s PATH in this Odin revision, so use an absolute executable path when you need the child’s PATH to choose the program; the fixture’s CLI invokes `uppercase-tool` after it has started and therefore uses that explicit child PATH.
+
+`process_exec` is convenient for short, bounded commands: it captures both streams and waits, but has no timeout parameter. For a command that may hang, use `process_start`, redirect stdout and stderr to owned files or pipes, and poll `process_wait` with a finite timeout until a wall-clock deadline. Do not replace the deadline with a fixed sleep: a sleep neither proves completion nor bounds a slow child. On timeout or any assertion/setup failure, kill and wait for a still-live child before returning; defer closing handles and removing the fixture directory at the scope that acquired them. The test creates a fresh temporary root with `os.make_directory_temp` for every run and defers its recursive removal.
+
+A useful outcome table keeps the contract explicit:
+
+| Child outcome | CLI status | CLI stdout | CLI stderr |
+| --- | ---: | --- | --- |
+| Tool succeeds | 0 | Tool output | Empty |
+| Tool starts and fails | 1 | Empty | Failure diagnosis |
+| Tool cannot be started | 2 | Empty | Start diagnosis |
+
+Keep assertions separate for these channels. A matching error message alone does not prove that the status is correct, and a nonzero status does not prove that diagnostics stayed off stdout.
+
+### Expectation messages are a different API
+
+In this compiler release, `testing.expect_value` takes optional source-location and expression arguments after the expected value, not a message string. Passing a string in the fourth position fails compilation. A direct experiment with `testing.expect_value(t, 1, 2, "message")` produced:
+
+```text
+Error: Cannot convert untyped value '"message"' to 'Source_Code_Location' from 'untyped string'
+```
+
+The signature in [core/testing/testing.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin) confirms it. Use `testing.expect` when a custom diagnosis helps, or follow a value comparison with a separate message-bearing condition:
+
+```odin
+testing.expect(t, exit_code == 0, "CLI should succeed")
+```
+
+The companion tests intentionally check individual output channels and values, using the standard runner. To keep these tests deterministic, give every run its own fresh temporary directory (`os.make_directory_temp`) and remove it afterwards, replace the external executable with a local script, use fixed canned output and exit statuses, and avoid network, clock-based expectations, or shared mutable state. If you add a timing-sensitive child, poll with a deadline, clean it up on every path, and run the suite repeatedly; three consecutive clean runs are a useful flakiness check, not proof that timing bugs are impossible.
+
+**Exercise 21.2.** Make the fake record a JSON line or another unambiguous argument encoding. Add a second user argument containing an empty string, and verify the recording distinguishes it from no argument at all.
 
 <a id="capstone"></a>
 

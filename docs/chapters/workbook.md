@@ -98,6 +98,85 @@ Reasoning
 
 The destination timestamp is 1000 ticks for one second. The integers have different units despite identical types. FFmpeg’s helpers also preserve unknown-timestamp conventions. Decoder EAGAIN is a state-machine transition: output consumption changes the state; elapsed wall time is not the required operation.
 
+<a id="dogfood-exercise-k"></a>
+
+### Exercise K · Runes, offsets, and declarations
+
+Before running anything, predict the three rune values and byte offsets from ranging over `"Aé🙂"`, and the value of `len(s)` and `s[1]`. Then, inside a procedure whose results are `(stdout, stderr: []byte, err: string)`, classify these declarations as accepted or rejected and explain the fix:
+
+```odin
+state, child_stdout, child_stderr, process_err := fake_process()
+state, stdout, stderr, process_err := fake_process()
+code, out, status := second()
+```
+
+Treat each of the first two lines as the only declaration in the procedure's top scope. Assume `code` and `out` already exist in the current scope for the last line. Finally, predict whether `now: time.Time = time.now()` is a valid default parameter.
+
+**Subtle watch-out:** the index from a string range is a byte offset, not a rune ordinal; and a new name on the left of `:=` does not permit redeclaring other names in the same scope.
+
+Solution sketch
+
+`"Aé🙂"` has seven bytes. Ranging yields U+41 at byte 0, U+E9 at byte 1, and U+1F642 at byte 3; `s[1]` is the first UTF-8 byte of `é` (195), not the rune. The first declaration is valid when its names are new. The second shadows the named results and is rejected; use distinct locals then assign to `stdout` and `stderr`, or assign the returned values with `=` after declaring only genuinely new locals. The third is rejected because `code` and `out` already exist; use `=` and declare `status` separately, or use fresh local names. A runtime call such as `time.now()` is not a constant default; accept the time as an argument or use a wrapper that supplies `time.now()` at runtime. The pinned compiler reports, verbatim, `Direct shadowing of the named return value 'stdout' in this scope` (and the same for `stderr`) for the second line; `Redeclaration of 'code' in this scope` (and for `out`) for the third; and `Default parameter must be a constant, got time.now()` for the default parameter. The pinned examples and tests in `docs/examples/04-language-traps/` exercise the rune offsets, valid assignment patterns, and runtime-time alternatives.
+
+<a id="dogfood-exercise-l"></a>
+
+### Exercise L · Who owns the formatted bytes?
+
+For each line below, predict the lifetime/ownership bug before running it, then state the rule it violates. Assume the braces are intended to produce JSON and `x` is `"7"`:
+
+```odin
+value := fmt.tprintf("order=%d", 7)
+delete(value)
+saved := fmt.tprintf("order=%d", 7)
+_ = mem.free_all(context.temp_allocator)
+fmt.println(saved)
+json_text := fmt.tprintf("{\"order\":%s}", x)
+```
+
+Which result is caller-owned, which is borrowed scratch, and which formatter is a poor choice for a JSON template?
+
+**Subtle watch-out:** undefined behaviour is not disproved by a run that happens not to crash; a temporary result can also appear intact until its allocator is reset.
+
+Solution sketch
+
+`tprintf` returns temporary-allocator storage: do not `delete` it, and do not use it after the temporary allocator is reset. The first line violates the allocator ownership rule; the second violates the borrowed value's lifetime. Clone into an allocator whose lifetime covers the use, or use an allocating formatter and delete its result with the same allocator. `fmt` interprets braces as formatting syntax, so a JSON-looking format string can produce a format diagnostic rather than JSON. Escape literal braces for the format language, concatenate fixed fragments for a deliberately simple case, or marshal a typed value with `json.marshal`. The pinned ownership companion tests these outcomes and ownership boundaries.
+
+<a id="dogfood-exercise-m"></a>
+
+### Exercise M · Two files, several crash points
+
+A state writer opens the snapshot and overwrites it in place, then appends an event to its log. Two processes can also call “create state directory” at the same time. Predict what each process may observe at directory creation, and describe the persisted files if a crash happens during snapshot writing or after snapshot replacement but before the log append. How should a reader detect inconsistency, and what recovery claim can it honestly make?
+
+**Subtle watch-out:** a valid JSON snapshot by itself does not prove that it agrees with the event history; a crash can leave a syntactically valid but stale or ahead-of-log state.
+
+Solution sketch
+
+Directory creation is a race: one caller may create it while another receives `.Exist`. Treat that result as success only after confirming the path is a directory. An in-place write can leave a truncated or partial snapshot if interrupted. If the snapshot is replaced first and the process stops before appending, the snapshot is ahead of the log. Validate complete log lines, sequence numbers, and replayed state against the snapshot; report a partial record or conflict instead of silently declaring success. Without a journal/transaction or an explicit repair source, the honest policy is to preserve evidence and require an explicit recovery decision. A sibling temporary file plus checked sync and rename avoids exposing a half-written single snapshot file, but does not make a two-file update transactional. The durable-state companion tests directory reuse, atomic replacement failure, partial lines, and snapshot/log disagreement.
+
+<a id="dogfood-exercise-n"></a>
+
+### Exercise N · A PID is not a process identity
+
+A supervisor stores only PID 812 and later finds that PID in `/proc`. Describe how PID reuse can fool it. Given a `/proc/812/stat` line whose parenthesized command name contains spaces and `)`, explain how to locate the state and start-time fields. Then explain why killing the direct child may leave its grandchild running, and what result to record if exit cannot be confirmed before the deadline.
+
+**Subtle watch-out:** splitting the whole line on spaces or stopping at the first `)` mis-parses `comm`; a successful signal request is not evidence that the process exited.
+
+Solution sketch
+
+Pair the PID with field 22 (`starttime`) from `/proc/<pid>/stat`; treat state `Z` as already exited, not live. Find the last `)` ending the command field, then split the suffix: state (field 3) is token 0 and start time (field 22) is token 19. A signal to the child does not automatically reach descendants. On Linux, launch through the external `setsid` utility and signal that process group when the whole group is the cancellation unit; calling `setsid` in the supervisor would change the supervisor, not its already-started child. Keep unrelated work out of the group. Record `Interrupted` (unknown), not `Cancelled`, when exit or identity cannot be confirmed by the deadline. The Linux companion tests the parser, zombie case, and cancellation outcomes.
+
+<a id="dogfood-exercise-o"></a>
+
+### Exercise O · Make the CLI test repeatable
+
+A black-box test passes on one machine and flakes on another. It sleeps for a fixed duration and assumes the command has finished, writes all runs under one fixed temporary path, and inherits the developer's `PATH`. Redesign the test setup and completion check. Explain what happens when `Process_Desc.env` contains only a replacement `PATH`, and how a test can replace selected variables without making the rest of the child environment accidental.
+
+**Subtle watch-out:** a longer fixed sleep is still a timing guess; process tests also need cleanup on assertion and timeout paths.
+
+Solution sketch
+
+Give each run a fresh temporary directory and remove it after the child and its files are cleaned up. Replace external dependencies with a local fake executable and fixed outputs. Poll process state with a finite deadline, then kill and wait on timeout rather than assuming a delay means completion. `Process_Desc.env` is the full child environment, not a set of additions; supplying only `PATH` discards all other variables. Start from `os.environ`, remove each key being overridden, then append controlled replacements. The pinned black-box example constructs this environment and asserts stdout, stderr, and exit status separately.
+
 **Completion test.** Explain one result from each source trail without quoting the function body. Then write the smallest experiment that could disprove your explanation. If your test cannot fail for a plausible wrong implementation, strengthen the oracle rather than simply adding more cases.
 
 <a id="glossary"></a>
@@ -128,6 +207,16 @@ A glossary is useful when it keeps adjacent concepts apart. “String,” “own
 | Syscall | A defined request from a program to the operating-system kernel. |
 | ABI | The binary-level conventions that let separately compiled code and the operating system communicate. |
 | Container | A media file format that stores streams, metadata and timing, such as MP4 or Matroska. |
+| Temporary allocator (borrowed scratch) | An allocator for short-lived values that may be invalidated when temporary storage is reset. A result allocated there is borrowed, not caller-owned memory to delete. |
+| Undefined behaviour | Program behavior for which the language or API gives no valid guarantee. An experiment that appears to work does not make it defined or safe. |
+| Atomic replace | Writing a complete sibling temporary file and renaming it over one target so readers do not see a partially written target. It does not make updates to multiple files transactional or guarantee power-loss durability. |
+| Append-only log | A sequence of records added at the end rather than rewriting prior records. It preserves history only if incomplete records and replay conflicts are detected. |
+| Snapshot | A saved summary of current state, commonly validated against replayed log history. It is not proof by itself that the history and current state agree. |
+| Process identity | A process reference that pairs its PID with a start-time value to distinguish a later process that reuses the PID. On Linux, the inspected example obtains the start time from `/proc/<pid>/stat`. |
+| Zombie | A process that has exited but whose parent has not yet collected its exit status. It is not a live process to cancel. |
+| Process group | A set of related processes that can receive a group signal together. Signaling a child PID alone does not signal its descendants. |
+| Black-box test | A test that invokes the built executable as a separate process and checks its externally visible behavior. It complements, rather than replaces, package tests. |
+| Fake executable | A controlled local program or script substituted for an external dependency during a test. It makes arguments, output, and failure status reproducible without depending on the real tool. |
 | Demuxer / muxer | A demuxer separates container input into streams and packets; a muxer packages output streams and packets. |
 | Packet / frame | A packet carries compressed stream data; a frame carries decoded audio samples or video pixels. |
 | Time base | A rational unit that gives meaning to integer media timestamps. |
@@ -161,6 +250,20 @@ This is library and runtime source evidence, not a claim to have audited the ent
 | `core/testing/logging.odin` and `runner.odin` · test\_logger\_proc | How is a logged expectation failure recorded? | 16 |
 | `core/encoding/json/types.odin`, `parser.odin`, `unmarshal.odin` | Which syntax is accepted, and who destroys a parsed tree? | 19 |
 | `core/strings/strings.odin` · clone\_to\_cstring, string\_from\_ptr | Who supplies termination, and which conversion only borrows? | 21, 23 |
+| `core/unicode/utf8/utf8.odin` and `core/unicode/letter.odin` · decoding and character properties | What does bytewise input mean, and when should text be decoded as runes? | 3–4 |
+| `core/time/time.odin` · now | Why can a runtime clock read not be a constant default parameter? | 4 |
+| `core/fmt/fmt.odin` · `tprintf`, `aprintf`, `bprintf`, `sbprintf` families | Who owns formatted output, which lifetime backs it, and how are literal braces parsed? | 9 |
+| `core/strings/builder.odin` · Builder and `builder_destroy` | Who owns builder-backed formatted bytes and how is its storage released? | 9 |
+| `core/encoding/json/marshal.odin` · `marshal` | How do you encode a typed value as JSON and receive allocated output? | 9, 12 |
+| `core/os/path.odin` · `make_directory_all`; `core/os/path_linux.odin` · `_mkdir_all` | What does recursive directory creation report when the directory already exists, and how does Linux create its path components? | 12 |
+| `core/os/file.odin`, `file_linux.odin`, and `file_posix.odin` · flush, sync, rename | How can a single state file be replaced without exposing a partial write, and what durability is not promised? | 12 |
+| `core/os/user.odin` · `user_state_dir`; `core/path/filepath/path.odin` · `is_abs` and `join` | How is the default state root chosen and how is an override validated? | 14 |
+| `core/os/process.odin` · `Process_Desc`, `process_start`, `process_wait`, `process_terminate`, `process_kill`, `process_exec` | What environment does a child receive, how is it started, cancelled, waited, and captured? | 15, 21 |
+| `core/os/process_linux.odin` · `_process_start`, `_process_wait`, `_process_kill`, `_process_terminate` | Which Linux process and PATH behaviors implement the public process operations? | 15, 21 |
+| `core/strings/strings.odin` and `core/strconv/strconv.odin` · `last_index_byte`, `fields`, `parse_u64` | How can `/proc/<pid>/stat` be parsed when `comm` contains spaces or `)`? | 15 |
+| `core/sys/posix/unistd.odin` · `setsid`; `core/sys/posix/signal.odin` · `killpg` | How can Linux process-group cancellation reach descendants, and what does it affect? | 15 |
+| `core/os/temp_file.odin` · `make_directory_temp`; `core/os/env.odin` · `environ` | How can tests isolate paths and construct a controlled child environment? | 21 |
+| `core/testing/testing.odin` · `expect_value`, `expect` | Which arguments are source/expression metadata, and how do you provide a custom expectation message? | 21 |
 
 To reproduce a reading, run `odin root`, open the local path, find the symbol, and compare the relevant branch with the pinned link. Do not call runtime-private helpers from application code merely because this book uses them to explain behavior. The public operation remains the intended interface.
 
@@ -189,6 +292,17 @@ To reproduce a reading, run `odin root`, open the local path, find the symbol, a
 - [Test runner](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/runner.odin) and [test logging](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/logging.odin) — contexts, allocation tracking, and failure recording.
 - [JSON source](https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json) — syntax policies, value trees, and cleanup.
 - [String source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin) — clones, C-string termination, and borrowed views.
+- [Unicode UTF-8 source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/utf8/utf8.odin) and [Unicode letter properties](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/letter.odin) — UTF-8 decoding and rune classification.
+- [Time source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/time/time.odin) — runtime clock reads.
+- [Formatting source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/fmt/fmt.odin) — formatting syntax and `t`, `a`, `b`, and builder-backed output families.
+- [String builder source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/builder.odin) — builder storage and destruction.
+- [JSON marshal source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/marshal.odin) — typed JSON encoding and allocated output.
+- [OS path source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path.odin) and [Linux path implementation](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path_linux.odin) — recursive directory creation and its public error contract.
+- [OS file source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin), [Linux file source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_linux.odin), and [POSIX file source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin) — flush, sync, and rename paths.
+- [User directories source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/user.odin) and [filepath source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/path/filepath/path.odin) — state-directory defaults and path validation.
+- [Linux process source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin) — Linux process startup, wait, and signaling paths.
+- [POSIX session source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin) and [POSIX signal source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin) — `setsid` and process-group signaling.
+- [Temporary-directory source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/temp_file.odin) — isolated temporary directories for tests.
 - [Creator’s explanation of the name](https://forum.odin-lang.org/t/origin-of-the-name-odin/794) — a mythological project codename that stuck.
 - [FFmpeg documentation](https://ffmpeg.org/documentation.html) — official user and developer documentation index.
 - [ffmpeg command documentation](https://ffmpeg.org/ffmpeg.html) — options, stream selection, streamcopy, transcoding and filtering.

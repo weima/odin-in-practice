@@ -14,6 +14,11 @@ test:
     TZ=UTC odin test docs/examples/18-containers
     TZ=UTC odin test docs/examples/19-parallel
     TZ=UTC odin test docs/examples/21-capstone/records
+    TZ=UTC odin test docs/examples/04-language-traps
+    TZ=UTC odin test docs/examples/09-ownership-traps
+    TZ=UTC odin test docs/examples/12-durable-state
+    TZ=UTC odin test docs/examples/15-supervision
+    TZ=UTC odin test docs/examples/21-e2e-cli
 
 # Assert the three Odin companion-skill CLI and network examples.
 skill-examples:

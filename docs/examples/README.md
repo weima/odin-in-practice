@@ -14,6 +14,11 @@ Commands below run from the repository root, with the pinned Odin compiler on `P
 | [Parallel map](19-parallel/README.md) | `odin run docs/examples/19-parallel` | Disjoint writes, stable descriptors, joining, errors and cancellation |
 | [CLI pipeline](21-capstone/run-pipeline/main.odin) | Build four stages as below | NDJSON boundaries and all-stage success before publication |
 | [Native media](26-libav-decode/README.md) | Build narrow C bridge and Odin caller | Decoder retries/drain, remux timestamps, staged output |
+| [Language traps](04-language-traps/main.odin) | `odin run docs/examples/04-language-traps` | Byte offsets versus runes, named-result and `:=` scope rules, runtime defaults |
+| [Formatted-string ownership](09-ownership-traps/main.odin) | `odin run docs/examples/09-ownership-traps` | Who owns `t`/`a`/`b`/`s` results, cloning into an owner, what a tracking allocator proves |
+| [Durable state](12-durable-state/main.odin) | `odin run docs/examples/12-durable-state` | Directory creation, atomic replace, an event log plus a snapshot |
+| [Supervising processes](15-supervision/main.odin) | `odin run docs/examples/15-supervision` | Process identity, zombies, confirmed cancellation (Linux only) |
+| [CLI end-to-end test](21-e2e-cli/cli.odin) | `TZ=UTC odin test docs/examples/21-e2e-cli` | Build the binary, a fake tool first on `PATH`, an explicit environment |
 
 ## Focused tests
 
@@ -26,6 +31,11 @@ TZ=UTC odin test docs/examples/17-networking/http-client
 TZ=UTC odin test docs/examples/18-containers
 TZ=UTC odin test docs/examples/19-parallel
 TZ=UTC odin test docs/examples/21-capstone/records
+TZ=UTC odin test docs/examples/04-language-traps
+TZ=UTC odin test docs/examples/09-ownership-traps
+TZ=UTC odin test docs/examples/12-durable-state
+TZ=UTC odin test docs/examples/15-supervision
+TZ=UTC odin test docs/examples/21-e2e-cli
 ```
 
 ## HTTP and CLI integration lab

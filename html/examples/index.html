@@ -639,6 +639,31 @@
 <td>Build narrow C bridge and Odin caller</td>
 <td>Decoder retries/drain, remux timestamps, staged output</td>
 </tr>
+<tr>
+<td><a href="04-language-traps/main.odin">Language traps</a></td>
+<td><code>odin run docs/examples/04-language-traps</code></td>
+<td>Byte offsets versus runes, named-result and <code>:=</code> scope rules, runtime defaults</td>
+</tr>
+<tr>
+<td><a href="09-ownership-traps/main.odin">Formatted-string ownership</a></td>
+<td><code>odin run docs/examples/09-ownership-traps</code></td>
+<td>Who owns <code>t</code>/<code>a</code>/<code>b</code>/<code>s</code> results, cloning into an owner, what a tracking allocator proves</td>
+</tr>
+<tr>
+<td><a href="12-durable-state/main.odin">Durable state</a></td>
+<td><code>odin run docs/examples/12-durable-state</code></td>
+<td>Directory creation, atomic replace, an event log plus a snapshot</td>
+</tr>
+<tr>
+<td><a href="15-supervision/main.odin">Supervising processes</a></td>
+<td><code>odin run docs/examples/15-supervision</code></td>
+<td>Process identity, zombies, confirmed cancellation (Linux only)</td>
+</tr>
+<tr>
+<td><a href="21-e2e-cli/cli.odin">CLI end-to-end test</a></td>
+<td><code>TZ=UTC odin test docs/examples/21-e2e-cli</code></td>
+<td>Build the binary, a fake tool first on <code>PATH</code>, an explicit environment</td>
+</tr>
 </tbody>
 </table>
 <h2 id="focused-tests">Focused tests<a class="headerlink" href="#focused-tests" title="Permanent link">&para;</a></h2>
@@ -650,6 +675,11 @@
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/18-containers
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/19-parallel
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/21-capstone/records
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/04-language-traps
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/09-ownership-traps
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/12-durable-state
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/15-supervision
+<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/21-e2e-cli
 </code></pre></div>
 <h2 id="http-and-cli-integration-lab">HTTP and CLI integration lab<a class="headerlink" href="#http-and-cli-integration-lab" title="Permanent link">&para;</a></h2>
 <p>Needs Linux, Python's standard library, <code>/usr/bin/curl</code>, and <code>/usr/bin/timeout</code>. The harness creates its own loopback HTTP fixture and temporary files; it does not start Docker or contact a remote service.</p>

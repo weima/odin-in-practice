@@ -654,6 +654,61 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exercise-k-runes-offsets-and-declarations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise K · Runes, offsets, and declarations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-l-who-owns-the-formatted-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise L · Who owns the formatted bytes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-m-two-files-several-crash-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise M · Two files, several crash points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-n-a-pid-is-not-a-process-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise N · A PID is not a process identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-o-make-the-cli-test-repeatable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise O · Make the CLI test repeatable
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -865,6 +920,61 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exercise-k-runes-offsets-and-declarations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise K · Runes, offsets, and declarations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-l-who-owns-the-formatted-bytes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise L · Who owns the formatted bytes?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-m-two-files-several-crash-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise M · Two files, several crash points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-n-a-pid-is-not-a-process-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise N · A PID is not a process identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-o-make-the-cli-test-repeatable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise O · Make the CLI test repeatable
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -987,6 +1097,49 @@
 <p>Rescale a timestamp of 48000 ticks from <code>1/48000</code> to <code>1/1000</code>. Explain why using an <code>i64</code> on both sides does not establish correctness. Then explain why a decoder’s send-side EAGAIN should trigger a receive call rather than a sleep.</p>
 <p>Reasoning</p>
 <p>The destination timestamp is 1000 ticks for one second. The integers have different units despite identical types. FFmpeg’s helpers also preserve unknown-timestamp conventions. Decoder EAGAIN is a state-machine transition: output consumption changes the state; elapsed wall time is not the required operation.</p>
+<p><a id="dogfood-exercise-k"></a></p>
+<h3 id="exercise-k-runes-offsets-and-declarations">Exercise K · Runes, offsets, and declarations<a class="headerlink" href="#exercise-k-runes-offsets-and-declarations" title="Permanent link">&para;</a></h3>
+<p>Before running anything, predict the three rune values and byte offsets from ranging over <code>"Aé🙂"</code>, and the value of <code>len(s)</code> and <code>s[1]</code>. Then, inside a procedure whose results are <code>(stdout, stderr: []byte, err: string)</code>, classify these declarations as accepted or rejected and explain the fix:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">state</span><span class="p">,</span><span class="w"> </span><span class="nc">child_stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">child_stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">process_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fake_process</span><span class="p">()</span>
+<span class="nc">state</span><span class="p">,</span><span class="w"> </span><span class="nc">stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">process_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fake_process</span><span class="p">()</span>
+<span class="nc">code</span><span class="p">,</span><span class="w"> </span><span class="nc">out</span><span class="p">,</span><span class="w"> </span><span class="nc">status</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">second</span><span class="p">()</span>
+</code></pre></div>
+<p>Treat each of the first two lines as the only declaration in the procedure's top scope. Assume <code>code</code> and <code>out</code> already exist in the current scope for the last line. Finally, predict whether <code>now: time.Time = time.now()</code> is a valid default parameter.</p>
+<p><strong>Subtle watch-out:</strong> the index from a string range is a byte offset, not a rune ordinal; and a new name on the left of <code>:=</code> does not permit redeclaring other names in the same scope.</p>
+<p>Solution sketch</p>
+<p><code>"Aé🙂"</code> has seven bytes. Ranging yields U+41 at byte 0, U+E9 at byte 1, and U+1F642 at byte 3; <code>s[1]</code> is the first UTF-8 byte of <code>é</code> (195), not the rune. The first declaration is valid when its names are new. The second shadows the named results and is rejected; use distinct locals then assign to <code>stdout</code> and <code>stderr</code>, or assign the returned values with <code>=</code> after declaring only genuinely new locals. The third is rejected because <code>code</code> and <code>out</code> already exist; use <code>=</code> and declare <code>status</code> separately, or use fresh local names. A runtime call such as <code>time.now()</code> is not a constant default; accept the time as an argument or use a wrapper that supplies <code>time.now()</code> at runtime. The pinned compiler reports, verbatim, <code>Direct shadowing of the named return value 'stdout' in this scope</code> (and the same for <code>stderr</code>) for the second line; <code>Redeclaration of 'code' in this scope</code> (and for <code>out</code>) for the third; and <code>Default parameter must be a constant, got time.now()</code> for the default parameter. The pinned examples and tests in <code>docs/examples/04-language-traps/</code> exercise the rune offsets, valid assignment patterns, and runtime-time alternatives.</p>
+<p><a id="dogfood-exercise-l"></a></p>
+<h3 id="exercise-l-who-owns-the-formatted-bytes">Exercise L · Who owns the formatted bytes?<a class="headerlink" href="#exercise-l-who-owns-the-formatted-bytes" title="Permanent link">&para;</a></h3>
+<p>For each line below, predict the lifetime/ownership bug before running it, then state the rule it violates. Assume the braces are intended to produce JSON and <code>x</code> is <code>"7"</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">value</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">tprintf</span><span class="p">(</span><span class="nc">"order=%d", 7</span><span class="p">)</span>
+<span class="nc">delete</span><span class="p">(</span><span class="nc">value</span><span class="p">)</span>
+<span class="nc">saved</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">tprintf</span><span class="p">(</span><span class="nc">"order=%d", 7</span><span class="p">)</span>
+<span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">mem</span><span class="err">.</span><span class="nc">free_all</span><span class="p">(</span><span class="nc">context.temp_allocator</span><span class="p">)</span>
+<span class="nc">fmt</span><span class="err">.</span><span class="nc">println</span><span class="p">(</span><span class="nc">saved</span><span class="p">)</span>
+<span class="nc">json_text</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fmt</span><span class="err">.</span><span class="nc">tprintf</span><span class="p">(</span><span class="nc">"{\"order\":%s}", x</span><span class="p">)</span>
+</code></pre></div>
+<p>Which result is caller-owned, which is borrowed scratch, and which formatter is a poor choice for a JSON template?</p>
+<p><strong>Subtle watch-out:</strong> undefined behaviour is not disproved by a run that happens not to crash; a temporary result can also appear intact until its allocator is reset.</p>
+<p>Solution sketch</p>
+<p><code>tprintf</code> returns temporary-allocator storage: do not <code>delete</code> it, and do not use it after the temporary allocator is reset. The first line violates the allocator ownership rule; the second violates the borrowed value's lifetime. Clone into an allocator whose lifetime covers the use, or use an allocating formatter and delete its result with the same allocator. <code>fmt</code> interprets braces as formatting syntax, so a JSON-looking format string can produce a format diagnostic rather than JSON. Escape literal braces for the format language, concatenate fixed fragments for a deliberately simple case, or marshal a typed value with <code>json.marshal</code>. The pinned ownership companion tests these outcomes and ownership boundaries.</p>
+<p><a id="dogfood-exercise-m"></a></p>
+<h3 id="exercise-m-two-files-several-crash-points">Exercise M · Two files, several crash points<a class="headerlink" href="#exercise-m-two-files-several-crash-points" title="Permanent link">&para;</a></h3>
+<p>A state writer opens the snapshot and overwrites it in place, then appends an event to its log. Two processes can also call “create state directory” at the same time. Predict what each process may observe at directory creation, and describe the persisted files if a crash happens during snapshot writing or after snapshot replacement but before the log append. How should a reader detect inconsistency, and what recovery claim can it honestly make?</p>
+<p><strong>Subtle watch-out:</strong> a valid JSON snapshot by itself does not prove that it agrees with the event history; a crash can leave a syntactically valid but stale or ahead-of-log state.</p>
+<p>Solution sketch</p>
+<p>Directory creation is a race: one caller may create it while another receives <code>.Exist</code>. Treat that result as success only after confirming the path is a directory. An in-place write can leave a truncated or partial snapshot if interrupted. If the snapshot is replaced first and the process stops before appending, the snapshot is ahead of the log. Validate complete log lines, sequence numbers, and replayed state against the snapshot; report a partial record or conflict instead of silently declaring success. Without a journal/transaction or an explicit repair source, the honest policy is to preserve evidence and require an explicit recovery decision. A sibling temporary file plus checked sync and rename avoids exposing a half-written single snapshot file, but does not make a two-file update transactional. The durable-state companion tests directory reuse, atomic replacement failure, partial lines, and snapshot/log disagreement.</p>
+<p><a id="dogfood-exercise-n"></a></p>
+<h3 id="exercise-n-a-pid-is-not-a-process-identity">Exercise N · A PID is not a process identity<a class="headerlink" href="#exercise-n-a-pid-is-not-a-process-identity" title="Permanent link">&para;</a></h3>
+<p>A supervisor stores only PID 812 and later finds that PID in <code>/proc</code>. Describe how PID reuse can fool it. Given a <code>/proc/812/stat</code> line whose parenthesized command name contains spaces and <code>)</code>, explain how to locate the state and start-time fields. Then explain why killing the direct child may leave its grandchild running, and what result to record if exit cannot be confirmed before the deadline.</p>
+<p><strong>Subtle watch-out:</strong> splitting the whole line on spaces or stopping at the first <code>)</code> mis-parses <code>comm</code>; a successful signal request is not evidence that the process exited.</p>
+<p>Solution sketch</p>
+<p>Pair the PID with field 22 (<code>starttime</code>) from <code>/proc/&lt;pid&gt;/stat</code>; treat state <code>Z</code> as already exited, not live. Find the last <code>)</code> ending the command field, then split the suffix: state (field 3) is token 0 and start time (field 22) is token 19. A signal to the child does not automatically reach descendants. On Linux, launch through the external <code>setsid</code> utility and signal that process group when the whole group is the cancellation unit; calling <code>setsid</code> in the supervisor would change the supervisor, not its already-started child. Keep unrelated work out of the group. Record <code>Interrupted</code> (unknown), not <code>Cancelled</code>, when exit or identity cannot be confirmed by the deadline. The Linux companion tests the parser, zombie case, and cancellation outcomes.</p>
+<p><a id="dogfood-exercise-o"></a></p>
+<h3 id="exercise-o-make-the-cli-test-repeatable">Exercise O · Make the CLI test repeatable<a class="headerlink" href="#exercise-o-make-the-cli-test-repeatable" title="Permanent link">&para;</a></h3>
+<p>A black-box test passes on one machine and flakes on another. It sleeps for a fixed duration and assumes the command has finished, writes all runs under one fixed temporary path, and inherits the developer's <code>PATH</code>. Redesign the test setup and completion check. Explain what happens when <code>Process_Desc.env</code> contains only a replacement <code>PATH</code>, and how a test can replace selected variables without making the rest of the child environment accidental.</p>
+<p><strong>Subtle watch-out:</strong> a longer fixed sleep is still a timing guess; process tests also need cleanup on assertion and timeout paths.</p>
+<p>Solution sketch</p>
+<p>Give each run a fresh temporary directory and remove it after the child and its files are cleaned up. Replace external dependencies with a local fake executable and fixed outputs. Poll process state with a finite deadline, then kill and wait on timeout rather than assuming a delay means completion. <code>Process_Desc.env</code> is the full child environment, not a set of additions; supplying only <code>PATH</code> discards all other variables. Start from <code>os.environ</code>, remove each key being overridden, then append controlled replacements. The pinned black-box example constructs this environment and asserts stdout, stderr, and exit status separately.</p>
 <p><strong>Completion test.</strong> Explain one result from each source trail without quoting the function body. Then write the smallest experiment that could disprove your explanation. If your test cannot fail for a plausible wrong implementation, strengthen the oracle rather than simply adding more cases.</p>
 <p><a id="glossary"></a></p>
 <h2 id="30-pocket-glossary">30. Pocket glossary<a class="headerlink" href="#30-pocket-glossary" title="Permanent link">&para;</a></h2>
@@ -1078,6 +1231,46 @@
 <tr>
 <td>Container</td>
 <td>A media file format that stores streams, metadata and timing, such as MP4 or Matroska.</td>
+</tr>
+<tr>
+<td>Temporary allocator (borrowed scratch)</td>
+<td>An allocator for short-lived values that may be invalidated when temporary storage is reset. A result allocated there is borrowed, not caller-owned memory to delete.</td>
+</tr>
+<tr>
+<td>Undefined behaviour</td>
+<td>Program behavior for which the language or API gives no valid guarantee. An experiment that appears to work does not make it defined or safe.</td>
+</tr>
+<tr>
+<td>Atomic replace</td>
+<td>Writing a complete sibling temporary file and renaming it over one target so readers do not see a partially written target. It does not make updates to multiple files transactional or guarantee power-loss durability.</td>
+</tr>
+<tr>
+<td>Append-only log</td>
+<td>A sequence of records added at the end rather than rewriting prior records. It preserves history only if incomplete records and replay conflicts are detected.</td>
+</tr>
+<tr>
+<td>Snapshot</td>
+<td>A saved summary of current state, commonly validated against replayed log history. It is not proof by itself that the history and current state agree.</td>
+</tr>
+<tr>
+<td>Process identity</td>
+<td>A process reference that pairs its PID with a start-time value to distinguish a later process that reuses the PID. On Linux, the inspected example obtains the start time from <code>/proc/&lt;pid&gt;/stat</code>.</td>
+</tr>
+<tr>
+<td>Zombie</td>
+<td>A process that has exited but whose parent has not yet collected its exit status. It is not a live process to cancel.</td>
+</tr>
+<tr>
+<td>Process group</td>
+<td>A set of related processes that can receive a group signal together. Signaling a child PID alone does not signal its descendants.</td>
+</tr>
+<tr>
+<td>Black-box test</td>
+<td>A test that invokes the built executable as a separate process and checks its externally visible behavior. It complements, rather than replaces, package tests.</td>
+</tr>
+<tr>
+<td>Fake executable</td>
+<td>A controlled local program or script substituted for an external dependency during a test. It makes arguments, output, and failure status reproducible without depending on the real tool.</td>
 </tr>
 <tr>
 <td>Demuxer / muxer</td>
@@ -1189,6 +1382,76 @@
 <td>Who supplies termination, and which conversion only borrows?</td>
 <td>21, 23</td>
 </tr>
+<tr>
+<td><code>core/unicode/utf8/utf8.odin</code> and <code>core/unicode/letter.odin</code> · decoding and character properties</td>
+<td>What does bytewise input mean, and when should text be decoded as runes?</td>
+<td>3–4</td>
+</tr>
+<tr>
+<td><code>core/time/time.odin</code> · now</td>
+<td>Why can a runtime clock read not be a constant default parameter?</td>
+<td>4</td>
+</tr>
+<tr>
+<td><code>core/fmt/fmt.odin</code> · <code>tprintf</code>, <code>aprintf</code>, <code>bprintf</code>, <code>sbprintf</code> families</td>
+<td>Who owns formatted output, which lifetime backs it, and how are literal braces parsed?</td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>core/strings/builder.odin</code> · Builder and <code>builder_destroy</code></td>
+<td>Who owns builder-backed formatted bytes and how is its storage released?</td>
+<td>9</td>
+</tr>
+<tr>
+<td><code>core/encoding/json/marshal.odin</code> · <code>marshal</code></td>
+<td>How do you encode a typed value as JSON and receive allocated output?</td>
+<td>9, 12</td>
+</tr>
+<tr>
+<td><code>core/os/path.odin</code> · <code>make_directory_all</code>; <code>core/os/path_linux.odin</code> · <code>_mkdir_all</code></td>
+<td>What does recursive directory creation report when the directory already exists, and how does Linux create its path components?</td>
+<td>12</td>
+</tr>
+<tr>
+<td><code>core/os/file.odin</code>, <code>file_linux.odin</code>, and <code>file_posix.odin</code> · flush, sync, rename</td>
+<td>How can a single state file be replaced without exposing a partial write, and what durability is not promised?</td>
+<td>12</td>
+</tr>
+<tr>
+<td><code>core/os/user.odin</code> · <code>user_state_dir</code>; <code>core/path/filepath/path.odin</code> · <code>is_abs</code> and <code>join</code></td>
+<td>How is the default state root chosen and how is an override validated?</td>
+<td>14</td>
+</tr>
+<tr>
+<td><code>core/os/process.odin</code> · <code>Process_Desc</code>, <code>process_start</code>, <code>process_wait</code>, <code>process_terminate</code>, <code>process_kill</code>, <code>process_exec</code></td>
+<td>What environment does a child receive, how is it started, cancelled, waited, and captured?</td>
+<td>15, 21</td>
+</tr>
+<tr>
+<td><code>core/os/process_linux.odin</code> · <code>_process_start</code>, <code>_process_wait</code>, <code>_process_kill</code>, <code>_process_terminate</code></td>
+<td>Which Linux process and PATH behaviors implement the public process operations?</td>
+<td>15, 21</td>
+</tr>
+<tr>
+<td><code>core/strings/strings.odin</code> and <code>core/strconv/strconv.odin</code> · <code>last_index_byte</code>, <code>fields</code>, <code>parse_u64</code></td>
+<td>How can <code>/proc/&lt;pid&gt;/stat</code> be parsed when <code>comm</code> contains spaces or <code>)</code>?</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>core/sys/posix/unistd.odin</code> · <code>setsid</code>; <code>core/sys/posix/signal.odin</code> · <code>killpg</code></td>
+<td>How can Linux process-group cancellation reach descendants, and what does it affect?</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>core/os/temp_file.odin</code> · <code>make_directory_temp</code>; <code>core/os/env.odin</code> · <code>environ</code></td>
+<td>How can tests isolate paths and construct a controlled child environment?</td>
+<td>21</td>
+</tr>
+<tr>
+<td><code>core/testing/testing.odin</code> · <code>expect_value</code>, <code>expect</code></td>
+<td>Which arguments are source/expression metadata, and how do you provide a custom expectation message?</td>
+<td>21</td>
+</tr>
 </tbody>
 </table>
 <p>To reproduce a reading, run <code>odin root</code>, open the local path, find the symbol, and compare the relevant branch with the pinned link. Do not call runtime-private helpers from application code merely because this book uses them to explain behavior. The public operation remains the intended interface.</p>
@@ -1217,6 +1480,17 @@
 <li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/runner.odin">Test runner</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/logging.odin">test logging</a> — contexts, allocation tracking, and failure recording.</li>
 <li><a href="https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json">JSON source</a> — syntax policies, value trees, and cleanup.</li>
 <li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/strings.odin">String source</a> — clones, C-string termination, and borrowed views.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/utf8/utf8.odin">Unicode UTF-8 source</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/letter.odin">Unicode letter properties</a> — UTF-8 decoding and rune classification.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/time/time.odin">Time source</a> — runtime clock reads.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/fmt/fmt.odin">Formatting source</a> — formatting syntax and <code>t</code>, <code>a</code>, <code>b</code>, and builder-backed output families.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/builder.odin">String builder source</a> — builder storage and destruction.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/marshal.odin">JSON marshal source</a> — typed JSON encoding and allocated output.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path.odin">OS path source</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path_linux.odin">Linux path implementation</a> — recursive directory creation and its public error contract.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin">OS file source</a>, <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_linux.odin">Linux file source</a>, and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin">POSIX file source</a> — flush, sync, and rename paths.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/user.odin">User directories source</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/path/filepath/path.odin">filepath source</a> — state-directory defaults and path validation.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin">Linux process source</a> — Linux process startup, wait, and signaling paths.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin">POSIX session source</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin">POSIX signal source</a> — <code>setsid</code> and process-group signaling.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/temp_file.odin">Temporary-directory source</a> — isolated temporary directories for tests.</li>
 <li><a href="https://forum.odin-lang.org/t/origin-of-the-name-odin/794">Creator’s explanation of the name</a> — a mythological project codename that stuck.</li>
 <li><a href="https://ffmpeg.org/documentation.html">FFmpeg documentation</a> — official user and developer documentation index.</li>
 <li><a href="https://ffmpeg.org/ffmpeg.html">ffmpeg command documentation</a> — options, stream selection, streamcopy, transcoding and filtering.</li>
