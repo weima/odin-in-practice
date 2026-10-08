@@ -538,9 +538,9 @@ Keep diagnostics on stderr so they do not contaminate machine-readable stdout. T
 
 <a id="text-processing"></a>
 
-Chapter 32 · Text that must stay exact
+Chapter 13a · Text that must stay exact
 
-## 32. Text processing: exact, bounded, and syntax-aware
+## 13a. Text processing: exact, bounded, and syntax-aware
 
 Sooner or later a program has to change a file or look through one: rename a symbol, fix a header, find the lines that mention an error. The quickest answer is a throwaway script, and for a job you will do once that is often fine. This chapter is about the other jobs: the ones you repeat, the ones where a silent mistake corrupts a file, and the ones whose input might be larger than memory. For those, three properties matter more than how fast the first version was written, and a small Odin program can have all three.
 
@@ -548,10 +548,10 @@ Sooner or later a program has to change a file or look through one: rename a sym
 - **Bounded.** Its memory depends on a limit you chose, not on the size of the input.
 - **Syntax-aware.** It does not mistake the inside of a string or a comment for code.
 
-The companion `docs/examples/32-text-processing/` is one tested package behind one command, `textproc`, with four subcommands. Each one is here to show one of the properties.
+The companion `docs/examples/13a-text-processing/` is one tested package behind one command, `textproc`, with four subcommands. Each one is here to show one of the properties.
 
 ```sh
-odin build docs/examples/32-text-processing -out:textproc
+odin build docs/examples/13a-text-processing -out:textproc
 ./textproc replace app.odin --old-file old.txt --new-file new.txt --count 1 --dry-run
 ./textproc grep 'error: \w+' build.log
 ./textproc check docs/examples/12-durable-state

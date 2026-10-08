@@ -14,15 +14,15 @@ required = (
     "examples/05-packages/README.md",
     "examples/05-packages/cli/main.odin",
     "examples/05-packages/label/label.odin",
-    "examples/32-text-processing/main.odin",
-    "examples/32-text-processing/source.odin",
+    "examples/13a-text-processing/main.odin",
+    "examples/13a-text-processing/source.odin",
 )
 missing = [path for path in required if not (skill / path).is_file()]
 assert not missing, f"Skill bundle is incomplete: {', '.join(missing)}"
 
 # Examples copied from the book must stay identical to the book's own, so the skill
 # never teaches code that the book's tests no longer cover.
-bundled_from_book = ("05-packages", "32-text-processing")
+bundled_from_book = ("05-packages", "13a-text-processing")
 for name in bundled_from_book:
     canonical_example = ROOT / "docs/examples" / name
     bundled_example = skill / "examples" / name

@@ -29,7 +29,7 @@ Load for writing, debugging, reviewing or explaining Odin code alongside the boo
 | Package layout, imports or visibility | [Package and dependency guide](references/packages.md), source directory and its imports |
 | Memory or threads | Allocator state, publication, cancellation and joining |
 | CLI or networking | Framing, budgets, exit/error contract and cleanup |
-| Editing, searching or checking files | [File and text processing guide](references/file-processing.md) and the bundled `examples/32-text-processing` |
+| Editing, searching or checking files | [File and text processing guide](references/file-processing.md) and the bundled `examples/13a-text-processing` |
 | C or libav | Installed headers, ABI/version, ownership and state machine |
 
 ## Practical Package Workflow
@@ -66,11 +66,11 @@ odin run examples/network
 
 The network example binds only to loopback and uses operation timeouts. It is a local exercise, not an Internet-facing server. CI compiles and runs both examples with the book's pinned official monthly `dev-2026-10` release.
 
-The [text-processing example](examples/32-text-processing/main.odin) is a tested package behind one command for exact-count replacement, bounded streaming search, and syntax-aware checking and splitting of Odin source. Build it, run its tests, and read [the file and text processing guide](references/file-processing.md) before writing a file-editing tool.
+The [text-processing example](examples/13a-text-processing/main.odin) is a tested package behind one command for exact-count replacement, bounded streaming search, and syntax-aware checking and splitting of Odin source. Build it, run its tests, and read [the file and text processing guide](references/file-processing.md) before writing a file-editing tool.
 
 ```sh
-odin build examples/32-text-processing -out:textproc
-TZ=UTC odin test examples/32-text-processing
+odin build examples/13a-text-processing -out:textproc
+TZ=UTC odin test examples/13a-text-processing
 ```
 
 ## References

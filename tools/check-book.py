@@ -19,7 +19,7 @@ class Page(HTMLParser):
         super().__init__()
         self.ids: set[str] = set()
         self.links: list[str] = []
-        self.chapters: list[int] = []
+        self.chapters: list[str] = []
         self.h2: list[str] | None = None
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
@@ -36,9 +36,9 @@ class Page(HTMLParser):
             self.h2.append(data)
     def handle_endtag(self, tag: str) -> None:
         if tag == 'h2' and self.h2 is not None:
-            match = re.match(r'^(\d+)\.', ''.join(self.h2).strip())
+            match = re.match(r'^(\d+a?)\.', ''.join(self.h2).strip())
             if match:
-                self.chapters.append(int(match.group(1)))
+                self.chapters.append(match.group(1))
             self.h2 = None
 
 pages: dict[Path, Page] = {}
@@ -67,8 +67,10 @@ for file, page in pages.items():
         elif parts.fragment and destination in pages and unquote(parts.fragment) not in pages[destination].ids:
             errors.append(f'{file.relative_to(SITE)}: missing anchor: {link}')
 chapters = [n for file, page in pages.items() if file.parent == (SITE / 'chapters').resolve() for n in page.chapters]
-if Counter(chapters) != Counter(range(1, 33)):
-    errors.append(f'chapter headings are not exactly 1–32: {sorted(chapters)}')
+# Chapters 1-31 are stable identifiers; 13a was inserted later without renumbering.
+expected_chapters = [str(n) for n in range(1, 32)] + ['13a']
+if Counter(chapters) != Counter(expected_chapters):
+    errors.append(f'chapter headings are not exactly 1–31 plus 13a: {sorted(chapters)}')
 legacy = json.loads((ROOT / 'tools/legacy-anchors.json').read_text())
 for route, ids in legacy.items():
     page = pages.get((SITE / route).resolve())
@@ -78,4 +80,4 @@ for file in (ROOT / 'docs/assets').rglob('*.svg'):
     ET.parse(file)
 assert pages, 'No generated HTML found; build the book first'
 assert not errors, '\n'.join(errors[:50])
-print(f'{len(pages)} HTML pages: local links/assets/anchors pass; chapters 1–32 and SVG XML pass')
+print(f'{len(pages)} HTML pages: local links/assets/anchors pass; chapters 1–31 plus 13a and SVG XML pass')

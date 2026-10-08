@@ -1,6 +1,6 @@
 # File and text processing in Odin
 
-Use this when a task is to edit, search or check files. It exists so the default is not a throwaway script in another language. The bundled example is `examples/32-text-processing/` (the same package as the book's chapter 32).
+Use this when a task is to edit, search or check files. It exists so the default is not a throwaway script in another language. The bundled example is `examples/13a-text-processing/` (the same package as the book's chapter 13a).
 
 ## Choose the smallest tool that is precise enough
 
@@ -29,15 +29,15 @@ Do not write an ad hoc script in another language for a repeatable file edit jus
 
 ## What the example contains
 
-`examples/32-text-processing/` is one package behind one command with four subcommands.
+`examples/13a-text-processing/` is one package behind one command with four subcommands.
 
 ```sh
-odin build examples/32-text-processing -out:textproc
+odin build examples/13a-text-processing -out:textproc
 ./textproc replace FILE --old-file OLD --new-file NEW [--count N] [--dry-run]
 ./textproc check PATH [--max-columns N]
 ./textproc split FILE [--write]
 ./textproc grep PATTERN FILE [--max-line-bytes N] [--max-matches N]
-TZ=UTC odin test examples/32-text-processing
+TZ=UTC odin test examples/13a-text-processing
 ```
 
 - `replace_exact` and `replace_in_file` implement rules 1, 3, 4 and 5.

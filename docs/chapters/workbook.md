@@ -297,8 +297,8 @@ This is library and runtime source evidence, not a claim to have audited the ent
 | `core/sys/posix/unistd.odin` · `setsid`; `core/sys/posix/signal.odin` · `killpg` | How can Linux process-group cancellation reach descendants, and what does it affect? | 15 |
 | `core/os/temp_file.odin` · `make_directory_temp`; `core/os/env.odin` · `environ` | How can tests isolate paths and construct a controlled child environment? | 21 |
 | `core/testing/testing.odin` · `expect_value`, `expect` | Which arguments are source/expression metadata, and how do you provide a custom expectation message? | 21 |
-| `core/bufio/reader.odin` · `reader_init`, `reader_read_slice` | Whose memory is a returned line, and what happens when a line is longer than the buffer? | 32 |
-| `core/text/regex/regex.odin` · `create`, `match`, `destroy` | How is a pattern compiled once, what does a capture hold, and who frees it? | 32 |
+| `core/bufio/reader.odin` · `reader_init`, `reader_read_slice` | Whose memory is a returned line, and what happens when a line is longer than the buffer? | 13a |
+| `core/text/regex/regex.odin` · `create`, `match`, `destroy` | How is a pattern compiled once, what does a capture hold, and who frees it? | 13a |
 
 To reproduce a reading, run `odin root`, open the local path, find the symbol, and compare the relevant branch with the pinned link. Do not call runtime-private helpers from application code merely because this book uses them to explain behavior. The public operation remains the intended interface.
 

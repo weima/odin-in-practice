@@ -18,9 +18,9 @@ Commands below run from the repository root, with the pinned Odin compiler on `P
 | [Formatted-string ownership](09-ownership-traps/main.odin) | `odin run docs/examples/09-ownership-traps` | Who owns `t`/`a`/`b`/`s` results, cloning into an owner, what a tracking allocator proves |
 | [Durable state](12-durable-state/main.odin) | `odin run docs/examples/12-durable-state` | Directory creation, atomic replace, an event log plus a snapshot |
 | [Supervising processes](15-supervision/main.odin) | `odin run docs/examples/15-supervision` | Process identity, zombies, confirmed cancellation (Linux only) |
-| [Text processing](32-text-processing/main.odin) | `odin run docs/examples/32-text-processing -- check docs/examples/32-text-processing` | Exact replacement, bounded streaming search, and syntax-aware checks with a masked copy |
+| [Text processing](13a-text-processing/main.odin) | `odin run docs/examples/13a-text-processing -- check docs/examples/13a-text-processing` | Exact replacement, bounded streaming search, and syntax-aware checks with a masked copy |
 | [CLI end-to-end test](21-e2e-cli/cli.odin) | `TZ=UTC odin test docs/examples/21-e2e-cli
-TZ=UTC odin test docs/examples/32-text-processing` | Build the binary, a fake tool first on `PATH`, an explicit environment |
+TZ=UTC odin test docs/examples/13a-text-processing` | Build the binary, a fake tool first on `PATH`, an explicit environment |
 
 ## Focused tests
 
