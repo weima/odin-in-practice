@@ -19,6 +19,7 @@ test:
     TZ=UTC odin test docs/examples/12-durable-state
     TZ=UTC odin test docs/examples/15-supervision
     TZ=UTC odin test docs/examples/21-e2e-cli
+    TZ=UTC odin test docs/examples/32-text-processing
 
 # Assert the three Odin companion-skill CLI and network examples.
 skill-examples:

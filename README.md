@@ -2,7 +2,7 @@
 
 **Read the book: https://weima.github.io/odin-in-practice/**
 
-A 31-chapter, source-guided book for programmers learning Odin through practical systems work: ownership, memory, Linux command-line tools, networking, Docker, parallel programming, and FFmpeg/libav.
+A 32-chapter, source-guided book for programmers learning Odin through practical systems work: ownership, memory, Linux command-line tools, networking, Docker, parallel programming, and FFmpeg/libav.
 
 ## Markdown source; HTML for readers
 
@@ -16,7 +16,7 @@ A 31-chapter, source-guided book for programmers learning Odin through practical
 | Part | Markdown source | Topics |
 | --- | --- | --- |
 | Foundations | [Chapters 1–4](docs/chapters/odin-foundations.md) | Packages, values, procedures, bare returns, independent generic types |
-| CLI and Linux | [Chapters 5–9, 12–16, 20–22](docs/chapters/cli-linux.md) | Arguments, errors, allocators, files, processes, tests, composition |
+| CLI and Linux | [Chapters 5–9, 12–16, 20–22, 32](docs/chapters/cli-linux.md) | Arguments, errors, allocators, files, text processing, processes, tests, composition |
 | Pointers | [Chapter 10](docs/chapters/pointers.md) | Aliases, headers, views, lifetime and foreign pointers |
 | Memory philosophy | [Chapter 11](docs/chapters/memory-philosophy.md) | Allocation strategy, context, errors and rollback |
 | Networking | [Chapter 17](docs/chapters/networking.md) | TCP/UDP, framing, deadlines and a loopback HTTP adapter |

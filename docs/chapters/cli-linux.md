@@ -536,6 +536,266 @@ Keep diagnostics on stderr so they do not contaminate machine-readable stdout. T
 
 **Subtle watch-out:** pipes carry arbitrary chunks, not lines or complete records. A single read can split a logical record—or combine several—so parse state must survive buffer boundaries.
 
+<a id="text-processing"></a>
+
+Chapter 32 · Text that must stay exact
+
+## 32. Text processing: exact, bounded, and syntax-aware
+
+Sooner or later a program has to change a file or look through one: rename a symbol, fix a header, find the lines that mention an error. The quickest answer is a throwaway script, and for a job you will do once that is often fine. This chapter is about the other jobs: the ones you repeat, the ones where a silent mistake corrupts a file, and the ones whose input might be larger than memory. For those, three properties matter more than how fast the first version was written, and a small Odin program can have all three.
+
+- **Exact.** It states the assumption an edit relies on, and refuses when the assumption is wrong.
+- **Bounded.** Its memory depends on a limit you chose, not on the size of the input.
+- **Syntax-aware.** It does not mistake the inside of a string or a comment for code.
+
+The companion `docs/examples/32-text-processing/` is one tested package behind one command, `textproc`, with four subcommands. Each one is here to show one of the properties.
+
+```sh
+odin build docs/examples/32-text-processing -out:textproc
+./textproc replace app.odin --old-file old.txt --new-file new.txt --count 1 --dry-run
+./textproc grep 'error: \w+' build.log
+./textproc check docs/examples/12-durable-state
+./textproc split app.odin --write
+```
+
+<a id="text-choose"></a>
+
+### Choose the smallest tool that is precise enough
+
+A bespoke tool is not always the answer. Use the smallest tool that gives the precision the job needs.
+
+| The job | Reach for |
+| --- | --- |
+| One edit in one file | Your editor, or your coding agent's edit tool. The change is visible and reviewed. |
+| Search or filter lines | `grep`, `rg`, `sed` and `awk` are installed, fast and well understood. |
+| Reshape JSON | `jq`. |
+| A repeatable job that must refuse a wrong assumption, understands syntax, or needs its own tests | A small Odin program like this one. |
+
+Nothing about Odin makes such a program precise by itself. A type checker will not notice that you replaced the wrong occurrence. The precision comes from the decisions in this chapter and from tests. What Odin does offer is that the standard library already has the pieces: `core:os`, `core:bufio`, `core:text/regex`, `core:strings` and `core:flags`. Building this package took about one and a half seconds on the machine used to write this chapter, and running it was instantaneous, so a compiled tool is not a heavy choice.
+
+<a id="text-exact"></a>
+
+### Exact: refuse a wrong assumption
+
+Every edit carries an assumption. "Replace `old` with `new`" quietly means "and `old` appears exactly where I think it does". If the file has changed since you looked, or `old` is a substring of something you did not intend, a plain replace-all succeeds and does the wrong thing. The fix is to make the assumption explicit: say how many times `old` must occur, and refuse otherwise.
+
+```odin
+// Replaces every occurrence of `old` with `new`, but only if `old` occurs exactly
+// `expected` times. A wrong count means the text is not what the caller assumed,
+// and an edit made on a wrong assumption is worse than no edit, so it is refused.
+// Occurrences do not overlap: "aa" occurs once in "aaa".
+//
+// Ownership: result.text is a fresh allocation the caller must delete, whenever
+// err is .None. On an error it is empty and there is nothing to free.
+replace_exact :: proc(
+    text, old, new: string,
+    expected: int,
+    allocator := context.allocator,
+) -> (
+    result: Replace_Result,
+    err: Edit_Error,
+) {
+    if len(old) == 0 {
+        return {}, .Empty_Old_Text
+    }
+    result.found = strings.count(text, old)
+    if result.found != expected {
+        return result, .Count_Mismatch
+    }
+
+    out := strings.builder_make(allocator)
+    rest := text
+    for {
+        at := strings.index(rest, old)
+        if at < 0 {
+            break
+        }
+        strings.write_string(&out, rest[:at])
+        strings.write_string(&out, new)
+        rest = rest[at + len(old):]
+    }
+    strings.write_string(&out, rest)
+    result.text = strings.to_string(out)
+    return result, .None
+}
+```
+
+Read this procedure for its contract more than for its loop.
+
+- **The count comes first.** `strings.count` is checked before anything is built, and `result.found` is filled in even when the edit is refused, so the caller can say *why*: "found 2, expected 1".
+- **Matches do not overlap.** `"aa"` occurs once in `"aaa"`, and the result is `"ba"`. Say which rule you chose; tests then pin it.
+- **An empty `old` is refused.** It would match between every pair of bytes.
+- **Ownership is stated.** `result.text` is a fresh allocation that the caller deletes when `err` is `.None`. On an error it is empty and there is nothing to free, so no path leaks. Chapter 9 explains why a returned string needs this sentence.
+
+The command-line wrapper adds three more decisions. The text to find and the replacement come from **files**, `--old-file` and `--new-file`, so no shell quoting can alter them, and a multi-line snippet is just a file. `--dry-run` computes and reports the change but writes nothing. And the answer "no" is a normal outcome with its own exit code, following the contract in [chapter 5](#cli-contract): 0 for success, 1 for a refusal, 2 for a usage or I/O error. A script can then tell "this file needs attention" from "the tool could not run".
+
+```text
+$ textproc replace f.txt --old-file old.txt --new-file new.txt
+textproc: refused: found 2 occurrence(s), expected 1; f.txt is unchanged
+$ echo $?
+1
+$ textproc replace f.txt --old-file old.txt --new-file new.txt --count 2 --dry-run
+would replace 2 occurrence(s) in f.txt (17 -> 17 bytes)
+```
+
+When the edit is accepted, `replace_in_file` replaces the file with the atomic pattern from [chapter 12](#dogfood-atomic-replacement): write a sibling temporary file, flush and sync it, then rename it over the target. A reader never sees a half-written file, and a refused or failed edit leaves the original untouched. Two details are easy to miss. The file's mode comes from `os.stat` and is passed to the new file, so an executable script stays executable. And the tool refuses a file that contains a NUL byte, which almost never appears in text, and a file larger than a limit, rather than guess.
+
+<a id="text-bounded"></a>
+
+### Bounded: search a file without holding it
+
+`replace` reads the whole file, which is right for source code. A log file can be larger than memory, and "how many bytes did I read?" is not a design. `grep` shows the alternative: read through a fixed-size buffer, so memory is set by two limits you choose, `max_line_bytes` and `max_matches`, and not by the file.
+
+```odin
+    reader: bufio.Reader
+    bufio.reader_init(&reader, os.to_stream(file), max_line_bytes)
+    defer bufio.reader_destroy(&reader)
+
+    line_number := 0
+    for {
+        slice, read_err := bufio.reader_read_slice(&reader, '\n')
+        if read_err == .Buffer_Full {
+            // Too long to hold. Discard the rest of the line without keeping it.
+            result.skipped_long_lines += 1
+            line_number += 1
+            skip_rest_of_line(&reader)
+            continue
+        }
+        if len(slice) == 0 && read_err != nil {
+            if read_err != .EOF {
+                err = .Read_Failed
+            }
+            break
+        }
+        line_number += 1
+        line := strings.trim_right(string(slice), "\r\n")
+        capture, matched := regex.match(expression, line)
+        if matched {
+            if len(result.matches) >= max_matches {
+                regex.destroy(capture)
+                result.truncated = true
+                break
+            }
+            append(&result.matches, Match{line_number, strings.clone(line)})
+        }
+        regex.destroy(capture)
+        if read_err != nil {
+            break
+        }
+    }
+    return result, err
+}
+```
+
+The loop rests on one behaviour of [bufio's `reader_read_slice`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin), which is worth reading in the source. It returns a slice up to and including the delimiter. The slice is a **view into the reader's own buffer**, so the match text is copied with `strings.clone` before the next read can overwrite it. If the buffer fills before a newline appears, it returns what it holds with `.Buffer_Full` and consumes it. That is the signal this loop uses: count the line, then read slices until one ends the line, and keep none of it. The smallest buffer `reader_init` accepts is 16 bytes, which is why the companion's test can exercise a 100-byte line against a 16-byte limit. A last line with no trailing newline arrives with an error after its data, so the loop searches the data before it looks at the error.
+
+The pattern is compiled once, outside the loop, with [`core:text/regex`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/text/regex/regex.odin), and every capture is destroyed, matched or not, because `regex.match` allocates its result. For a pattern with groups the capture holds the whole match first, then each group, with their positions; the companion prints only the line. The cost is stated rather than hidden: a line longer than `max_line_bytes` is skipped, and the tool says so on stderr instead of silently dropping it, and a search stopped at `max_matches` reports that too.
+
+<a id="text-syntax"></a>
+
+### Syntax-aware: mask before you search
+
+Suppose a tool must find the `;` characters that separate two statements on one line. The obvious attempt is `strings.index(line, ";")`. It is wrong for lines like these.
+
+```odin
+s := "a; b"      // a ';' inside a string
+x := 1 // a; b   // a ';' inside a comment
+```
+
+A regular expression does not rescue this, because the problem is not the pattern. The inside of a string or a comment is simply not code, and a flat search cannot know where one begins. The robust approach does not try to be clever at search time. It **masks first**: copy the source, and blank out the contents of every comment, string, character literal and raw string. The copy has the same length and the same newlines as the original, so every offset and every line number still lines up, but a plain search of the copy sees only real code.
+
+```odin
+mask_source :: proc(source: string, allocator := context.allocator) -> string {
+    masked := make([]u8, len(source), allocator)
+    copy(masked, source)
+
+    index := 0
+    for index < len(source) {
+        switch {
+        case strings.has_prefix(source[index:], "//"):
+            index = blank_until_newline(masked, index + 2)
+        case strings.has_prefix(source[index:], "/*"):
+            index = blank_block_comment(masked, index)
+        case source[index] == '"' || source[index] == '\'':
+            index = blank_quoted(masked, index, source[index])
+        case source[index] == '`':
+            index = blank_raw_string(masked, index)
+        case:
+            index += 1
+        }
+    }
+    return string(masked)
+}
+
+blank_quoted :: proc(masked: []u8, start: int, quote: u8) -> int {
+    index := start + 1
+    for index < len(masked) && masked[index] != quote {
+        if masked[index] == '\\' && index + 1 < len(masked) {
+            blank(masked, index)
+            index += 1
+        }
+        blank(masked, index)
+        index += 1
+    }
+    return index + 1
+}
+```
+
+```text
+original: x := "a; b" // c; d
+masked:   x := "    " //     
+```
+
+Three details decide whether the mask is right. A backslash escapes the next byte, so `"say \"x;y\""` is one string and not two. A raw string, written with backticks, has no escapes and may span lines, so its newlines are kept. And Odin block comments **nest**: `/* a /* b */ c */` is one comment, which the compiler accepts, so the scanner counts depth instead of stopping at the first `*/`.
+
+Masking removes false positives, but a `;` in real code is still not always a separator. In `for i := 0; i < n; i += 1 {` and `if x := f(); x > 0 {` the semicolons belong to the statement's header. The rule the tool uses is small enough to read in full.
+
+```odin
+starts_header :: proc(text: string) -> bool {
+    for keyword in ([]string{"if", "for", "switch", "when", "else if"}) {
+        if strings.has_prefix(text, keyword) {
+            rest := text[len(keyword):]
+            if len(rest) == 0 || rest[0] == ' ' || rest[0] == '(' || rest[0] == '{' {
+                return true
+            }
+        }
+    }
+    return false
+}
+```
+
+A `;` counts as a statement separator only when it is outside parentheses and brackets, outside a header (a statement that starts with `if`, `for`, `switch`, `when` or `else if`, until its opening brace), and followed by more code on the same line. A trailing `;`, or one followed only by a comment, is left alone. With those separators found, `split` puts each statement on its own line and expands a one-line block that holds several, and the result splits to itself: running it twice changes nothing.
+
+```text
+before:  if found && state == 'Z' { zombie = true; break }
+after:   if found && state == 'Z' {
+             zombie = true
+             break
+         }
+```
+
+This is a scanner, not a parser, and it is honest about that. Header detection looks at the first word of a statement, so unusual layouts can fool it. The defence is the order of operations: `check` only reports, so run it first; `split --write` rewrites a file, so compile and run the tests afterwards. A formatter is still the right tool for layout. The `odinfmt` formatter from the OLS project, in the version tried while writing this chapter, normalizes spacing and indentation but does not split statements chained with `;`. Splitting them first, then formatting, gave clean code. On three files written by an automated tool, `split` separated 52 chained statements, and the package still compiled and passed its tests.
+
+<a id="text-verify"></a>
+
+### Test the tool as you would test any program
+
+A tool that edits files deserves tests that attack its promises. The companion's tests check the properties this chapter claimed.
+
+- **A refused edit changes nothing.** A wrong count, a dry run, a binary file, an oversized file and a missing file all leave the original bytes untouched, and no `.tmp` file is left behind.
+- **Failure cleans up.** If the final rename cannot happen, the temporary is removed and the target is intact. The test forces this with a target that is a non-empty directory.
+- **Masking preserves layout.** The masked copy has the same length as the source, and the same newlines.
+- **Splitting is idempotent**, and leaves no chain behind.
+- **Bounds hold.** A 100-byte line against a 16-byte limit is skipped, not buffered, and the match cap is reported.
+
+Passing tests prove little until you see them fail, so break the tool on purpose. Removing `for` from the header rule, removing the raw-string rule, and letting the count check always succeed each made two tests fail. Finally, run the tool on input it was not written against. The strongest check here was the real files, not the fixtures.
+
+**Exercise 32.1.** Add a `--max-count` guard to `replace` so an edit that would touch more than N lines is refused even when the count matches. Which of the promises above could this weaken, and what test pins it down?
+
+**Exercise 32.2.** `check` reports a tab only once per line. Predict what a tab-indented file with 500 lines produces, decide whether that is the right default, and change the tool and its tests if you disagree.
+
+**Design question.** `split --write` rewrites a file in place. Would you add an automatic backup, a `--dry-run`, or neither? Argue from the failure you most want to survive.
+
 <a id="environment"></a>
 
 ## 14. Environment and process context

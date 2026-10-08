@@ -67,8 +67,8 @@ for file, page in pages.items():
         elif parts.fragment and destination in pages and unquote(parts.fragment) not in pages[destination].ids:
             errors.append(f'{file.relative_to(SITE)}: missing anchor: {link}')
 chapters = [n for file, page in pages.items() if file.parent == (SITE / 'chapters').resolve() for n in page.chapters]
-if Counter(chapters) != Counter(range(1, 32)):
-    errors.append(f'chapter headings are not exactly 1–31: {sorted(chapters)}')
+if Counter(chapters) != Counter(range(1, 33)):
+    errors.append(f'chapter headings are not exactly 1–32: {sorted(chapters)}')
 legacy = json.loads((ROOT / 'tools/legacy-anchors.json').read_text())
 for route, ids in legacy.items():
     page = pages.get((SITE / route).resolve())
@@ -78,4 +78,4 @@ for file in (ROOT / 'docs/assets').rglob('*.svg'):
     ET.parse(file)
 assert pages, 'No generated HTML found; build the book first'
 assert not errors, '\n'.join(errors[:50])
-print(f'{len(pages)} HTML pages: local links/assets/anchors pass; chapters 1–31 and SVG XML pass')
+print(f'{len(pages)} HTML pages: local links/assets/anchors pass; chapters 1–32 and SVG XML pass')
