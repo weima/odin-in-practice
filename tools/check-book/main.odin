@@ -80,7 +80,7 @@ run :: proc(args: []string) -> int {
         return EXIT_FINDINGS
     }
     fmt.printfln(
-        "%d HTML pages: local links/assets/anchors pass; chapters 1–31 plus 13a and SVG XML pass",
+        "%d HTML pages: local links/assets/anchors pass; chapters 1–31, 13a, 17a, and SVG XML pass",
         report.pages,
     )
     return EXIT_OK

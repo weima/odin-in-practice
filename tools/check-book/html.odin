@@ -277,8 +277,8 @@ note_tag :: proc(page: ^Page, tag: Start_Tag) {
     }
 }
 
-// note_chapter records the chapter number a heading starts with: digits, an optional
-// 'a', then a '.', as in "5. The contract" or "13a. Text processing".
+// note_chapter records a numbered heading with any letter suffix so the exact-set check can
+// reject unsupported identifiers such as 17b, as well as accept 13a and 17a.
 note_chapter :: proc(page: ^Page, raw_heading: string) {
     text := strings.trim_space(unescape(raw_heading))
     digits := 0
@@ -289,7 +289,7 @@ note_chapter :: proc(page: ^Page, raw_heading: string) {
         return
     }
     end := digits
-    if end < len(text) && text[end] == 'a' {
+    for end < len(text) && is_letter(text[end]) {
         end += 1
     }
     if end < len(text) && text[end] == '.' {

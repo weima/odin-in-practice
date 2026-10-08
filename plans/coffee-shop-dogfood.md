@@ -2,6 +2,8 @@
 
 This page records the needs analysis, the plan, and the outcome of using [Coffee Shop](https://github.com/weima/coffee-shop), a local tool that runs parallel Pi Workers in isolated Git worktrees, to extend this book. Findings about Coffee Shop itself are in the last section; the matching proposals are in [its v0.2.0 roadmap](https://github.com/weima/coffee-shop/blob/main/PLAN.md#roadmap-v020). The rules the Workers follow are [`standards.md`](../standards.md) and [`workers.md`](../workers.md) in this repository.
 
+> Historical note: this plan records the original dogfood scope. The Python book checker and comparison harness mentioned below have since been retired in favor of `just check-book`; Chapter 17a was approved as a separate follow-up.
+
 ## 1. What the book needs
 
 Coffee Shop was built using the book as its Odin reference. Everything below cost real time while building it, and the book covers it little or not at all. "Coverage" counts the book's chapters and examples (`grep`, then read in context).

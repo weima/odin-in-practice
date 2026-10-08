@@ -11,7 +11,7 @@ These standards apply to every change to the book: chapters, companion code and 
 
 ## Structure
 
-- The chapter headings are exactly 1-31 plus 13a (`tools/check-book/` and `tools/check-book.py` enforce this). Add new material as unnumbered `###` subsections inside the relevant chapter. Never add, remove or renumber a `## N.` heading.
+- The chapter headings are exactly 1-31 plus 13a and 17a (`tools/check-book/` enforces this). Add new numbered chapters only when the user explicitly approves them; otherwise add material as unnumbered `###` subsections inside the relevant chapter. Never renumber existing chapters.
 - Where a file uses explicit anchors (`<a id="...">`), give every new subsection a unique one.
 - Add; do not rewrite existing text without a reason a reviewer can see.
 - `html/` and the offline ZIP are generated. Never edit them by hand; rebuild them once, when the change is complete.

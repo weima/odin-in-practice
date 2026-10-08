@@ -77,6 +77,7 @@ CLI, memory and systems
 - [15. Starting child processes](chapters/cli-linux.md#child-process)
 - [16. Linux as a systems-programming lab](chapters/cli-linux.md#linux)
 - [17. Network programming and an HTTP client](chapters/networking.md#networking)
+- [17a. Watch worker activity with local IPC](chapters/activity.md#worker-activity)
 - [18. Explore local Docker networks and filesystems](chapters/containers.md#containers)
 - [19. Parallel programming](chapters/parallel-programming.md#parallel-programming)
 - [20. Build, test, debug, and inspect](chapters/cli-linux.md#testing)

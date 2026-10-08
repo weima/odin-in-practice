@@ -45,6 +45,7 @@ nav:
   - Pointers: chapters/pointers.md
   - Memory philosophy: chapters/memory-philosophy.md
   - Networking: chapters/networking.md
+  - Worker activity: chapters/activity.md
   - Docker: chapters/containers.md
   - Parallel programming: chapters/parallel-programming.md
   - FFmpeg and libav: chapters/ffmpeg-libav.md

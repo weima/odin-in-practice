@@ -11,6 +11,7 @@ test:
     TZ=UTC odin test docs/examples/10-pointers/tests
     TZ=UTC odin test docs/examples/11-memory-philosophy/tests
     TZ=UTC odin test docs/examples/17-networking/http-client
+    TZ=UTC odin test docs/examples/17a-worker-activity
     TZ=UTC odin test docs/examples/18-containers
     TZ=UTC odin test docs/examples/19-parallel
     TZ=UTC odin test docs/examples/21-capstone/records
@@ -36,11 +37,6 @@ site:
 # Check the generated reader in html/ (build it first with mkdocs) using the Odin checker.
 check-book:
     odin run tools/check-book
-
-# Transitional: run the Odin and Python checkers on the same damaged copies of the book and
-# compare what they report. Needs html/ and the Python environment; delete with check-book.py.
-compare-check-book:
-    bin="$(mktemp -d)"; trap 'rm -rf "$bin"' EXIT; odin build tools/check-book -out:"$bin/check-book"; bash tools/check-book/compare.sh "$bin/check-book"
 
 # Run all local book verification recipes.
 verify: check test skill-examples site

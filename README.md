@@ -2,7 +2,7 @@
 
 **Read the book: https://weima.github.io/odin-in-practice/**
 
-A 32-chapter, source-guided book for programmers learning Odin through practical systems work: ownership, memory, Linux command-line tools, networking, Docker, parallel programming, and FFmpeg/libav.
+A 33-chapter, source-guided book for programmers learning Odin through practical systems work: ownership, memory, Linux command-line tools, networking, Docker, parallel programming, and FFmpeg/libav.
 
 ## Markdown source; HTML for readers
 
@@ -20,6 +20,7 @@ A 32-chapter, source-guided book for programmers learning Odin through practical
 | Pointers | [Chapter 10](docs/chapters/pointers.md) | Aliases, headers, views, lifetime and foreign pointers |
 | Memory philosophy | [Chapter 11](docs/chapters/memory-philosophy.md) | Allocation strategy, context, errors and rollback |
 | Networking | [Chapter 17](docs/chapters/networking.md) | TCP/UDP, framing, deadlines and a loopback HTTP adapter |
+| Worker activity | [Chapter 17a](docs/chapters/activity.md) | Local IPC, bounded progress events and process liveness |
 | Docker | [Chapter 18](docs/chapters/containers.md) | Port 1333, interactive shells, network peers, bind mounts and volumes |
 | Parallel programming | [Chapter 19](docs/chapters/parallel-programming.md) | Threads, ownership, synchronization, cancellation and pools |
 | FFmpeg and libav | [Chapters 23–28](docs/chapters/ffmpeg-libav.md) | Probing, JSON, foreign calls, decoding, remuxing and timestamps |
@@ -39,12 +40,11 @@ npm ci
 npm run diagrams
 python tools/package-skill.py
 mkdocs build --strict
-python tools/check-book.py
 just check-book
 python tools/package-offline.py
 ```
 
-`tools/check-book/` is an Odin port of `tools/check-book.py`. Both run in CI until the Python script is retired, and `just compare-check-book` runs them on deliberately damaged copies of the book and compares what each reports.
+`tools/check-book/` is the canonical Odin implementation for validating the generated reader. CI and local verification run it through `just check-book`.
 
 After editing a diagram, rerun `npm run diagrams`. Preview Markdown edits with `mkdocs serve --dev-addr 127.0.0.1:8000`. Before committing, rebuild the tracked `html/` reader and offline ZIP. Do not edit generated files by hand.
 
@@ -60,7 +60,7 @@ One-time repository setup:
 4. If a protected `github-pages` environment requires approval, approve that deployment under your repository's policy.
 5. Check the deployment URL shown by the workflow and download the offline reader from the book.
 
-The build job installs the locked dependencies, downloads and SHA-256 verifies the pinned official Odin release, checks all 18 standalone book packages, runs the book's Odin tests and the companion-skill CLI/network examples, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
+The build job installs the locked dependencies, downloads and SHA-256 verifies the pinned official Odin release, checks all standalone book packages, runs the book's Odin tests and the companion-skill CLI/network examples, renders Mermaid SVGs, builds HTML with strict link validation, checks the generated reader, and creates the offline ZIP. The deploy job publishes the freshly built `html/` artifact only for `main`. Changes submitted for review build without publishing. The workflow **does not commit or push generated files back to your branch**; it does not create or merge a change request. Its deployment uses GitHub's automatic token, not a personal access token.
 
 Publishing dependencies currently report a low-severity transitive KaTeX advisory (GHSA-238p-pmpm-9mq7). The diagrams are trusted repository inputs with strict Mermaid security, and KaTeX is not shipped as a reader runtime. Do not use this build as an arbitrary untrusted-diagram rendering service; dependency updates need a fresh rendering check rather than a forced automatic downgrade.
 
