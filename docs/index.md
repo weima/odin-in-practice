@@ -72,6 +72,7 @@ CLI, memory and systems
 - [11. Memory and error philosophy](chapters/memory-philosophy.md#memory-philosophy)
 - [12. Files are bytes](chapters/cli-linux.md#files)
 - [13. Streams, pipes, and bounded work](chapters/cli-linux.md#streams)
+- [13a. Text processing: exact, bounded, and syntax-aware](chapters/cli-linux.md#text-processing)
 - [14. Environment and process context](chapters/cli-linux.md#environment)
 - [15. Starting child processes](chapters/cli-linux.md#child-process)
 - [16. Linux as a systems-programming lab](chapters/cli-linux.md#linux)

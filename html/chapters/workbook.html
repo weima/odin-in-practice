@@ -709,6 +709,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exercise-p-a-correct-count-of-the-wrong-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise P · A correct count of the wrong thing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-q-which-semicolons-separate-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise Q · Which semicolons separate statements?
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -975,6 +997,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#exercise-p-a-correct-count-of-the-wrong-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise P · A correct count of the wrong thing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exercise-q-which-semicolons-separate-statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exercise Q · Which semicolons separate statements?
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1140,6 +1184,22 @@
 <p><strong>Subtle watch-out:</strong> a longer fixed sleep is still a timing guess; process tests also need cleanup on assertion and timeout paths.</p>
 <p>Solution sketch</p>
 <p>Give each run a fresh temporary directory and remove it after the child and its files are cleaned up. Replace external dependencies with a local fake executable and fixed outputs. Poll process state with a finite deadline, then kill and wait on timeout rather than assuming a delay means completion. <code>Process_Desc.env</code> is the full child environment, not a set of additions; supplying only <code>PATH</code> discards all other variables. Start from <code>os.environ</code>, remove each key being overridden, then append controlled replacements. The pinned black-box example constructs this environment and asserts stdout, stderr, and exit status separately.</p>
+<p><a id="dogfood-exercise-p"></a></p>
+<h3 id="exercise-p-a-correct-count-of-the-wrong-thing">Exercise P · A correct count of the wrong thing<a class="headerlink" href="#exercise-p-a-correct-count-of-the-wrong-thing" title="Permanent link">&para;</a></h3>
+<p>A file contains the three lines <code>count</code>, <code>account</code> and <code>count</code>. A tool is asked to replace <code>count</code> with <code>total</code>, expecting exactly 2 occurrences. Predict what it does. Then it is run again with the expectation corrected to 3: predict the file. What should the author have changed instead of the number?</p>
+<p><strong>Subtle watch-out:</strong> an exact count guards against <em>surprises</em>, not against a search text that is not specific enough. A count that matches by accident still produces a wrong file.</p>
+<p>Solution sketch</p>
+<p>The first run is refused: <code>textproc: refused: found 3 occurrence(s), expected 2; f.txt is unchanged</code>, with exit status 1. The count was the signal that the assumption was wrong, and the file is untouched. Raising the expectation to 3 is the wrong response, because <code>count</code> also occurs inside <code>account</code>; the replacement succeeds and leaves <code>total</code>, <code>actotal</code>, <code>total</code>. The fix is to make the search text unique: search for the whole three-line block, <code>count</code>, <code>account</code>, <code>count</code>, which occurs once. The lesson is that the count and the specificity of the text work together.</p>
+<p><a id="dogfood-exercise-q"></a></p>
+<h3 id="exercise-q-which-semicolons-separate-statements">Exercise Q · Which semicolons separate statements?<a class="headerlink" href="#exercise-q-which-semicolons-separate-statements" title="Permanent link">&para;</a></h3>
+<p>For each line below, say which <code>;</code> characters separate two statements, what a plain search for <code>;</code> would report, and what a masked copy of line 2 looks like. Then say why the masked copy must keep the original length.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">a</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="nc">b</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">2</span>
+<span class="nc">s</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="s">"x; y"</span>
+<span class="nc">for</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="nc">i</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="err">{</span>
+</code></pre></div>
+<p><strong>Subtle watch-out:</strong> a <code>;</code> is not a separator merely because it is a <code>;</code>. Context decides, and a flat search cannot see context.</p>
+<p>Solution sketch</p>
+<p>Only the first line has a separator. The <code>;</code> in line 2 is inside a string, and the two in line 3 belong to a <code>for</code> header, where they separate the initializer, the condition and the step. A plain search reports four <code>;</code> characters, three of them wrong. The masked copy of line 2 is <code>s := "    "</code>: the quotes stay, the contents become spaces. Keeping the length and the newlines means that every offset and line number found in the masked copy points at the same place in the original, so the tool can report <code>file:line:column</code> or edit the original text at the offsets it found.</p>
 <p><strong>Completion test.</strong> Explain one result from each source trail without quoting the function body. Then write the smallest experiment that could disprove your explanation. If your test cannot fail for a plausible wrong implementation, strengthen the oracle rather than simply adding more cases.</p>
 <p><a id="glossary"></a></p>
 <h2 id="30-pocket-glossary">30. Pocket glossary<a class="headerlink" href="#30-pocket-glossary" title="Permanent link">&para;</a></h2>
@@ -1271,6 +1331,18 @@
 <tr>
 <td>Fake executable</td>
 <td>A controlled local program or script substituted for an external dependency during a test. It makes arguments, output, and failure status reproducible without depending on the real tool.</td>
+</tr>
+<tr>
+<td>Exact-count replacement</td>
+<td>A text replacement that states how many occurrences it expects and refuses when the count differs. It guards against surprises, but the search text must also be specific enough.</td>
+</tr>
+<tr>
+<td>Masked copy</td>
+<td>A copy of source text in which the contents of comments, strings and raw strings are blanked, keeping the length and the newlines, so a plain search sees only code and every offset still matches the original.</td>
+</tr>
+<tr>
+<td>Bounded streaming</td>
+<td>Processing input through a fixed-size buffer so that memory depends on limits the program chose, such as line length and result count, and not on the size of the input.</td>
 </tr>
 <tr>
 <td>Demuxer / muxer</td>
@@ -1452,6 +1524,16 @@
 <td>Which arguments are source/expression metadata, and how do you provide a custom expectation message?</td>
 <td>21</td>
 </tr>
+<tr>
+<td><code>core/bufio/reader.odin</code> · <code>reader_init</code>, <code>reader_read_slice</code></td>
+<td>Whose memory is a returned line, and what happens when a line is longer than the buffer?</td>
+<td>13a</td>
+</tr>
+<tr>
+<td><code>core/text/regex/regex.odin</code> · <code>create</code>, <code>match</code>, <code>destroy</code></td>
+<td>How is a pattern compiled once, what does a capture hold, and who frees it?</td>
+<td>13a</td>
+</tr>
 </tbody>
 </table>
 <p>To reproduce a reading, run <code>odin root</code>, open the local path, find the symbol, and compare the relevant branch with the pinned link. Do not call runtime-private helpers from application code merely because this book uses them to explain behavior. The public operation remains the intended interface.</p>
@@ -1491,6 +1573,8 @@
 <li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin">Linux process source</a> — Linux process startup, wait, and signaling paths.</li>
 <li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin">POSIX session source</a> and <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin">POSIX signal source</a> — <code>setsid</code> and process-group signaling.</li>
 <li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/temp_file.odin">Temporary-directory source</a> — isolated temporary directories for tests.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin">Buffered reader source</a> — fixed-size buffering, <code>reader_read_slice</code> and <code>Buffer_Full</code>.</li>
+<li><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/text/regex/regex.odin">Regular-expression source</a> — compiling patterns, matching, and capture ownership.</li>
 <li><a href="https://forum.odin-lang.org/t/origin-of-the-name-odin/794">Creator’s explanation of the name</a> — a mythological project codename that stuck.</li>
 <li><a href="https://ffmpeg.org/documentation.html">FFmpeg documentation</a> — official user and developer documentation index.</li>
 <li><a href="https://ffmpeg.org/ffmpeg.html">ffmpeg command documentation</a> — options, stream selection, streamcopy, transcoding and filtering.</li>

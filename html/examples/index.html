@@ -660,9 +660,19 @@
 <td>Process identity, zombies, confirmed cancellation (Linux only)</td>
 </tr>
 <tr>
+<td><a href="13a-text-processing/main.odin">Text processing</a></td>
+<td><code>odin run docs/examples/13a-text-processing -- check docs/examples/13a-text-processing</code></td>
+<td>Exact replacement, bounded streaming search, and syntax-aware checks with a masked copy</td>
+</tr>
+<tr>
 <td><a href="21-e2e-cli/cli.odin">CLI end-to-end test</a></td>
-<td><code>TZ=UTC odin test docs/examples/21-e2e-cli</code></td>
-<td>Build the binary, a fake tool first on <code>PATH</code>, an explicit environment</td>
+<td>`TZ=UTC odin test docs/examples/21-e2e-cli</td>
+<td></td>
+</tr>
+<tr>
+<td>TZ=UTC odin test docs/examples/13a-text-processing<code>| Build the binary, a fake tool first on</code>PATH`, an explicit environment</td>
+<td></td>
+<td></td>
 </tr>
 </tbody>
 </table>

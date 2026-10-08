@@ -685,6 +685,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#13a-text-processing-exact-bounded-and-syntax-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13a. Text processing: exact, bounded, and syntax-aware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13a. Text processing: exact, bounded, and syntax-aware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choose-the-smallest-tool-that-is-precise-enough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose the smallest tool that is precise enough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exact-refuse-a-wrong-assumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exact: refuse a wrong assumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-search-a-file-without-holding-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded: search a file without holding it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syntax-aware-mask-before-you-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax-aware: mask before you search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-the-tool-as-you-would-test-any-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test the tool as you would test any program
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#14-environment-and-process-context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1657,6 +1729,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#13a-text-processing-exact-bounded-and-syntax-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13a. Text processing: exact, bounded, and syntax-aware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13a. Text processing: exact, bounded, and syntax-aware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choose-the-smallest-tool-that-is-precise-enough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose the smallest tool that is precise enough
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exact-refuse-a-wrong-assumption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exact: refuse a wrong assumption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-search-a-file-without-holding-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded: search a file without holding it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syntax-aware-mask-before-you-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax-aware: mask before you search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-the-tool-as-you-would-test-any-program" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test the tool as you would test any program
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#14-environment-and-process-context" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2492,6 +2636,235 @@ cat<span class="w"> </span>main.odin<span class="w"> </span><span class="p">|</s
 <p>Keep diagnostics on stderr so they do not contaminate machine-readable stdout. Test the behavior with a pipe and redirection, not only by watching the terminal.</p>
 <p><strong>Exercise 13.1.</strong> Add stdin support to <code>count-bytes</code>. Preserve path mode, document how <code>-</code> selects stdin, and test a short pipeline plus a large stream.</p>
 <p><strong>Subtle watch-out:</strong> pipes carry arbitrary chunks, not lines or complete records. A single read can split a logical record—or combine several—so parse state must survive buffer boundaries.</p>
+<p><a id="text-processing"></a></p>
+<p>Chapter 13a · Text that must stay exact</p>
+<h2 id="13a-text-processing-exact-bounded-and-syntax-aware">13a. Text processing: exact, bounded, and syntax-aware<a class="headerlink" href="#13a-text-processing-exact-bounded-and-syntax-aware" title="Permanent link">&para;</a></h2>
+<p>Sooner or later a program has to change a file or look through one: rename a symbol, fix a header, find the lines that mention an error. The quickest answer is a throwaway script, and for a job you will do once that is often fine. This chapter is about the other jobs: the ones you repeat, the ones where a silent mistake corrupts a file, and the ones whose input might be larger than memory. For those, three properties matter more than how fast the first version was written, and a small Odin program can have all three.</p>
+<ul>
+<li><strong>Exact.</strong> It states the assumption an edit relies on, and refuses when the assumption is wrong.</li>
+<li><strong>Bounded.</strong> Its memory depends on a limit you chose, not on the size of the input.</li>
+<li><strong>Syntax-aware.</strong> It does not mistake the inside of a string or a comment for code.</li>
+</ul>
+<p>The companion <code>docs/examples/13a-text-processing/</code> is one tested package behind one command, <code>textproc</code>, with four subcommands. Each one is here to show one of the properties.</p>
+<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>build<span class="w"> </span>docs/examples/13a-text-processing<span class="w"> </span>-out:textproc
+./textproc<span class="w"> </span>replace<span class="w"> </span>app.odin<span class="w"> </span>--old-file<span class="w"> </span>old.txt<span class="w"> </span>--new-file<span class="w"> </span>new.txt<span class="w"> </span>--count<span class="w"> </span><span class="m">1</span><span class="w"> </span>--dry-run
+./textproc<span class="w"> </span>grep<span class="w"> </span><span class="s1">'error: \w+'</span><span class="w"> </span>build.log
+./textproc<span class="w"> </span>check<span class="w"> </span>docs/examples/12-durable-state
+./textproc<span class="w"> </span>split<span class="w"> </span>app.odin<span class="w"> </span>--write
+</code></pre></div>
+<p><a id="text-choose"></a></p>
+<h3 id="choose-the-smallest-tool-that-is-precise-enough">Choose the smallest tool that is precise enough<a class="headerlink" href="#choose-the-smallest-tool-that-is-precise-enough" title="Permanent link">&para;</a></h3>
+<p>A bespoke tool is not always the answer. Use the smallest tool that gives the precision the job needs.</p>
+<table>
+<thead>
+<tr>
+<th>The job</th>
+<th>Reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One edit in one file</td>
+<td>Your editor, or your coding agent's edit tool. The change is visible and reviewed.</td>
+</tr>
+<tr>
+<td>Search or filter lines</td>
+<td><code>grep</code>, <code>rg</code>, <code>sed</code> and <code>awk</code> are installed, fast and well understood.</td>
+</tr>
+<tr>
+<td>Reshape JSON</td>
+<td><code>jq</code>.</td>
+</tr>
+<tr>
+<td>A repeatable job that must refuse a wrong assumption, understands syntax, or needs its own tests</td>
+<td>A small Odin program like this one.</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing about Odin makes such a program precise by itself. A type checker will not notice that you replaced the wrong occurrence. The precision comes from the decisions in this chapter and from tests. What Odin does offer is that the standard library already has the pieces: <code>core:os</code>, <code>core:bufio</code>, <code>core:text/regex</code>, <code>core:strings</code> and <code>core:flags</code>. Building this package took about one and a half seconds on the machine used to write this chapter, and running it was instantaneous, so a compiled tool is not a heavy choice.</p>
+<p><a id="text-exact"></a></p>
+<h3 id="exact-refuse-a-wrong-assumption">Exact: refuse a wrong assumption<a class="headerlink" href="#exact-refuse-a-wrong-assumption" title="Permanent link">&para;</a></h3>
+<p>Every edit carries an assumption. "Replace <code>old</code> with <code>new</code>" quietly means "and <code>old</code> appears exactly where I think it does". If the file has changed since you looked, or <code>old</code> is a substring of something you did not intend, a plain replace-all succeeds and does the wrong thing. The fix is to make the assumption explicit: say how many times <code>old</code> must occur, and refuse otherwise.</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">R</span><span class="nc">eplaces</span><span class="w"> </span><span class="nc">every</span><span class="w"> </span><span class="nc">occurrence</span><span class="w"> </span><span class="nc">of</span><span class="w"> </span><span class="err">`</span><span class="nc">old</span><span class="err">`</span><span class="w"> </span><span class="nc">with</span><span class="w"> </span><span class="err">`</span><span class="nc">new</span><span class="err">`</span><span class="p">,</span><span class="w"> </span><span class="nc">but</span><span class="w"> </span><span class="nc">only</span><span class="w"> </span><span class="nc">if</span><span class="w"> </span><span class="err">`</span><span class="nc">old</span><span class="err">`</span><span class="w"> </span><span class="nc">occurs</span><span class="w"> </span><span class="nc">exactly</span>
+<span class="p">//</span><span class="w"> </span><span class="err">`</span><span class="nc">expected</span><span class="err">`</span><span class="w"> </span><span class="nc">times</span><span class="err">.</span><span class="w"> </span><span class="err">A</span><span class="w"> </span><span class="nc">wrong</span><span class="w"> </span><span class="nc">count</span><span class="w"> </span><span class="nc">means</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">text</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">not</span><span class="w"> </span><span class="nc">what</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">caller</span><span class="w"> </span><span class="nc">assumed</span><span class="p">,</span>
+<span class="p">//</span><span class="w"> </span><span class="nc">and</span><span class="w"> </span><span class="nc">an</span><span class="w"> </span><span class="nc">edit</span><span class="w"> </span><span class="nc">made</span><span class="w"> </span><span class="nc">on</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">wrong</span><span class="w"> </span><span class="nc">assumption</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">worse</span><span class="w"> </span><span class="nc">than</span><span class="w"> </span><span class="nc">no</span><span class="w"> </span><span class="nc">edit</span><span class="p">,</span><span class="w"> </span><span class="nc">so</span><span class="w"> </span><span class="nc">it</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">refused</span><span class="err">.</span>
+<span class="p">//</span><span class="w"> </span><span class="err">O</span><span class="nc">ccurrences</span><span class="w"> </span><span class="nc">do</span><span class="w"> </span><span class="nc">not</span><span class="w"> </span><span class="l">overlap:</span><span class="p"> </span><span class="s">"aa"</span><span class="w"> </span><span class="nc">occurs</span><span class="w"> </span><span class="nc">once</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="s">"aaa"</span><span class="err">.</span>
+<span class="p">//</span>
+<span class="p">//</span><span class="w"> </span><span class="err">O</span><span class="l">wnership:</span><span class="p"> </span><span class="nc">result</span><span class="err">.</span><span class="nc">text</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">fresh</span><span class="w"> </span><span class="nc">allocation</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">caller</span><span class="w"> </span><span class="nc">must</span><span class="w"> </span><span class="nc">delete</span><span class="p">,</span><span class="w"> </span><span class="nc">whenever</span>
+<span class="p">//</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="err">.N</span><span class="nc">one</span><span class="err">.</span><span class="w"> </span><span class="err">O</span><span class="nc">n</span><span class="w"> </span><span class="nc">an</span><span class="w"> </span><span class="nc">error</span><span class="w"> </span><span class="nc">it</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">empty</span><span class="w"> </span><span class="nc">and</span><span class="w"> </span><span class="nc">there</span><span class="w"> </span><span class="nc">is</span><span class="w"> </span><span class="nc">nothing</span><span class="w"> </span><span class="nc">to</span><span class="w"> </span><span class="nc">free</span><span class="err">.</span>
+<span class="nc">replace_exact</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span>
+<span class="nc">    text, old, new: string,</span>
+<span class="nc">    expected: int,</span>
+<span class="nc">    allocator := context.allocator,</span>
+<span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="nc">    result: Replace_Result,</span>
+<span class="nc">    err: Edit_Error,</span>
+<span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">old</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="err">{}</span><span class="p">,</span><span class="w"> </span><span class="err">.E</span><span class="nc">mpty_Old_Text</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">result</span><span class="err">.</span><span class="nc">found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">count</span><span class="p">(</span><span class="nc">text, old</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">result</span><span class="err">.</span><span class="nc">found</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">expected</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">return</span><span class="w"> </span><span class="nc">result</span><span class="p">,</span><span class="w"> </span><span class="err">.C</span><span class="nc">ount_Mismatch</span>
+<span class="w">    </span><span class="err">}</span>
+
+<span class="w">    </span><span class="nc">out</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">builder_make</span><span class="p">(</span><span class="nc">allocator</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">rest</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">text</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">at</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">index</span><span class="p">(</span><span class="nc">rest, old</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">at</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">break</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">        </span><span class="nc">strings</span><span class="err">.</span><span class="nc">write_string</span><span class="p">(</span><span class="nc">&amp;out, rest[:at]</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">strings</span><span class="err">.</span><span class="nc">write_string</span><span class="p">(</span><span class="nc">&amp;out, new</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">rest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">rest</span><span class="p">[</span><span class="err">at + len(old):</span><span class="p">]</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">strings</span><span class="err">.</span><span class="nc">write_string</span><span class="p">(</span><span class="nc">&amp;out, rest</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">result</span><span class="err">.</span><span class="nc">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">to_string</span><span class="p">(</span><span class="nc">out</span><span class="p">)</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">result</span><span class="p">,</span><span class="w"> </span><span class="err">.N</span><span class="nc">one</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Read this procedure for its contract more than for its loop.</p>
+<ul>
+<li><strong>The count comes first.</strong> <code>strings.count</code> is checked before anything is built, and <code>result.found</code> is filled in even when the edit is refused, so the caller can say <em>why</em>: "found 2, expected 1".</li>
+<li><strong>Matches do not overlap.</strong> <code>"aa"</code> occurs once in <code>"aaa"</code>, and the result is <code>"ba"</code>. Say which rule you chose; tests then pin it.</li>
+<li><strong>An empty <code>old</code> is refused.</strong> It would match between every pair of bytes.</li>
+<li><strong>Ownership is stated.</strong> <code>result.text</code> is a fresh allocation that the caller deletes when <code>err</code> is <code>.None</code>. On an error it is empty and there is nothing to free, so no path leaks. Chapter 9 explains why a returned string needs this sentence.</li>
+</ul>
+<p>The command-line wrapper adds three more decisions. The text to find and the replacement come from <strong>files</strong>, <code>--old-file</code> and <code>--new-file</code>, so no shell quoting can alter them, and a multi-line snippet is just a file. <code>--dry-run</code> computes and reports the change but writes nothing. And the answer "no" is a normal outcome with its own exit code, following the contract in <a href="#cli-contract">chapter 5</a>: 0 for success, 1 for a refusal, 2 for a usage or I/O error. A script can then tell "this file needs attention" from "the tool could not run".</p>
+<div class="highlight"><pre><span></span><code>$ textproc replace f.txt --old-file old.txt --new-file new.txt
+textproc: refused: found 2 occurrence(s), expected 1; f.txt is unchanged
+$ echo $?
+1
+$ textproc replace f.txt --old-file old.txt --new-file new.txt --count 2 --dry-run
+would replace 2 occurrence(s) in f.txt (17 -&gt; 17 bytes)
+</code></pre></div>
+<p>When the edit is accepted, <code>replace_in_file</code> replaces the file with the atomic pattern from <a href="#dogfood-atomic-replacement">chapter 12</a>: write a uniquely named sibling temporary file, flush and sync it, then rename it over the target. A reader never sees a half-written file, and a refused or failed edit leaves the original untouched. Two details are easy to miss. The file's mode comes from <code>os.stat</code> and is passed to the new file, so an executable script stays executable. And the tool refuses what it cannot handle rather than guess: a file that contains a NUL byte, which almost never appears in text, a file larger than a limit, and anything that is not a regular file. That last check has a trap worth knowing. A FIFO has no size and blocks a reader until a writer appears, so a tool that opens it hangs. In this release <code>os.stat</code> itself opens the file, and so does <code>os.is_dir</code>, so both block on a FIFO and <code>os.is_dir</code> reports an unreadable directory as "not a directory". <code>os.lstat</code> reports the type without opening anything, so the tool asks it first. The same check refuses a symlink: renaming a temporary over a link would replace the link, not edit its target, so you pass the target's path.</p>
+<p><a id="text-bounded"></a></p>
+<h3 id="bounded-search-a-file-without-holding-it">Bounded: search a file without holding it<a class="headerlink" href="#bounded-search-a-file-without-holding-it" title="Permanent link">&para;</a></h3>
+<p><code>replace</code> reads the whole file, which is right for source code. A log file can be larger than memory, and "how many bytes did I read?" is not a design. <code>grep</code> shows the alternative: read through a fixed-size buffer, so memory is set by two limits you choose, <code>max_line_bytes</code> and <code>max_matches</code>, and not by the file.</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="l">reader:</span><span class="p"> </span><span class="nc">bufio</span><span class="err">.R</span><span class="nc">eader</span>
+<span class="w">    </span><span class="nc">bufio</span><span class="err">.</span><span class="nc">reader_init</span><span class="p">(</span><span class="nc">&amp;reader, os.to_stream(file</span><span class="p">),</span><span class="w"> </span><span class="nc">max_line_bytes</span><span class="err">)</span>
+<span class="w">    </span><span class="nc">defer</span><span class="w"> </span><span class="nc">bufio</span><span class="err">.</span><span class="nc">reader_destroy</span><span class="p">(</span><span class="nc">&amp;reader</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nc">line_number</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">slice</span><span class="p">,</span><span class="w"> </span><span class="nc">read_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">bufio</span><span class="err">.</span><span class="nc">reader_read_slice</span><span class="p">(</span><span class="nc">&amp;reader, '\n'</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">read_err</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="err">.B</span><span class="nc">uffer_Full</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="p">//</span><span class="w"> </span><span class="err">T</span><span class="nc">oo</span><span class="w"> </span><span class="nc">long</span><span class="w"> </span><span class="nc">to</span><span class="w"> </span><span class="nc">hold</span><span class="err">.</span><span class="w"> </span><span class="err">D</span><span class="nc">iscard</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">rest</span><span class="w"> </span><span class="nc">of</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">line</span><span class="w"> </span><span class="nc">without</span><span class="w"> </span><span class="nc">keeping</span><span class="w"> </span><span class="nc">it</span><span class="err">.</span>
+<span class="w">            </span><span class="nc">result</span><span class="err">.</span><span class="nc">skipped_long_lines</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">            </span><span class="nc">line_number</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">            </span><span class="nc">skip_rest_of_line</span><span class="p">(</span><span class="nc">&amp;reader</span><span class="p">)</span>
+<span class="w">            </span><span class="nc">continue</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">slice</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">&amp;&amp;</span><span class="w"> </span><span class="nc">read_err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">if</span><span class="w"> </span><span class="nc">read_err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="err">.EOF</span><span class="w"> </span><span class="err">{</span>
+<span class="w">                </span><span class="nc">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">.R</span><span class="nc">ead_Failed</span>
+<span class="w">            </span><span class="err">}</span>
+<span class="w">            </span><span class="nc">break</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">        </span><span class="nc">line_number</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="nc">line</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">trim_right</span><span class="p">(</span><span class="nc">string(slice</span><span class="p">),</span><span class="w"> </span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="err">)</span>
+<span class="w">        </span><span class="nc">capture</span><span class="p">,</span><span class="w"> </span><span class="nc">matched</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">regex</span><span class="err">.</span><span class="nc">match</span><span class="p">(</span><span class="nc">expression, line</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">matched</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">result.matches</span><span class="p">)</span><span class="w"> </span><span class="p">&gt;</span><span class="o">=</span><span class="w"> </span><span class="nc">max_matches</span><span class="w"> </span><span class="err">{</span>
+<span class="w">                </span><span class="nc">regex</span><span class="err">.</span><span class="nc">destroy</span><span class="p">(</span><span class="nc">capture</span><span class="p">)</span>
+<span class="w">                </span><span class="nc">result</span><span class="err">.</span><span class="nc">truncated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="l">true</span>
+<span class="w">                </span><span class="nc">break</span>
+<span class="w">            </span><span class="err">}</span>
+<span class="w">            </span><span class="nc">append</span><span class="p">(</span><span class="nc">&amp;result.matches, Match{line_number, strings.clone(line</span><span class="p">)</span><span class="err">})</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">        </span><span class="nc">regex</span><span class="err">.</span><span class="nc">destroy</span><span class="p">(</span><span class="nc">capture</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">read_err</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">nil</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">break</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">result</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>The loop rests on one behaviour of <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin">bufio's <code>reader_read_slice</code></a>, which is worth reading in the source. It returns a slice up to and including the delimiter. The slice is a <strong>view into the reader's own buffer</strong>, so the match text is copied with <code>strings.clone</code> before the next read can overwrite it. If the buffer fills before a newline appears, it returns what it holds with <code>.Buffer_Full</code> and consumes it. That is the signal this loop uses: count the line, then read slices until one ends the line, and keep none of it. The smallest buffer <code>reader_init</code> accepts is 16 bytes, so a requested line limit below 16 is raised to 16, and the tool reports the limit it actually applied instead of the one it was asked for. The companion's test exercises a 100-byte line against a 16-byte limit, and a request for 1. A last line with no trailing newline arrives with an error after its data, so the loop searches the data before it looks at the error.</p>
+<p>The pattern is compiled once, outside the loop, with <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/text/regex/regex.odin"><code>core:text/regex</code></a>, and every capture is destroyed, matched or not, because <code>regex.match</code> allocates its result. For a pattern with groups the capture holds the whole match first, then each group, with their positions; the companion prints only the line. The cost is stated rather than hidden: a line longer than <code>max_line_bytes</code> is skipped, and the tool says so on stderr instead of silently dropping it, and a search stopped at <code>max_matches</code> reports that too.</p>
+<p><a id="text-syntax"></a></p>
+<h3 id="syntax-aware-mask-before-you-search">Syntax-aware: mask before you search<a class="headerlink" href="#syntax-aware-mask-before-you-search" title="Permanent link">&para;</a></h3>
+<p>Suppose a tool must find the <code>;</code> characters that separate two statements on one line. The obvious attempt is <code>strings.index(line, ";")</code>. It is wrong for lines like these.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">s</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="s">"a; b"</span><span class="w">      </span><span class="p">//</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="sc">';'</span><span class="w"> </span><span class="nc">inside</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">string</span>
+<span class="nc">x</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="nc">a</span><span class="p">;</span><span class="w"> </span><span class="nc">b</span><span class="w">   </span><span class="p">//</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="sc">';'</span><span class="w"> </span><span class="nc">inside</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">comment</span>
+</code></pre></div>
+<p>A regular expression does not rescue this, because the problem is not the pattern. The inside of a string or a comment is simply not code, and a flat search cannot know where one begins. The robust approach does not try to be clever at search time. It <strong>masks first</strong>: copy the source, and blank out the contents of every comment, string, character literal and raw string. The copy has the same length and the same newlines as the original, so every offset and every line number still lines up, but a plain search of the copy sees only real code.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">mask_source</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">source: string, allocator := context.allocator</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">string</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">masked</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">make</span><span class="p">(</span><span class="nc">[]u8, len(source</span><span class="p">),</span><span class="w"> </span><span class="nc">allocator</span><span class="err">)</span>
+<span class="w">    </span><span class="nc">copy</span><span class="p">(</span><span class="nc">masked, source</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nc">index</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="nc">index</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">source</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">switch</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">case</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">has_prefix</span><span class="p">(</span><span class="nc">source[index:], "//"</span><span class="p">)</span><span class="err">:</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">blank_until_newline</span><span class="p">(</span><span class="nc">masked, index + 2</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">case</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">has_prefix</span><span class="p">(</span><span class="nc">source[index:], "/*"</span><span class="p">)</span><span class="err">:</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">blank_block_comment</span><span class="p">(</span><span class="nc">masked, index</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">case</span><span class="w"> </span><span class="nc">source</span><span class="p">[</span><span class="err">index</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'"'</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="nc">source</span><span class="p">[</span><span class="err">index</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'\''</span><span class="err">:</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">blank_quoted</span><span class="p">(</span><span class="nc">masked, index, source[index]</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">case</span><span class="w"> </span><span class="nc">source</span><span class="p">[</span><span class="err">index</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'`'</span><span class="err">:</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">blank_raw_string</span><span class="p">(</span><span class="nc">masked, index</span><span class="p">)</span>
+<span class="w">        </span><span class="l">case:</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">string</span><span class="p">(</span><span class="nc">masked</span><span class="p">)</span>
+<span class="err">}</span>
+
+<span class="nc">blank_quoted</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">masked: []u8, start: int, quote: u8</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">int</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">index</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">start</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="nc">index</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">masked</span><span class="p">)</span><span class="w"> </span><span class="err">&amp;&amp;</span><span class="w"> </span><span class="nc">masked</span><span class="p">[</span><span class="err">index</span><span class="p">]</span><span class="w"> </span><span class="err">!</span><span class="o">=</span><span class="w"> </span><span class="nc">quote</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">masked</span><span class="p">[</span><span class="err">index</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'\\'</span><span class="w"> </span><span class="err">&amp;&amp;</span><span class="w"> </span><span class="nc">index</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">masked</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">blank</span><span class="p">(</span><span class="nc">masked, index</span><span class="p">)</span>
+<span class="w">            </span><span class="nc">index</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">        </span><span class="nc">blank</span><span class="p">(</span><span class="nc">masked, index</span><span class="p">)</span>
+<span class="w">        </span><span class="nc">index</span><span class="w"> </span><span class="err">+</span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">index</span><span class="w"> </span><span class="err">+</span><span class="w"> </span><span class="mi">1</span>
+<span class="err">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>original: x := "a; b" // c; d
+masked:   x := "    " //     
+</code></pre></div>
+<p>Three details decide whether the mask is right. A backslash escapes the next byte, so <code>"say \"x;y\""</code> is one string and not two. A raw string, written with backticks, has no escapes and may span lines, so its newlines are kept. And Odin block comments <strong>nest</strong>: <code>/* a /* b */ c */</code> is one comment, which the compiler accepts, so the scanner counts depth instead of stopping at the first <code>*/</code>.</p>
+<p>Masking removes false positives, but a <code>;</code> in real code is still not always a separator. In <code>for i := 0; i &lt; n; i += 1 {</code> and <code>if x := f(); x &gt; 0 {</code> the semicolons belong to the statement's header. The rule the tool uses is small enough to read in full.</p>
+<div class="highlight"><pre><span></span><code><span class="nc">starts_header</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">text: string</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">bool</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">for</span><span class="w"> </span><span class="nc">keyword</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="p">(</span><span class="nc">[]string{"if", "for", "switch", "when", "else if"}</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">if</span><span class="w"> </span><span class="nc">strings</span><span class="err">.</span><span class="nc">has_prefix</span><span class="p">(</span><span class="nc">text, keyword</span><span class="p">)</span><span class="w"> </span><span class="err">{</span>
+<span class="w">            </span><span class="nc">rest</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">text</span><span class="p">[</span><span class="err">len(keyword):</span><span class="p">]</span>
+<span class="w">            </span><span class="nc">if</span><span class="w"> </span><span class="nc">len</span><span class="p">(</span><span class="nc">rest</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="nc">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">' '</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="nc">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'('</span><span class="w"> </span><span class="p">||</span><span class="w"> </span><span class="nc">rest</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'{'</span><span class="w"> </span><span class="err">{</span>
+<span class="w">                </span><span class="nc">return</span><span class="w"> </span><span class="l">true</span>
+<span class="w">            </span><span class="err">}</span>
+<span class="w">        </span><span class="err">}</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="l">false</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>A <code>;</code> counts as a statement separator only when it is outside parentheses and brackets, outside a header (a statement that starts with <code>if</code>, <code>for</code>, <code>switch</code>, <code>when</code> or <code>else if</code>, until its opening brace), and followed by more code on the same line. A trailing <code>;</code>, or one followed only by a comment, is left alone, but code after a block comment on the same line still counts, because a comment is not code and what follows it may be. <code>split</code> also keeps each line's own ending: input with CRLF endings stays CRLF. With those separators found, <code>split</code> puts each statement on its own line and expands a one-line block that holds several, and the result splits to itself: running it twice changes nothing.</p>
+<div class="highlight"><pre><span></span><code>before:  if found &amp;&amp; state == 'Z' { zombie = true; break }
+after:   if found &amp;&amp; state == 'Z' {
+             zombie = true
+             break
+         }
+</code></pre></div>
+<p>This is a scanner, not a parser, and it is honest about that. Header detection looks at the first word of a statement, so unusual layouts can fool it. The defence is the order of operations: <code>check</code> only reports, so run it first; <code>split --write</code> rewrites a file, so compile and run the tests afterwards. A formatter is still the right tool for layout. The <code>odinfmt</code> formatter from the OLS project, in the version tried while writing this chapter (commit <code>ec8606b</code>, built with <code>dev-2026-10</code>, with its <code>newline_style</code> left at its default of CRLF, so always pass a config), normalizes spacing and indentation but does not split statements chained with <code>;</code>. Splitting them first, then formatting, gave clean code. Run <code>split</code> on your own code that chains statements, and it separates every chain; then compile and run the tests, as above.</p>
+<p><a id="text-verify"></a></p>
+<h3 id="test-the-tool-as-you-would-test-any-program">Test the tool as you would test any program<a class="headerlink" href="#test-the-tool-as-you-would-test-any-program" title="Permanent link">&para;</a></h3>
+<p>A tool that edits files deserves tests that attack its promises. The companion's tests check the properties this chapter claimed.</p>
+<ul>
+<li><strong>A refused edit changes nothing.</strong> A wrong count, a dry run, a binary file, an oversized file, a missing file, a directory, a symlink and a FIFO all leave the original bytes untouched, and no temporary file is left behind. The FIFO case matters because a regression there does not fail, it hangs.</li>
+<li><strong>Failure cleans up.</strong> If the final rename cannot happen, the temporary is removed and the target is intact. The test forces this with a target that is a non-empty directory.</li>
+<li><strong>Masking preserves layout.</strong> The masked copy has the same length as the source, and the same newlines.</li>
+<li><strong>Splitting is idempotent</strong>, and leaves no chain behind.</li>
+<li><strong>Bounds hold.</strong> A 100-byte line against a 16-byte limit is skipped, not buffered, a requested limit of 1 behaves as 16, and the match cap is reported. A directory that cannot be listed is an error, not an empty result: a check that silently inspected nothing would pass a tree it never looked at.</li>
+</ul>
+<p>Passing tests prove little until you see them fail, so break the tool on purpose. Removing <code>for</code> from the header rule, removing the raw-string rule, and letting the count check always succeed each made two tests fail. Finally, run the tool on input it was not written against. The strongest check here was the real files, not the fixtures.</p>
+<p><strong>Exercise 32.1.</strong> Add a <code>--max-count</code> guard to <code>replace</code> so an edit that would touch more than N lines is refused even when the count matches. Which of the promises above could this weaken, and what test pins it down?</p>
+<p><strong>Exercise 32.2.</strong> <code>check</code> reports a tab only once per line. Predict what a tab-indented file with 500 lines produces, decide whether that is the right default, and change the tool and its tests if you disagree.</p>
+<p><strong>Design question.</strong> <code>split --write</code> rewrites a file in place. Would you add an automatic backup, a <code>--dry-run</code>, or neither? Argue from the failure you most want to survive.</p>
 <p><a id="environment"></a></p>
 <h2 id="14-environment-and-process-context">14. Environment and process context<a class="headerlink" href="#14-environment-and-process-context" title="Permanent link">&para;</a></h2>
 <p>Suppose a tool uses <code>HOME</code> to find configuration. An empty value and an absent variable might both print as nothing. Should they mean the same thing? Only if we have deliberately chosen that contract. Checking the text alone throws away the distinction before we can decide.</p>

@@ -6,11 +6,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Trigger: Odin code, packages, pointers, allocators, parallelism, CLI or libav. Ground changes in the installed compiler and Odin in Practice.">
+        <meta name="description" content="A source-guided Odin book for practical systems programming.">
       
       
       
-        <link rel="canonical" href="https://weima.github.io/odin-in-practice/skills/odin-companion/SKILL.html">
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/skills/odin-companion/references/file-processing.html">
       
       
       
@@ -18,19 +18,19 @@
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>SKILL - Odin in Practice</title>
+        <title>File and text processing in Odin - Odin in Practice</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -43,9 +43,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/book.css">
+      <link rel="stylesheet" href="../../../assets/book.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#activation-contract" class="md-skip">
+        <a href="#file-and-text-processing-in-odin" class="md-skip">
           Skip to content
         </a>
       
@@ -86,7 +86,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+    <a href="../../../index.html" title="Odin in Practice" class="md-header__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              SKILL
+              File and text processing in Odin
             
           </span>
         </div>
@@ -210,7 +210,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
+    <a href="../../../index.html" title="Odin in Practice" class="md-nav__button md-logo" aria-label="Odin in Practice" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -228,7 +228,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../index.html" class="md-nav__link">
+      <a href="../../../index.html" class="md-nav__link">
         
   
   
@@ -255,7 +255,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/odin-foundations.html" class="md-nav__link">
+      <a href="../../../chapters/odin-foundations.html" class="md-nav__link">
         
   
   
@@ -282,7 +282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/cli-linux.html" class="md-nav__link">
+      <a href="../../../chapters/cli-linux.html" class="md-nav__link">
         
   
   
@@ -309,7 +309,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/pointers.html" class="md-nav__link">
+      <a href="../../../chapters/pointers.html" class="md-nav__link">
         
   
   
@@ -336,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/memory-philosophy.html" class="md-nav__link">
+      <a href="../../../chapters/memory-philosophy.html" class="md-nav__link">
         
   
   
@@ -363,7 +363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/networking.html" class="md-nav__link">
+      <a href="../../../chapters/networking.html" class="md-nav__link">
         
   
   
@@ -390,7 +390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/containers.html" class="md-nav__link">
+      <a href="../../../chapters/containers.html" class="md-nav__link">
         
   
   
@@ -417,7 +417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/parallel-programming.html" class="md-nav__link">
+      <a href="../../../chapters/parallel-programming.html" class="md-nav__link">
         
   
   
@@ -444,7 +444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/ffmpeg-libav.html" class="md-nav__link">
+      <a href="../../../chapters/ffmpeg-libav.html" class="md-nav__link">
         
   
   
@@ -471,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../chapters/workbook.html" class="md-nav__link">
+      <a href="../../../chapters/workbook.html" class="md-nav__link">
         
   
   
@@ -508,6 +508,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -516,10 +518,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#activation-contract" class="md-nav__link">
+  <a href="#choose-the-smallest-tool-that-is-precise-enough" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Activation Contract
+        Choose the smallest tool that is precise enough
       
     </span>
   </a>
@@ -527,10 +529,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#hard-rules" class="md-nav__link">
+  <a href="#rules-for-any-tool-that-edits-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hard Rules
+        Rules for any tool that edits files
       
     </span>
   </a>
@@ -538,10 +540,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#decision-gates" class="md-nav__link">
+  <a href="#what-the-example-contains" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Decision Gates
+        What the example contains
       
     </span>
   </a>
@@ -549,10 +551,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#practical-package-workflow" class="md-nav__link">
+  <a href="#library-facts-to-check-not-assume" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Practical Package Workflow
+        Library facts to check, not assume
       
     </span>
   </a>
@@ -560,43 +562,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#execution-steps" class="md-nav__link">
+  <a href="#report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution Steps
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output Contract
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#runnable-starting-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Runnable starting points
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
+        Report
       
     </span>
   </a>
@@ -620,101 +589,82 @@
 
 
 
-  <h1>SKILL</h1>
-
-<h2 id="activation-contract">Activation Contract<a class="headerlink" href="#activation-contract" title="Permanent link">&para;</a></h2>
-<p>Load for writing, debugging, reviewing or explaining Odin code alongside the book. Use the narrowest relevant reference; do not turn a focused change into a framework or a broad rewrite.</p>
-<h2 id="hard-rules">Hard Rules<a class="headerlink" href="#hard-rules" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Treat the installed compiler and library source as authority; distinguish the book's pinned edition from the reader's compiler.</li>
-<li>State ownership, borrowed lifetimes, release obligations and partial-failure behavior at each boundary.</li>
-<li>Use native threads and documented synchronization for parallel work; never invent built-in JavaScript Promise or async/await support.</li>
-<li>Keep demos separate from production claims. Request permission before installing tools, accessing credentials, contacting production or starting containers.</li>
-<li>Keep package boundaries deliberate. Odin directories define packages; names are public by default unless restricted with a visibility attribute.</li>
-<li>Do not assume Odin has an official package manager or silently use an unpinned external dependency.</li>
-<li>For a repeatable, exactness-critical or syntax-aware file edit, use or adapt the bundled Odin file-processing example rather than an ad hoc script in another language. Use the harness's edit tool for a single edit and existing tools (<code>rg</code>, <code>sed</code>, <code>jq</code>) for simple transforms. A refused edit must leave the file unchanged.</li>
-</ul>
-<h2 id="decision-gates">Decision Gates<a class="headerlink" href="#decision-gates" title="Permanent link">&para;</a></h2>
+<h1 id="file-and-text-processing-in-odin">File and text processing in Odin<a class="headerlink" href="#file-and-text-processing-in-odin" title="Permanent link">&para;</a></h1>
+<p>Use this when a task is to edit, search or check files. It exists so the default is not a throwaway script in another language. The bundled example is <code>examples/13a-text-processing/</code> (the same package as the book's chapter 13a).</p>
+<h2 id="choose-the-smallest-tool-that-is-precise-enough">Choose the smallest tool that is precise enough<a class="headerlink" href="#choose-the-smallest-tool-that-is-precise-enough" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Task</th>
-<th>Inspect first</th>
+<th>The job</th>
+<th>Use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Language or library API</td>
-<td>Installed declarations and target implementation</td>
+<td>One edit in one file</td>
+<td>The harness's edit tool or the editor: the change is visible and reviewed.</td>
 </tr>
 <tr>
-<td>Package layout, imports or visibility</td>
-<td><a href="references/packages.html">Package and dependency guide</a>, source directory and its imports</td>
+<td>Search or filter lines</td>
+<td><code>rg</code>, <code>grep</code>, <code>sed</code>, <code>awk</code>.</td>
 </tr>
 <tr>
-<td>Memory or threads</td>
-<td>Allocator state, publication, cancellation and joining</td>
+<td>Reshape JSON</td>
+<td><code>jq</code>.</td>
 </tr>
 <tr>
-<td>CLI or networking</td>
-<td>Framing, budgets, exit/error contract and cleanup</td>
-</tr>
-<tr>
-<td>Editing, searching or checking files</td>
-<td><a href="references/file-processing.html">File and text processing guide</a> and the bundled <code>examples/13a-text-processing</code></td>
-</tr>
-<tr>
-<td>C or libav</td>
-<td>Installed headers, ABI/version, ownership and state machine</td>
+<td>A repeatable job that must refuse a wrong assumption, understand syntax, or carry its own tests</td>
+<td>The bundled Odin example, or a small program built on its patterns.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="practical-package-workflow">Practical Package Workflow<a class="headerlink" href="#practical-package-workflow" title="Permanent link">&para;</a></h2>
+<p>Odin is not more precise by itself. A type checker will not notice that the wrong occurrence was replaced. Precision comes from the rules below and from tests. Building the example takes about a second and a half and running it is instantaneous, so a compiled tool is not a heavy choice.</p>
+<p>Do not write an ad hoc script in another language for a repeatable file edit just because it is quicker to start. If the project already standardizes on a scripting language, follow the project, and still apply the rules below.</p>
+<h2 id="rules-for-any-tool-that-edits-files">Rules for any tool that edits files<a class="headerlink" href="#rules-for-any-tool-that-edits-files" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Start with one directory package. Split cohesive source across files when navigation helps; same-directory files share declarations, but each file needs its own imports.</li>
-<li>Create a subdirectory package only for a clear responsibility, independent reuse/testing, or an API boundary worth maintaining. Do not make a package for every file.</li>
-<li>Keep the CLI entry point, argument interpretation and process exit contract close together. Separate domain operations only when they can be named and tested independently.</li>
-<li>Treat declarations as public by default. Expose a small API; mark shared implementation <code>@(private="package")</code> and file-only details <code>@(private="file")</code>. There is no protected inheritance visibility.</li>
-<li>Keep imports explicit at file scope. Check the local path, package declaration and imported package's actual public API rather than guessing import resolution.</li>
-<li>Prefer built-in collections and project-controlled dependency source. Vendor dependencies deliberately, record upstream and exact version/commit plus license and local patches, and update/test them intentionally. Never use a moving branch or undocumented local checkout as a reproducible dependency.</li>
-<li>Treat the bundled <a href="examples/05-packages/index.html">complete package example</a> and its <code>.odin</code> source as a curated reference: inspect the code and test, then adapt its verified patterns instead of guessing Odin syntax or APIs. Check the CLI package, run the default and named cases, and test the imported package. Follow its cleanup for allocated return values.</li>
+<li><strong>State the assumption and count it.</strong> An edit means "this text occurs exactly N times". Count first and refuse when the count differs. Report the count found so the failure is explainable.</li>
+<li><strong>Take the text from files, not from shell arguments.</strong> Quoting cannot alter a file's content, and a multi-line snippet is just a file.</li>
+<li><strong>Offer a dry run</strong> that reports the change and writes nothing. Use it first for bulk edits.</li>
+<li><strong>Replace atomically.</strong> Write a uniquely named sibling temporary file (created exclusively, so two writers never share one), flush and sync it, close it, rename it over the target, and remove the temporary on every failure after the open. Pass the original file mode to the new file. A refused or failed edit leaves the original untouched.</li>
+<li><strong>Refuse what you cannot handle:</strong> a file containing a NUL byte (binary), a file above a size limit, an empty search text, and anything that is not a regular file. A FIFO blocks a reader forever, and renaming a temporary over a symlink replaces the link instead of editing its target. Classify the path with <code>os.lstat</code> before opening it.</li>
+<li><strong>Bound memory for input that may be large.</strong> Read through a fixed-size buffer with limits on line length and result count, and report what was skipped or truncated instead of silently dropping it.</li>
+<li><strong>Never search source code with a flat search.</strong> A <code>;</code> inside a string, a character literal or a comment looks like a separator. Mask first: copy the source and blank the contents of comments, strings and raw strings, keeping the length and the newlines, then search the copy.</li>
+<li><strong>Use distinct exit codes.</strong> 0 success, 1 a refusal or findings (the tool worked and the answer is "no"), 2 a usage or I/O error.</li>
+<li><strong>Verify the tool like a program.</strong> Test that a refused edit changes nothing and leaves no temporary, that a transformation is idempotent, that bounds hold, and run it on real input. Break a rule on purpose and confirm a test fails.</li>
 </ol>
-<h2 id="execution-steps">Execution Steps<a class="headerlink" href="#execution-steps" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Read <a href="references/checklist.html">the source and verification checklist</a> and any branch-specific reference.</li>
-<li>Record <code>odin version</code> and locate libraries with <code>odin root</code>; inspect exact signatures and source before editing.</li>
-<li>Trace package directories, declarations, imports, callers, ownership and error paths. Choose the smallest boundary that gives a real benefit.</li>
-<li>Make the smallest change that satisfies the request. Reuse project conventions and dependencies; do not add a package manager or general framework for a local package need.</li>
-<li>Check a complete package, run focused tests, and exercise success plus the relevant failure boundary. For package work, follow commands in the runnable example and test imported package behavior.</li>
-<li>Report compiler/platform, commands, results and untested obligations; attach measurements before claiming a speedup.</li>
-</ol>
-<h2 id="output-contract">Output Contract<a class="headerlink" href="#output-contract" title="Permanent link">&para;</a></h2>
-<p>Return changed paths, verified behavior and remaining limits. Label fragments, intentional compile failures and complete runnable programs distinctly. Do not claim visibility is a security boundary or claim dependency reproducibility without recording the source/version.</p>
-<h2 id="runnable-starting-points">Runnable starting points<a class="headerlink" href="#runnable-starting-points" title="Permanent link">&para;</a></h2>
-<p>The <a href="examples/cli/main.odin">CLI example</a> uses <code>core:flags</code> to parse a required positional name and a boolean option. The <a href="examples/network/main.odin">network example</a> performs a bounded TCP round trip on loopback, checks the exact byte count, and defers socket cleanup. Both are complete programs, not production templates.</p>
-<div class="highlight"><pre><span></span><code>odin<span class="w"> </span>run<span class="w"> </span>examples/cli<span class="w"> </span>--<span class="w"> </span>Ada<span class="w"> </span>--loud
-odin<span class="w"> </span>run<span class="w"> </span>examples/network
-</code></pre></div>
-<p>The network example binds only to loopback and uses operation timeouts. It is a local exercise, not an Internet-facing server. CI compiles and runs both examples with the book's pinned official monthly <code>dev-2026-10</code> release.</p>
-<p>The <a href="examples/13a-text-processing/main.odin">text-processing example</a> is a tested package behind one command for exact-count replacement, bounded streaming search, and syntax-aware checking and splitting of Odin source. Build it, run its tests, and read <a href="references/file-processing.html">the file and text processing guide</a> before writing a file-editing tool.</p>
+<h2 id="what-the-example-contains">What the example contains<a class="headerlink" href="#what-the-example-contains" title="Permanent link">&para;</a></h2>
+<p><code>examples/13a-text-processing/</code> is one package behind one command with four subcommands.</p>
 <div class="highlight"><pre><span></span><code>odin<span class="w"> </span>build<span class="w"> </span>examples/13a-text-processing<span class="w"> </span>-out:textproc
+./textproc<span class="w"> </span>replace<span class="w"> </span>FILE<span class="w"> </span>--old-file<span class="w"> </span>OLD<span class="w"> </span>--new-file<span class="w"> </span>NEW<span class="w"> </span><span class="o">[</span>--count<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dry-run<span class="o">]</span>
+./textproc<span class="w"> </span>check<span class="w"> </span>PATH<span class="w"> </span><span class="o">[</span>--max-columns<span class="w"> </span>N<span class="o">]</span>
+./textproc<span class="w"> </span>split<span class="w"> </span>FILE<span class="w"> </span><span class="o">[</span>--write<span class="o">]</span>
+./textproc<span class="w"> </span>grep<span class="w"> </span>PATTERN<span class="w"> </span>FILE<span class="w"> </span><span class="o">[</span>--max-line-bytes<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--max-matches<span class="w"> </span>N<span class="o">]</span>
 <span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>examples/13a-text-processing
 </code></pre></div>
-<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="references/packages.html">Package boundaries, visibility and dependencies</a></li>
-<li><a href="references/checklist.html">Source, ownership and verification checklist</a></li>
-<li><a href="references/file-processing.html">File and text processing</a></li>
+<li><code>replace_exact</code> and <code>replace_in_file</code> implement rules 1, 3, 4 and 5.</li>
+<li><code>grep_file</code> implements rule 6 with <code>core:bufio</code> and <code>core:text/regex</code>.</li>
+<li><code>mask_source</code>, <code>find_separators</code>, <code>check_source</code> and <code>split_statements</code> implement rule 7. <code>check</code> only reports, so run it first; <code>split --write</code> rewrites a file, so compile and run the tests afterwards.</li>
 </ul>
+<h2 id="library-facts-to-check-not-assume">Library facts to check, not assume<a class="headerlink" href="#library-facts-to-check-not-assume" title="Permanent link">&para;</a></h2>
+<p>These were observed with the pinned <code>dev-2026-10</code> compiler; confirm them on yours.</p>
+<ul>
+<li><code>strings.replace_all</code> returns the original string, unallocated, with <code>was_allocation == false</code> when nothing matches. Deleting its result unconditionally frees memory you do not own. Build the result yourself, or check the flag.</li>
+<li><code>bufio.reader_read_slice</code> returns a view into the reader's buffer. Copy what you keep before the next read. When the buffer fills before the delimiter it returns <code>.Buffer_Full</code> and consumes the buffer, so skip the rest of the line by reading until a slice ends it. The smallest buffer <code>reader_init</code> accepts is 16 bytes, so a smaller requested line limit is raised to 16; report the limit actually applied.</li>
+<li><code>core:text/regex</code> exists. <code>regex.create</code> compiles a pattern, <code>regex.match</code> returns a capture that you must <code>regex.destroy</code>, and a capture lists the whole match and then each group.</li>
+<li>The file mode in the <code>os.lstat</code> result (<code>info.mode</code>) is a permission set that can be passed to <code>os.open</code> or <code>os.write_entire_file</code>, which is how an edit keeps an executable file executable.</li>
+<li><code>os.stat</code> and <code>os.is_dir</code> open the path in this release, so both <strong>block on a FIFO</strong>, and <code>os.is_dir</code> reports an unreadable directory as "not a directory". <code>os.lstat</code> reports the type without opening anything. <code>os.get_absolute_path</code> also blocks on a symlink to a FIFO.</li>
+<li>Odin block comments nest.</li>
+<li><code>odinfmt</code> (from OLS) defaults to CRLF line endings, so pass a config with <code>"newline_style": "LF"</code>. It normalizes layout but does not split statements chained with <code>;</code>; split them first, then format.</li>
+</ul>
+<h2 id="report">Report<a class="headerlink" href="#report" title="Permanent link">&para;</a></h2>
+<p>State the command run, the count found versus expected, whether the file changed, and the verification you ran (tests, <code>check</code>, a compile after any <code>split</code>).</p>
 
 
 
 
 
 
-
-  
-  
 
 
 
@@ -764,12 +714,12 @@ odin<span class="w"> </span>run<span class="w"> </span>examples/network
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
-        <script src="../../assets/font-size.js"></script>
+        <script src="../../../assets/font-size.js"></script>
       
     
   </body>

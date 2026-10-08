@@ -19,12 +19,14 @@ test:
     TZ=UTC odin test docs/examples/12-durable-state
     TZ=UTC odin test docs/examples/15-supervision
     TZ=UTC odin test docs/examples/21-e2e-cli
+    TZ=UTC odin test docs/examples/13a-text-processing
 
 # Assert the three Odin companion-skill CLI and network examples.
 skill-examples:
     test "$(odin run docs/skills/odin-companion/examples/cli -- Ada --loud)" = 'HELLO, Ada!'
     test "$(odin run docs/skills/odin-companion/examples/cli -- Ada)" = 'Hello, Ada.'
     test "$(timeout 10s odin run docs/skills/odin-companion/examples/network)" = 'TCP loopback: exact read, reply, and half-close checked'
+    TZ=UTC odin test docs/skills/odin-companion/examples/13a-text-processing
 
 # Build the site into a temporary directory; never write generated html/.
 site:
