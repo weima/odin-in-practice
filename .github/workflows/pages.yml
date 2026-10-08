@@ -21,6 +21,7 @@ jobs:
       # Installed Chrome uses Ubuntu's supported sandbox, unlike the cached test build.
       PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
       ODIN_RELEASE: dev-2026-10
+      JUST_RELEASE: 1.58.0
     steps:
       - uses: actions/checkout@v6
         with:
@@ -53,31 +54,26 @@ jobs:
           test -x "$odin"
           echo "$(dirname "$odin")" >> "$GITHUB_PATH"
           "$odin" version
+      - name: Install pinned just release
+        run: |
+          archive="$RUNNER_TEMP/just.tar.gz"
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            "https://github.com/casey/just/releases/download/${JUST_RELEASE}/just-${JUST_RELEASE}-x86_64-unknown-linux-musl.tar.gz"
+          printf '%s  %s\n' \
+            '4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d' \
+            "$archive" | sha256sum --check -
+          mkdir "$RUNNER_TEMP/just"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/just" just
+          echo "$RUNNER_TEMP/just" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/just/just" --version
+      # The justfile is the single list of checks, so CI and a local `just verify` agree.
       - name: Check book Odin packages
-        run: |
-          set -euo pipefail
-          while IFS= read -r -d '' source; do
-            odin check "${source%/main.odin}"
-          done < <(find docs/examples -name main.odin -print0 | sort -z)
+        run: just check
       - name: Run book Odin tests
-        run: |
-          TZ=UTC odin test docs/examples/04-procedures
-          TZ=UTC odin test docs/examples/10-pointers/tests
-          TZ=UTC odin test docs/examples/11-memory-philosophy/tests
-          TZ=UTC odin test docs/examples/17-networking/http-client
-          TZ=UTC odin test docs/examples/18-containers
-          TZ=UTC odin test docs/examples/19-parallel
-          TZ=UTC odin test docs/examples/21-capstone/records
-          TZ=UTC odin test docs/examples/04-language-traps
-          TZ=UTC odin test docs/examples/09-ownership-traps
-          TZ=UTC odin test docs/examples/12-durable-state
-          TZ=UTC odin test docs/examples/15-supervision
-          TZ=UTC odin test docs/examples/21-e2e-cli
+        run: just test
       - name: Check and run Odin companion skill examples
-        run: |
-          test "$(odin run docs/skills/odin-companion/examples/cli -- Ada --loud)" = 'HELLO, Ada!'
-          test "$(odin run docs/skills/odin-companion/examples/cli -- Ada)" = 'Hello, Ada.'
-          test "$(timeout 10s odin run docs/skills/odin-companion/examples/network)" = 'TCP loopback: exact read, reply, and half-close checked'
+        run: just skill-examples
       - name: Render Mermaid diagrams to offline SVGs
         run: |
           "$PUPPETEER_EXECUTABLE_PATH" --version
