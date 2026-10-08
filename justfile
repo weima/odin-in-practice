@@ -26,6 +26,7 @@ skill-examples:
     test "$(odin run docs/skills/odin-companion/examples/cli -- Ada --loud)" = 'HELLO, Ada!'
     test "$(odin run docs/skills/odin-companion/examples/cli -- Ada)" = 'Hello, Ada.'
     test "$(timeout 10s odin run docs/skills/odin-companion/examples/network)" = 'TCP loopback: exact read, reply, and half-close checked'
+    TZ=UTC odin test docs/skills/odin-companion/examples/32-text-processing
 
 # Build the site into a temporary directory; never write generated html/.
 site:

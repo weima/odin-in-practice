@@ -4,7 +4,7 @@ description: "Trigger: Odin code, packages, pointers, allocators, parallelism, C
 license: "Not specified; consult the book repository's licensing."
 metadata:
   author: "weima"
-  version: "1.1"
+  version: "1.2"
 ---
 
 ## Activation Contract
@@ -19,6 +19,7 @@ Load for writing, debugging, reviewing or explaining Odin code alongside the boo
 - Keep demos separate from production claims. Request permission before installing tools, accessing credentials, contacting production or starting containers.
 - Keep package boundaries deliberate. Odin directories define packages; names are public by default unless restricted with a visibility attribute.
 - Do not assume Odin has an official package manager or silently use an unpinned external dependency.
+- For a repeatable, exactness-critical or syntax-aware file edit, use or adapt the bundled Odin file-processing example rather than an ad hoc script in another language. Use the harness's edit tool for a single edit and existing tools (`rg`, `sed`, `jq`) for simple transforms. A refused edit must leave the file unchanged.
 
 ## Decision Gates
 
@@ -28,6 +29,7 @@ Load for writing, debugging, reviewing or explaining Odin code alongside the boo
 | Package layout, imports or visibility | [Package and dependency guide](references/packages.md), source directory and its imports |
 | Memory or threads | Allocator state, publication, cancellation and joining |
 | CLI or networking | Framing, budgets, exit/error contract and cleanup |
+| Editing, searching or checking files | [File and text processing guide](references/file-processing.md) and the bundled `examples/32-text-processing` |
 | C or libav | Installed headers, ABI/version, ownership and state machine |
 
 ## Practical Package Workflow
@@ -64,7 +66,15 @@ odin run examples/network
 
 The network example binds only to loopback and uses operation timeouts. It is a local exercise, not an Internet-facing server. CI compiles and runs both examples with the book's pinned official monthly `dev-2026-10` release.
 
+The [text-processing example](examples/32-text-processing/main.odin) is a tested package behind one command for exact-count replacement, bounded streaming search, and syntax-aware checking and splitting of Odin source. Build it, run its tests, and read [the file and text processing guide](references/file-processing.md) before writing a file-editing tool.
+
+```sh
+odin build examples/32-text-processing -out:textproc
+TZ=UTC odin test examples/32-text-processing
+```
+
 ## References
 
 - [Package boundaries, visibility and dependencies](references/packages.md)
 - [Source, ownership and verification checklist](references/checklist.md)
+- [File and text processing](references/file-processing.md)
