@@ -18,16 +18,39 @@ Cancel_Result :: enum {
     Already_Gone,
 }
 
-current_identity :: proc() -> Process_Identity {
+// What reading /proc says about a saved identity. Only evidence of absence may
+// say Gone; a read that failed or text that does not parse proves nothing.
+Liveness :: enum {
+    Alive,
+    Gone,
+    Unknown,
+}
+
+current_identity :: proc() -> (identity: Process_Identity, ok: bool) {
     pid := os.get_pid()
-    start_time, _, ok := read_proc_stat(int(pid))
-    assert(ok)
-    return {int(pid), start_time}
+    start_time, _, found := read_proc_stat(int(pid))
+    if !found { return {}, false }
+    return {int(pid), start_time}, true
+}
+
+// Gone means a missing entry, a zombie, or a different start time (the PID now
+// belongs to another process). Anything else that is not Alive is Unknown.
+classify :: proc(identity: Process_Identity, data: []byte, read_err: os.Error) -> Liveness {
+    if read_err == os.General_Error.Not_Exist { return .Gone }
+    if read_err != nil { return .Unknown }
+    start_time, state, ok := parse_proc_stat(string(data))
+    if !ok { return .Unknown }
+    if state == 'Z' || start_time != identity.start_time { return .Gone }
+    return .Alive
+}
+
+identity_liveness :: proc(identity: Process_Identity) -> Liveness {
+    data, err := os.read_entire_file(fmt.tprintf("/proc/%d/stat", identity.pid), context.temp_allocator)
+    return classify(identity, data, err)
 }
 
 identity_alive :: proc(identity: Process_Identity) -> bool {
-    start_time, state, ok := read_proc_stat(identity.pid)
-    return ok && state != 'Z' && start_time == identity.start_time
+    return identity_liveness(identity) == .Alive
 }
 
 // Parses Linux /proc/<pid>/stat. The comm field ends at the last ')'.
@@ -48,12 +71,17 @@ read_proc_stat :: proc(pid: int) -> (start_time: u64, state: u8, ok: bool) {
 
 // The caller owns process and must eventually wait it, including after timeout.
 cancel :: proc(process: os.Process, identity: Process_Identity, deadline: time.Duration) -> Cancel_Result {
-    if !identity_alive(identity) {
+    switch identity_liveness(identity) {
+    case .Gone:
         _, _ = os.process_wait(process, timeout=0)
         return .Already_Gone
+    case .Unknown:
+        // Cannot tell whether it is running, so claim neither gone nor cancelled.
+        return .Interrupted
+    case .Alive:
     }
     if os.process_terminate(process) != nil {
-        if !identity_alive(identity) {
+        if identity_liveness(identity) == .Gone {
             _, _ = os.process_wait(process, timeout=0)
             return .Already_Gone
         }

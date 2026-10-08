@@ -24,13 +24,15 @@ atomic_write :: proc(path: string, data: []byte) -> Error {
     defer delete(temp)
     file, err := os.open(temp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.Permissions{.Read_User, .Write_User})
     if err != nil { return Error{kind = .IO} }
-    defer os.close(file)
     n, write_err := os.write(file, data)
-    if write_err != nil || n != len(data) || os.flush(file) != nil || os.sync(file) != nil { return Error{kind = .IO} }
-    if os.close(file) != nil { return Error{kind = .IO} }
-    // Avoid a second close from defer after the successful close.
-    file = nil
-    if os.rename(temp, path) != nil { _ = os.remove(temp); return Error{kind = .IO} }
+    written := write_err == nil && n == len(data) && os.flush(file) == nil && os.sync(file) == nil
+    // Close exactly once, whether or not the writes worked, then replace the target.
+    // Every failure after the open removes the temporary, so none is left behind.
+    close_err := os.close(file)
+    if !written || close_err != nil || os.rename(temp, path) != nil {
+        _ = os.remove(temp)
+        return Error{kind = .IO}
+    }
     return Error{}
 }
 
