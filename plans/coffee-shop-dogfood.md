@@ -60,9 +60,35 @@ Gates: every new example passes under `odin check` and `odin test` on `dev-2026-
 
 ## 3. Outcome and findings about Coffee Shop
 
-_Filled in as the work proceeds._
+### Result
 
-Findings about Coffee Shop so far:
+Both waves are done and integrated into one branch, `dogfood-odin-book`.
+
+- **Wave 1** (six Shots, two at a time): five chapter sections with tested companion packages, and a `justfile` that verifies the book. One Shot (`ownership-traps`) finished having done nothing and was re-run with the repository's own rules.
+- **Wave 2** (two Shots in parallel): workbook exercises K-O, ten glossary terms and fourteen source-trail rows; and a read-only audit that re-checked every claim in the five sections.
+- **Integration** was done by the Barista, not the Workers: each Shot's report and diff was read and re-verified, then applied and committed as one commit per topic. Workers never committed.
+
+| | Added to the book |
+| --- | --- |
+| Chapter sections | 5 topics, about 340 lines in chapters 3, 4, 9, 12, 14, 15 and 21 |
+| Companion packages | 5 (`04-language-traps`, `09-ownership-traps`, `12-durable-state`, `15-supervision`, `21-e2e-cli`), about 900 lines of Odin |
+| Workbook | 5 exercises, 10 glossary terms, 14 source-trail rows, 11 source links |
+| Tooling | `justfile`, `standards.md`, `workers.md`; CI and `docs/examples/README.md` list the new suites |
+
+Every one of the 13 suites passes under `just verify`, the strict site build passes, and `tools/check-book.py` passes (chapters still exactly 1-31). The updated CI workflow has not yet run on GitHub.
+
+### What reading the Workers' output found
+
+The Workers' reports said everything passed. Reading the work found real defects that tests did not:
+
+- Text that leaked the author's machine into a public book (`/home/...` and scratch paths) and tests that wrote to fixed `/tmp` paths named after Worker scratch directories.
+- A code fragment that cannot compile (`"PATH=" + runtime_string`; Odin only concatenates constants).
+- A paragraph that treated "did not crash once" as nearly safe, against the book's own standard.
+- An independent audit then re-ran every claim: it confirmed 100, and found four wrong or stale sentences and four code defects (a temporary file left behind on some failures, an `/proc` probe that conflated "gone" with "unreadable", an assert where the code should clean up, and test cleanup that could hang). All were fixed, with tests.
+
+### Findings about Coffee Shop
+
+Findings 1-10 came up during Wave 1; 11-14 during Wave 2.
 
 1. **A busy Worker looks dead.** `pi --print` prints only its final answer, so a running Worker's pane shows just the command line and `status` says only `running`. The first Wave 1 Shots were mistaken for stuck at about four minutes, while their Stations were gaining files and their Pi processes were active. Planned in [the v0.2.0 roadmap](https://github.com/weima/coffee-shop/blob/main/PLAN.md#roadmap-v020), item 1.
 2. **Every Shot uses the same model and thinking level.** The book's Shots range from a one-file `justfile` to multi-section chapters with reproduced experiments. Planned in item 2.
@@ -74,3 +100,7 @@ Findings about Coffee Shop so far:
 8. **A Shot can complete with a progress note as its report.** `verify-entrypoint`'s whole report was "I fixed the `check` recipe and restarted the requested verification sequence." No results. The `justfile` turned out to be correct, but only because the Barista re-ran every recipe. Same root cause as finding 7: exit code 0 is all Coffee Shop requires. The shared rules now state that the last message must be a real report and that nothing may be reported while a check is unverified.
 9. **Sharing one rules file by path works.** The re-run of `ownership-traps` took its shared rules from one file instead of 3 KB pasted into the prompt, which shrank to the 2.2 KB that is unique to the Shot. The Worker read the file, did not ask for permission, ran every check, and delivered a full report. It also reported a place where reality contradicted my brief: deleting a `tprintf` result did not crash in isolation, although it had crashed Coffee Shop. That is the behaviour the book's standards ask for (say so, and call it undefined). Caveats: nothing guarantees a Worker reads the file, and the file can change under a running Brew. Both are addressed by item 5.
 10. **The rules were in the wrong repository.** They first lived in Coffee Shop's own repository, and every prompt quoted an absolute path into it. Rules for the book belong to the book. They now live here as `standards.md` (what a correct change is, which also lets the Filter's review run, since it had reported "standards.md is missing") and `workers.md` (how Workers behave). Coffee Shop needs a convention and automatic delivery for this. Planned as item 7 of its roadmap. This page was moved here from Coffee Shop for the same reason.
+11. **The Filter worked on a repository it had never seen.** In Wave 2 it found the book's `justfile`, ran `just test` in each Station (it passed), and ran a read-only review against the book's `standards.md`. The review made two sound findings, both against the book's own standards: Exercise K called declarations "rejected" without quoting the compiler's errors, and the new subsections lacked unique anchors. Both were fixed. This is the same Filter that, one wave earlier, had to report "standards.md is missing in the Beans repository", which is what finding 10 fixed.
+12. **A read-only Shot is useful, and Coffee Shop kept it read-only.** The `source-audit` Shot had no files to change, and its Station stayed clean while it re-ran every claim. It was the most valuable Shot of the exercise: 100 claims confirmed, 8 defects found, several in code the Barista had already accepted.
+13. **The Filter's note about `node_modules` is noise here.** Every Shot's Oreo said "Beans has `node_modules` but this Station does not; if the checks need it, add it to the Recipe's `share` list", although the book's `just test` passed. The book's `node_modules` is only for rendering diagrams. A suggestion should appear when a check failed or could not run, not when everything passed.
+14. **Coffee Shop has the same liveness defect the audit found in the book's example.** `identity_alive` returns `false` for any failure to read `/proc/<pid>/stat`, and the supervisor treats `false` as "the Worker died" (`settle.odin`). On a host that hides other processes (a `hidepid` mount) or on a transient read error, a live Worker would be recorded as `interrupted`. The fix is the one the book now teaches: three outcomes (alive, gone, unknown), where only evidence of absence says gone, and unknown is never recorded as an exit.
