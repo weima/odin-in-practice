@@ -80,3 +80,20 @@ test_existing_directory_is_success :: proc(t: ^testing.T) {
     testing.expect_value(t, ensure_directory(target), true) // creates both levels
     testing.expect_value(t, ensure_directory(target), true) // already there: still success
 }
+
+@(test)
+test_failed_rename_leaves_no_temporary_file :: proc(t: ^testing.T) {
+    root := root_for_test("rename"); defer delete(root); defer _ = os.remove_all(root)
+    // A non-empty directory cannot be replaced by a file, so the rename fails
+    // after the temporary has been written completely.
+    target, _ := strings.concatenate({root, "/state"}); defer delete(target)
+    inner, _ := strings.concatenate({target, "/keep"}); defer delete(inner)
+    temp, _ := strings.concatenate({target, ".tmp"}); defer delete(temp)
+    _ = os.make_directory_all(target)
+    _ = os.write_entire_file(inner, "x")
+
+    err := atomic_write(target, []byte{'n', 'e', 'w'})
+    testing.expect_value(t, err.kind, Error_Kind.IO)
+    testing.expect(t, !os.exists(temp), "the temporary file must be removed after a failed rename")
+    testing.expect(t, os.exists(inner), "the existing target must be untouched")
+}

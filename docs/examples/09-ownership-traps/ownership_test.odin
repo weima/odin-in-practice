@@ -71,3 +71,21 @@ test_formatting_braces_and_json_marshalling :: proc(t: ^testing.T) {
 	testing.expect_value(t, joined, "{\"order\":7}")
 	delete(joined)
 }
+
+@(test)
+test_forgotten_allocated_result_is_visible_to_the_tracker :: proc(t: ^testing.T) {
+	original := context.allocator
+	track: mem.Tracking_Allocator
+	mem.tracking_allocator_init(&track, original)
+	context.allocator = mem.tracking_allocator(&track)
+
+	forgotten := allocated_format("tea", context.allocator) // nobody deletes it yet
+	testing.expect_value(t, len(track.allocation_map), 1) // the tracker sees the leak
+	_ = temp_format("again") // a temporary result is invisible to it
+	testing.expect_value(t, len(track.allocation_map), 1)
+
+	delete(forgotten, context.allocator) // clean up so this test does not leak itself
+	context.allocator = original
+	testing.expect_value(t, len(track.allocation_map), 0)
+	mem.tracking_allocator_destroy(&track)
+}
