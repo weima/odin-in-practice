@@ -42,7 +42,7 @@ Split_Arguments :: struct {
 Grep_Arguments :: struct {
     pattern:        string `args:"pos=0,required" usage:"A regular expression."`,
     file:           string `args:"pos=1,required" usage:"The file to search."`,
-    max_line_bytes: int `usage:"Longest line to buffer (default 4096)."`,
+    max_line_bytes: int `usage:"Longest line to buffer (default 4096, at least 16)."`,
     max_matches:    int `usage:"Stop after this many matches (default 1000)."`,
 }
 
@@ -120,6 +120,8 @@ run_replace :: proc(args: []string) -> int {
         fmt.eprintfln("textproc: %s looks binary (it contains a NUL byte)", options.file)
     case .Too_Large:
         fmt.eprintfln("textproc: %s is too large", options.file)
+    case .Not_Regular_File:
+        fmt.eprintfln("textproc: %s is not a regular file", options.file)
     case .Write_Failed:
         fmt.eprintfln("textproc: could not write %s; it is unchanged", options.file)
     }
@@ -134,12 +136,16 @@ run_check :: proc(args: []string) -> int {
     }
     max_columns := options.max_columns if options.max_columns > 0 else 100
 
-    files := odin_files(options.path)
+    files, listed := odin_files(options.path)
     defer {
         for file in files {
             delete(file)
         }
         delete(files)
+    }
+    if !listed {
+        fmt.eprintfln("textproc: could not list every directory under %s", options.path)
+        return EXIT_ERROR
     }
     problems := 0
     for file in files {
@@ -197,6 +203,9 @@ run_grep :: proc(args: []string) -> int {
         return EXIT_ERROR
     }
     max_line_bytes := options.max_line_bytes if options.max_line_bytes > 0 else 4096
+    // Report the limit that was applied, not the one that was asked for: bufio's
+    // smallest buffer is MIN_LINE_BYTES.
+    max_line_bytes = max(max_line_bytes, MIN_LINE_BYTES)
     max_matches := options.max_matches if options.max_matches > 0 else 1000
 
     result, err := grep_file(options.file, options.pattern, max_line_bytes, max_matches)
@@ -228,30 +237,42 @@ run_grep :: proc(args: []string) -> int {
 
 // The .odin files at `path`: the file itself, or every one below a directory.
 // Hidden directories (.git, .build) are skipped. The caller owns the result.
-odin_files :: proc(path: string) -> [dynamic]string {
-    files: [dynamic]string
-    if !os.is_dir(path) {
+//
+// ok is false if any directory could not be listed. That must be an error: a check
+// that silently inspected nothing would pass a tree it never looked at.
+odin_files :: proc(path: string) -> (files: [dynamic]string, ok: bool) {
+    // lstat, not is_dir: is_dir opens the path, so it reports an unreadable directory
+    // as "not a directory", and the walk would then quietly treat it as a file.
+    info, stat_err := os.lstat(path, context.temp_allocator)
+    if stat_err != nil {
+        return files, false
+    }
+    if info.type != .Directory {
         append(&files, strings.clone(path))
-        return files
+        return files, true
     }
     entries, err := os.read_all_directory_by_path(path, context.temp_allocator)
     if err != nil {
-        return files
+        return files, false
     }
     for entry in entries {
         full, _ := strings.concatenate({path, "/", entry.name})
         defer delete(full)
         if entry.type == .Directory {
             if !strings.has_prefix(entry.name, ".") {
-                nested := odin_files(full)
+                nested, nested_ok := odin_files(full)
                 for file in nested {
                     append(&files, file)
                 }
                 delete(nested)
+                if !nested_ok {
+                    return files, false
+                }
             }
-        } else if strings.has_suffix(entry.name, ".odin") {
+        } else if entry.type == .Regular && strings.has_suffix(entry.name, ".odin") {
+            // Symlinks inside a tree are not followed, and not read as files.
             append(&files, strings.clone(full))
         }
     }
-    return files
+    return files, true
 }

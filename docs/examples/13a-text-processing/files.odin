@@ -1,11 +1,16 @@
 package main
 
 import "core:bufio"
+import "core:fmt"
 import "core:os"
 import "core:strings"
+import "core:sync"
 import "core:text/regex"
 
 DEFAULT_MAX_BYTES :: 16 * 1024 * 1024
+
+// bufio never uses a buffer smaller than this, so no line limit below it can be honoured.
+MIN_LINE_BYTES :: 16
 
 Edit_Report :: struct {
     found:        int,
@@ -26,9 +31,17 @@ read_text_file :: proc(
     mode: os.Permissions,
     err: Edit_Error,
 ) {
-    info, stat_err := os.stat(path, context.temp_allocator)
+    // lstat reports the type without opening the file. That matters: in this release
+    // os.stat opens it, and opening a FIFO blocks until a writer appears. A symlink is
+    // refused too, because renaming a temporary over a link would replace the link
+    // itself and not edit its target; pass the target's path instead.
+    info, stat_err := os.lstat(path, context.temp_allocator)
     if stat_err != nil {
         return "", {}, .Read_Failed
+    }
+    // Only a regular file has a size to check and an end to read to.
+    if info.type != .Regular {
+        return "", {}, .Not_Regular_File
     }
     if int(info.size) > max_bytes {
         return "", {}, .Too_Large
@@ -46,14 +59,25 @@ read_text_file :: proc(
     return string(data), info.mode, .None
 }
 
+// A temporary name no other writer can share: the process id and a per-process
+// counter, so two writers to the same target never touch the same file. The caller
+// owns the result.
+temporary_path_for :: proc(path: string) -> string {
+    serial := sync.atomic_add(&temporary_serial, 1)
+    return fmt.aprintf("%s.tmp-%d-%d", path, os.get_pid(), serial)
+}
+
+temporary_serial: int
+
 // Replaces the file's contents without ever exposing a half-written file: write a
-// sibling temporary, flush and sync it, close it, then rename it over the target.
-// A rename within one directory is atomic; across filesystems it would fail. Every
-// failure after the open removes the temporary. A refused write leaves the old
-// target untouched.
+// uniquely named sibling temporary, flush and sync it, close it, then rename it
+// over the target. A rename within one directory is atomic; across filesystems it
+// would fail. The temporary is created exclusively, and every failure after the
+// open removes it. A refused write leaves the old target untouched.
 write_file_atomic :: proc(path: string, data: []byte, mode: os.Permissions) -> Edit_Error {
-    temp, _ := strings.concatenate({path, ".tmp"}, context.temp_allocator)
-    file, open_err := os.open(temp, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, mode)
+    temp := temporary_path_for(path)
+    defer delete(temp)
+    file, open_err := os.open(temp, os.O_WRONLY | os.O_CREATE | os.O_EXCL, mode)
     if open_err != nil {
         return .Write_Failed
     }
@@ -130,7 +154,9 @@ destroy_grep_result :: proc(result: ^Grep_Result) {
 // Finds lines matching a regular expression, reading the file through a fixed-size
 // buffer: memory use is bounded by max_line_bytes and max_matches, not by the size
 // of the file. A line longer than max_line_bytes is counted and skipped rather than
-// buffered; a final line without a newline is still searched.
+// buffered; a final line without a newline is still searched. The limit is at least
+// MIN_LINE_BYTES (16), the smallest buffer bufio accepts: a smaller request is
+// raised to it, not silently honoured.
 grep_file :: proc(
     path, pattern: string,
     max_line_bytes := 4096,
@@ -139,6 +165,7 @@ grep_file :: proc(
     result: Grep_Result,
     err: Grep_Error,
 ) {
+    line_limit := max(max_line_bytes, MIN_LINE_BYTES)
     expression, pattern_err := regex.create(pattern)
     if pattern_err != nil {
         return {}, .Bad_Pattern
@@ -152,7 +179,7 @@ grep_file :: proc(
     defer os.close(file)
 
     reader: bufio.Reader
-    bufio.reader_init(&reader, os.to_stream(file), max_line_bytes)
+    bufio.reader_init(&reader, os.to_stream(file), line_limit)
     defer bufio.reader_destroy(&reader)
 
     line_number := 0

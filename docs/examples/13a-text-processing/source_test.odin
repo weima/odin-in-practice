@@ -150,3 +150,30 @@ test_split_is_idempotent_and_leaves_no_chain_behind :: proc(t: ^testing.T) {
         delete(once)
     }
 }
+
+@(test)
+test_code_after_a_block_comment_still_counts_as_code :: proc(t: ^testing.T) {
+    findings := check_source("a := 1; /* note */ b := 2\n", 100)
+    defer delete(findings)
+    testing.expect_value(t, len(findings), 1)
+
+    got := split_statements("a := 1; /* note */ b := 2\n")
+    defer delete(got)
+    testing.expect_value(t, got, "a := 1\n/* note */ b := 2\n")
+
+    // A comment that runs past the end of the line leaves no code on this line.
+    open := check_source("a := 1; /* starts here\nstill comment */ b := 2\n", 100)
+    defer delete(open)
+    testing.expect_value(t, len(open), 0)
+}
+
+@(test)
+test_split_keeps_the_line_ending_style_it_was_given :: proc(t: ^testing.T) {
+    crlf := split_statements("a := 1; b := 2\r\nc := 3\r\n")
+    defer delete(crlf)
+    testing.expect_value(t, crlf, "a := 1\r\nb := 2\r\nc := 3\r\n")
+
+    lf := split_statements("a := 1; b := 2\nc := 3\n")
+    defer delete(lf)
+    testing.expect_value(t, lf, "a := 1\nb := 2\nc := 3\n")
+}

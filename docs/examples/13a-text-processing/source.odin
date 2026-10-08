@@ -246,15 +246,29 @@ starts_header :: proc(text: string) -> bool {
 }
 
 code_follows_on_line :: proc(masked: string, start: int) -> bool {
-    for index := start; index < len(masked); index += 1 {
+    index := start
+    for index < len(masked) {
         switch masked[index] {
         case ' ', '\t', '\r':
+            index += 1
         case '\n':
             return false
         case '/':
-            // A comment after the ';' is not code.
             next := masked[index + 1] if index + 1 < len(masked) else 0
-            return !(next == '/' || next == '*')
+            if next == '/' {
+                return false // a line comment runs to the end of the line
+            }
+            if next != '*' {
+                return true
+            }
+            // A block comment is not code, but code may follow it on the same line.
+            // The mask blanked its inside, so the first "*/" is its closing delimiter.
+            rest := masked[index + 2:]
+            close := strings.index(rest, "*/")
+            if close < 0 || strings.contains_rune(rest[:close], '\n') {
+                return false // the comment runs past this line
+            }
+            index += 2 + close + 2
         case:
             return true
         }
@@ -324,23 +338,25 @@ split_line :: proc(
     }
 
     indent := leading_whitespace(source[start:end])
+    // Break lines the way this line already ends, so CRLF input stays CRLF.
+    eol := "\r\n" if end > start && source[end - 1] == '\r' else "\n"
     level := 0
     index := start
     for index < end {
         switch {
         case slice_contains(separators, index):
             trim_trailing_spaces(out)
-            new_line(out, indent, level)
+            new_line(out, eol, indent, level)
             index = skip_spaces(source, index + 1, end)
         case source[index] == '{' && expanding[index]:
             strings.write_byte(out, '{')
             level += 1
-            new_line(out, indent, level)
+            new_line(out, eol, indent, level)
             index = skip_spaces(source, index + 1, end)
         case source[index] == '}' && expanding[index]:
             level -= 1
             trim_trailing_spaces(out)
-            new_line(out, indent, level)
+            new_line(out, eol, indent, level)
             strings.write_byte(out, '}')
             index += 1
         case:
@@ -381,8 +397,8 @@ trim_trailing_spaces :: proc(out: ^strings.Builder) {
     }
 }
 
-new_line :: proc(out: ^strings.Builder, indent: string, level: int) {
-    strings.write_byte(out, '\n')
+new_line :: proc(out: ^strings.Builder, eol, indent: string, level: int) {
+    strings.write_string(out, eol)
     strings.write_string(out, indent)
     for _ in 0 ..< level {
         strings.write_string(out, "    ")

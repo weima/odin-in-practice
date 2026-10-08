@@ -80,7 +80,7 @@ test_replace_in_file_edits_atomically_and_keeps_the_mode :: proc(t: ^testing.T) 
     testing.expect(t, report.changed)
     testing.expect_value(t, read_text(path), "echo new\n")
     // No temporary file is left behind, and an executable file stays executable.
-    testing.expect(t, !os.exists(fmt.tprintf("%s.tmp", path)))
+    testing.expect_value(t, count_temporaries(root), 0)
     info, _ := os.stat(path, context.temp_allocator)
     testing.expect(t, .Execute_User in info.mode)
 }
@@ -136,7 +136,7 @@ test_a_failed_atomic_write_removes_its_temporary_and_keeps_the_target :: proc(t:
 
     err := write_file_atomic(target, []byte{'n', 'e', 'w'}, os.Permissions{.Read_User, .Write_User})
     testing.expect_value(t, err, Edit_Error.Write_Failed)
-    testing.expect(t, !os.exists(fmt.tprintf("%s.tmp", target)), "the temporary must be removed")
+    testing.expect_value(t, count_temporaries(root), 0)
     testing.expect(t, os.is_dir(target), "the existing target must be untouched")
 }
 
@@ -179,4 +179,117 @@ test_grep_caps_matches_and_rejects_a_bad_pattern :: proc(t: ^testing.T) {
 
     _, bad_err := grep_file(path, "(unclosed")
     testing.expect_value(t, bad_err, Grep_Error.Bad_Pattern)
+}
+
+// How many leftover temporary files a directory holds, whatever their exact names.
+count_temporaries :: proc(root: string) -> int {
+    entries, err := os.read_all_directory_by_path(root, context.temp_allocator)
+    if err != nil {
+        return -1
+    }
+    count := 0
+    for entry in entries {
+        if strings.contains(entry.name, ".tmp") {
+            count += 1
+        }
+    }
+    return count
+}
+
+@(test)
+test_atomic_temporaries_are_unique_per_call :: proc(t: ^testing.T) {
+    first := temporary_path_for("/tmp/x/target")
+    second := temporary_path_for("/tmp/x/target")
+    defer delete(first)
+    defer delete(second)
+    testing.expect(t, first != second, "two writers must never share a temporary")
+    testing.expect(t, strings.has_prefix(first, "/tmp/x/target.tmp"))
+}
+
+@(test)
+test_only_regular_files_are_read :: proc(t: ^testing.T) {
+    root := temp_root(t, "kinds")
+    defer delete(root)
+    defer os.remove_all(root)
+
+    _, _, directory_err := read_text_file(root, DEFAULT_MAX_BYTES)
+    testing.expect_value(t, directory_err, Edit_Error.Not_Regular_File)
+
+    // A symlink is refused: renaming a temporary over it would replace the link, not
+    // edit its target.
+    target := fmt.tprintf("%s/real.txt", root)
+    link := fmt.tprintf("%s/link.txt", root)
+    write_text(target, "x\n")
+    if os.symlink(target, link) == nil {
+        _, _, link_err := read_text_file(link, DEFAULT_MAX_BYTES)
+        testing.expect_value(t, link_err, Edit_Error.Not_Regular_File)
+    }
+
+    // A FIFO has no size and blocks a reader forever, so it must be refused
+    // before any read is attempted.
+    fifo := fmt.tprintf("%s/pipe", root)
+    command := os.Process_Desc{command = []string{"mkfifo", fifo}}
+    made, _, _, make_err := os.process_exec(command, context.temp_allocator)
+    if make_err != nil || !made.success {
+        return // no mkfifo here; the directory case above still ran
+    }
+    _, _, fifo_err := read_text_file(fifo, DEFAULT_MAX_BYTES)
+    testing.expect_value(t, fifo_err, Edit_Error.Not_Regular_File)
+}
+
+@(test)
+test_grep_never_uses_a_line_limit_below_the_smallest_buffer :: proc(t: ^testing.T) {
+    root := temp_root(t, "grep-min")
+    defer delete(root)
+    defer os.remove_all(root)
+    path := fmt.tprintf("%s/lines.txt", root)
+    write_text(path, "12345678\n12345678901234567890\n")
+
+    // The reader's smallest buffer is 16 bytes, so a limit of 1 behaves as 16: the
+    // 8-byte line is searched and the 20-byte line is skipped.
+    result, err := grep_file(path, `\d+`, max_line_bytes = 1)
+    defer destroy_grep_result(&result)
+    testing.expect_value(t, err, Grep_Error.None)
+    testing.expect_value(t, len(result.matches), 1)
+    testing.expect_value(t, result.skipped_long_lines, 1)
+}
+
+@(test)
+test_odin_files_walks_directories_and_reports_an_unreadable_one :: proc(t: ^testing.T) {
+    root := temp_root(t, "walk")
+    defer delete(root)
+    defer os.remove_all(root)
+    _ = os.make_directory_all(fmt.tprintf("%s/sub", root))
+    _ = os.make_directory_all(fmt.tprintf("%s/.hidden", root))
+    write_text(fmt.tprintf("%s/a.odin", root), "package main\n")
+    write_text(fmt.tprintf("%s/sub/b.odin", root), "package main\n")
+    write_text(fmt.tprintf("%s/.hidden/c.odin", root), "package main\n")
+    write_text(fmt.tprintf("%s/notes.txt", root), "x\n")
+
+    files, ok := odin_files(root)
+    defer {
+        for file in files {
+            delete(file)
+        }
+        delete(files)
+    }
+    testing.expect(t, ok)
+    testing.expect_value(t, len(files), 2) // a.odin and sub/b.odin; no hidden, no .txt
+
+    // A directory that cannot be listed must be an error, not "no files": a check
+    // that silently inspected nothing would pass a book it never looked at.
+    locked := fmt.tprintf("%s/locked", root)
+    _ = os.make_directory_all(locked)
+    if os.chmod(locked, {}) == nil {
+        defer _ = os.chmod(locked, {.Read_User, .Write_User, .Execute_User})
+        _, readable := os.read_all_directory_by_path(locked, context.temp_allocator)
+        if readable != nil { // running as root would still read it; then there is nothing to prove
+            locked_files, locked_ok := odin_files(locked)
+            for file in locked_files {
+                delete(file)
+            }
+            delete(locked_files)
+            testing.expect(t, !locked_ok)
+        }
+    }
 }

@@ -638,7 +638,7 @@ $ textproc replace f.txt --old-file old.txt --new-file new.txt --count 2 --dry-r
 would replace 2 occurrence(s) in f.txt (17 -> 17 bytes)
 ```
 
-When the edit is accepted, `replace_in_file` replaces the file with the atomic pattern from [chapter 12](#dogfood-atomic-replacement): write a sibling temporary file, flush and sync it, then rename it over the target. A reader never sees a half-written file, and a refused or failed edit leaves the original untouched. Two details are easy to miss. The file's mode comes from `os.stat` and is passed to the new file, so an executable script stays executable. And the tool refuses a file that contains a NUL byte, which almost never appears in text, and a file larger than a limit, rather than guess.
+When the edit is accepted, `replace_in_file` replaces the file with the atomic pattern from [chapter 12](#dogfood-atomic-replacement): write a uniquely named sibling temporary file, flush and sync it, then rename it over the target. A reader never sees a half-written file, and a refused or failed edit leaves the original untouched. Two details are easy to miss. The file's mode comes from `os.stat` and is passed to the new file, so an executable script stays executable. And the tool refuses what it cannot handle rather than guess: a file that contains a NUL byte, which almost never appears in text, a file larger than a limit, and anything that is not a regular file. That last check has a trap worth knowing. A FIFO has no size and blocks a reader until a writer appears, so a tool that opens it hangs. In this release `os.stat` itself opens the file, and so does `os.is_dir`, so both block on a FIFO and `os.is_dir` reports an unreadable directory as "not a directory". `os.lstat` reports the type without opening anything, so the tool asks it first. The same check refuses a symlink: renaming a temporary over a link would replace the link, not edit its target, so you pass the target's path.
 
 <a id="text-bounded"></a>
 
@@ -687,7 +687,7 @@ When the edit is accepted, `replace_in_file` replaces the file with the atomic p
 }
 ```
 
-The loop rests on one behaviour of [bufio's `reader_read_slice`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin), which is worth reading in the source. It returns a slice up to and including the delimiter. The slice is a **view into the reader's own buffer**, so the match text is copied with `strings.clone` before the next read can overwrite it. If the buffer fills before a newline appears, it returns what it holds with `.Buffer_Full` and consumes it. That is the signal this loop uses: count the line, then read slices until one ends the line, and keep none of it. The smallest buffer `reader_init` accepts is 16 bytes, which is why the companion's test can exercise a 100-byte line against a 16-byte limit. A last line with no trailing newline arrives with an error after its data, so the loop searches the data before it looks at the error.
+The loop rests on one behaviour of [bufio's `reader_read_slice`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin), which is worth reading in the source. It returns a slice up to and including the delimiter. The slice is a **view into the reader's own buffer**, so the match text is copied with `strings.clone` before the next read can overwrite it. If the buffer fills before a newline appears, it returns what it holds with `.Buffer_Full` and consumes it. That is the signal this loop uses: count the line, then read slices until one ends the line, and keep none of it. The smallest buffer `reader_init` accepts is 16 bytes, so a requested line limit below 16 is raised to 16, and the tool reports the limit it actually applied instead of the one it was asked for. The companion's test exercises a 100-byte line against a 16-byte limit, and a request for 1. A last line with no trailing newline arrives with an error after its data, so the loop searches the data before it looks at the error.
 
 The pattern is compiled once, outside the loop, with [`core:text/regex`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/text/regex/regex.odin), and every capture is destroyed, matched or not, because `regex.match` allocates its result. For a pattern with groups the capture holds the whole match first, then each group, with their positions; the companion prints only the line. The cost is stated rather than hidden: a line longer than `max_line_bytes` is skipped, and the tool says so on stderr instead of silently dropping it, and a search stopped at `max_matches` reports that too.
 
@@ -764,7 +764,7 @@ starts_header :: proc(text: string) -> bool {
 }
 ```
 
-A `;` counts as a statement separator only when it is outside parentheses and brackets, outside a header (a statement that starts with `if`, `for`, `switch`, `when` or `else if`, until its opening brace), and followed by more code on the same line. A trailing `;`, or one followed only by a comment, is left alone. With those separators found, `split` puts each statement on its own line and expands a one-line block that holds several, and the result splits to itself: running it twice changes nothing.
+A `;` counts as a statement separator only when it is outside parentheses and brackets, outside a header (a statement that starts with `if`, `for`, `switch`, `when` or `else if`, until its opening brace), and followed by more code on the same line. A trailing `;`, or one followed only by a comment, is left alone, but code after a block comment on the same line still counts, because a comment is not code and what follows it may be. `split` also keeps each line's own ending: input with CRLF endings stays CRLF. With those separators found, `split` puts each statement on its own line and expands a one-line block that holds several, and the result splits to itself: running it twice changes nothing.
 
 ```text
 before:  if found && state == 'Z' { zombie = true; break }
@@ -774,7 +774,7 @@ after:   if found && state == 'Z' {
          }
 ```
 
-This is a scanner, not a parser, and it is honest about that. Header detection looks at the first word of a statement, so unusual layouts can fool it. The defence is the order of operations: `check` only reports, so run it first; `split --write` rewrites a file, so compile and run the tests afterwards. A formatter is still the right tool for layout. The `odinfmt` formatter from the OLS project, in the version tried while writing this chapter, normalizes spacing and indentation but does not split statements chained with `;`. Splitting them first, then formatting, gave clean code. On three files written by an automated tool, `split` separated 52 chained statements, and the package still compiled and passed its tests.
+This is a scanner, not a parser, and it is honest about that. Header detection looks at the first word of a statement, so unusual layouts can fool it. The defence is the order of operations: `check` only reports, so run it first; `split --write` rewrites a file, so compile and run the tests afterwards. A formatter is still the right tool for layout. The `odinfmt` formatter from the OLS project, in the version tried while writing this chapter (commit `ec8606b`, built with `dev-2026-10`, with its `newline_style` left at its default of CRLF, so always pass a config), normalizes spacing and indentation but does not split statements chained with `;`. Splitting them first, then formatting, gave clean code. Run `split` on your own code that chains statements, and it separates every chain; then compile and run the tests, as above.
 
 <a id="text-verify"></a>
 
@@ -782,11 +782,11 @@ This is a scanner, not a parser, and it is honest about that. Header detection l
 
 A tool that edits files deserves tests that attack its promises. The companion's tests check the properties this chapter claimed.
 
-- **A refused edit changes nothing.** A wrong count, a dry run, a binary file, an oversized file and a missing file all leave the original bytes untouched, and no `.tmp` file is left behind.
+- **A refused edit changes nothing.** A wrong count, a dry run, a binary file, an oversized file, a missing file, a directory, a symlink and a FIFO all leave the original bytes untouched, and no temporary file is left behind. The FIFO case matters because a regression there does not fail, it hangs.
 - **Failure cleans up.** If the final rename cannot happen, the temporary is removed and the target is intact. The test forces this with a target that is a non-empty directory.
 - **Masking preserves layout.** The masked copy has the same length as the source, and the same newlines.
 - **Splitting is idempotent**, and leaves no chain behind.
-- **Bounds hold.** A 100-byte line against a 16-byte limit is skipped, not buffered, and the match cap is reported.
+- **Bounds hold.** A 100-byte line against a 16-byte limit is skipped, not buffered, a requested limit of 1 behaves as 16, and the match cap is reported. A directory that cannot be listed is an error, not an empty result: a check that silently inspected nothing would pass a tree it never looked at.
 
 Passing tests prove little until you see them fail, so break the tool on purpose. Removing `for` from the header rule, removing the raw-string rule, and letting the count check always succeed each made two tests fail. Finally, run the tool on input it was not written against. The strongest check here was the real files, not the fixtures.
 

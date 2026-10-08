@@ -9,6 +9,7 @@ Edit_Error :: enum {
     Read_Failed,
     Binary_File,
     Too_Large,
+    Not_Regular_File,
     Write_Failed,
 }
 

@@ -20,8 +20,8 @@ Do not write an ad hoc script in another language for a repeatable file edit jus
 1. **State the assumption and count it.** An edit means "this text occurs exactly N times". Count first and refuse when the count differs. Report the count found so the failure is explainable.
 2. **Take the text from files, not from shell arguments.** Quoting cannot alter a file's content, and a multi-line snippet is just a file.
 3. **Offer a dry run** that reports the change and writes nothing. Use it first for bulk edits.
-4. **Replace atomically.** Write a sibling temporary file, flush and sync it, close it, rename it over the target, and remove the temporary on every failure after the open. Pass the original file mode to the new file. A refused or failed edit leaves the original untouched.
-5. **Refuse what you cannot handle:** a file containing a NUL byte (binary), a file above a size limit, an empty search text.
+4. **Replace atomically.** Write a uniquely named sibling temporary file (created exclusively, so two writers never share one), flush and sync it, close it, rename it over the target, and remove the temporary on every failure after the open. Pass the original file mode to the new file. A refused or failed edit leaves the original untouched.
+5. **Refuse what you cannot handle:** a file containing a NUL byte (binary), a file above a size limit, an empty search text, and anything that is not a regular file. A FIFO blocks a reader forever, and renaming a temporary over a symlink replaces the link instead of editing its target. Classify the path with `os.lstat` before opening it.
 6. **Bound memory for input that may be large.** Read through a fixed-size buffer with limits on line length and result count, and report what was skipped or truncated instead of silently dropping it.
 7. **Never search source code with a flat search.** A `;` inside a string, a character literal or a comment looks like a separator. Mask first: copy the source and blank the contents of comments, strings and raw strings, keeping the length and the newlines, then search the copy.
 8. **Use distinct exit codes.** 0 success, 1 a refusal or findings (the tool worked and the answer is "no"), 2 a usage or I/O error.
@@ -49,9 +49,10 @@ TZ=UTC odin test examples/13a-text-processing
 These were observed with the pinned `dev-2026-10` compiler; confirm them on yours.
 
 - `strings.replace_all` returns the original string, unallocated, with `was_allocation == false` when nothing matches. Deleting its result unconditionally frees memory you do not own. Build the result yourself, or check the flag.
-- `bufio.reader_read_slice` returns a view into the reader's buffer. Copy what you keep before the next read. When the buffer fills before the delimiter it returns `.Buffer_Full` and consumes the buffer, so skip the rest of the line by reading until a slice ends it. The smallest buffer `reader_init` accepts is 16 bytes.
+- `bufio.reader_read_slice` returns a view into the reader's buffer. Copy what you keep before the next read. When the buffer fills before the delimiter it returns `.Buffer_Full` and consumes the buffer, so skip the rest of the line by reading until a slice ends it. The smallest buffer `reader_init` accepts is 16 bytes, so a smaller requested line limit is raised to 16; report the limit actually applied.
 - `core:text/regex` exists. `regex.create` compiles a pattern, `regex.match` returns a capture that you must `regex.destroy`, and a capture lists the whole match and then each group.
-- `os.stat` returns the file mode as a permission set that can be passed to `os.open` or `os.write_entire_file`.
+- The file mode in the `os.lstat` result (`info.mode`) is a permission set that can be passed to `os.open` or `os.write_entire_file`, which is how an edit keeps an executable file executable.
+- `os.stat` and `os.is_dir` open the path in this release, so both **block on a FIFO**, and `os.is_dir` reports an unreadable directory as "not a directory". `os.lstat` reports the type without opening anything. `os.get_absolute_path` also blocks on a symlink to a FIFO.
 - Odin block comments nest.
 - `odinfmt` (from OLS) defaults to CRLF line endings, so pass a config with `"newline_style": "LF"`. It normalizes layout but does not split statements chained with `;`; split them first, then format.
 
