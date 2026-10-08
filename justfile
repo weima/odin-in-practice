@@ -20,6 +20,7 @@ test:
     TZ=UTC odin test docs/examples/15-supervision
     TZ=UTC odin test docs/examples/21-e2e-cli
     TZ=UTC odin test docs/examples/13a-text-processing
+    TZ=UTC odin test tools/check-book
 
 # Assert the three Odin companion-skill CLI and network examples.
 skill-examples:
@@ -31,6 +32,15 @@ skill-examples:
 # Build the site into a temporary directory; never write generated html/.
 site:
     site_dir="$(mktemp -d)"; trap 'rm -rf "$site_dir"' EXIT; source .venv/bin/activate; mkdocs build --strict -d "$site_dir"
+
+# Check the generated reader in html/ (build it first with mkdocs) using the Odin checker.
+check-book:
+    odin run tools/check-book
+
+# Transitional: run the Odin and Python checkers on the same damaged copies of the book and
+# compare what they report. Needs html/ and the Python environment; delete with check-book.py.
+compare-check-book:
+    bin="$(mktemp -d)"; trap 'rm -rf "$bin"' EXIT; odin build tools/check-book -out:"$bin/check-book"; bash tools/check-book/compare.sh "$bin/check-book"
 
 # Run all local book verification recipes.
 verify: check test skill-examples site
