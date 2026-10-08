@@ -40,8 +40,11 @@ npm run diagrams
 python tools/package-skill.py
 mkdocs build --strict
 python tools/check-book.py
+just check-book
 python tools/package-offline.py
 ```
+
+`tools/check-book/` is an Odin port of `tools/check-book.py`. Both run in CI until the Python script is retired, and `just compare-check-book` runs them on deliberately damaged copies of the book and compares what each reports.
 
 After editing a diagram, rerun `npm run diagrams`. Preview Markdown edits with `mkdocs serve --dev-addr 127.0.0.1:8000`. Before committing, rebuild the tracked `html/` reader and offline ZIP. Do not edit generated files by hand.
 
