@@ -452,6 +452,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#a-string-range-gives-runes-and-byte-offsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A string range gives runes and byte offsets
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -507,6 +518,17 @@
     <span class="md-ellipsis">
       
         What “passed by value” does not promise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-results-and-runtime-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named results, :=, and runtime defaults
       
     </span>
   </a>
@@ -1035,6 +1057,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#a-string-range-gives-runes-and-byte-offsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A string range gives runes and byte offsets
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1090,6 +1123,17 @@
     <span class="md-ellipsis">
       
         What “passed by value” does not promise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-results-and-runtime-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named results, :=, and runtime defaults
       
     </span>
   </a>
@@ -1425,6 +1469,17 @@ odin<span class="w"> </span>version
 <p>The practical question is not merely “what is the type?” It is “what does a copy preserve, what does it share, and who keeps that shared data alive?” We will use that question repeatedly.</p>
 <p><strong>Experiment.</strong> Change the array to contain four numbers. Try assigning a string to one of its integer elements and observe the compile-time diagnostic.</p>
 <p><strong>Subtle watch-out:</strong> a slice such as <code>three[:]</code> is a view, not a copy or owner. If the original storage goes out of scope or is resized, the slice may no longer be valid.</p>
+<p><a id="dogfood-string-byte-offsets"></a></p>
+<h3 id="a-string-range-gives-runes-and-byte-offsets">A string range gives runes and byte offsets<a class="headerlink" href="#a-string-range-gives-runes-and-byte-offsets" title="Permanent link">&para;</a></h3>
+<p>A string range decodes each rune, but its index is the rune's starting byte offset. Test with <code>"Aé🙂"</code> on the pinned compiler:</p>
+<div class="highlight"><pre><span></span><code>len(s) = 7
+rune U+41 at byte offset 0; s[0] = 65
+rune U+E9 at byte offset 1; s[1] = 195
+rune U+1F642 at byte offset 3; s[3] = 240
+</code></pre></div>
+<p><code>len(s)</code> counts bytes, and <code>s[i]</code> reads one <code>u8</code>; neither is a character lookup. <code>for rune, byte_offset in s</code> is rune-aware iteration. Do not use that byte offset as an index into a rune-count-sized array: offsets can skip values. If you need sequential rune positions, keep a separate counter. A rune is a Unicode code point, not necessarily a user-perceived character; combining marks can still form one visible grapheme.</p>
+<p>Bytewise iteration is the right, smaller tool when the grammar is explicitly ASCII. Coffee Shop's <code>valid_shot_id</code> checks length and ASCII byte ranges directly; a non-ASCII UTF-8 sequence cannot masquerade as one allowed ASCII byte. For text that permits Unicode letters or digits, iterate runes and use the character properties in <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/letter.odin">core/unicode/letter.odin</a>. For lower-level decoding and validation, inspect <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/utf8/utf8.odin">core/unicode/utf8/utf8.odin</a>. These choices do not validate UTF-8 merely because a value has type <code>string</code>.</p>
+<p>The <a href="../examples/04-language-traps/main.odin">companion</a> prints the rune values, byte offsets, and bytes, and contrasts a bytewise ASCII identifier with a rune-aware identifier. Its tests assert the offsets and policies.</p>
 <p><a id="procedures"></a></p>
 <p>Chapter 4 · Computation</p>
 <h2 id="4-procedures-control-flow-and-data">4. Procedures, control flow, and data<a class="headerlink" href="#4-procedures-control-flow-and-data" title="Permanent link">&para;</a></h2>
@@ -1530,6 +1585,64 @@ if errno != .NONE {
 <p>For a record that a procedure must update, pass a pointer and make the mutation visible. For a procedure that merely selects part of a slice, return a view and document its dependence on the input lifetime. Neither decision requires methods or a class hierarchy.</p>
 <p><strong>Experiment.</strong> Supply <code>low &gt; high</code> to <code>clamp</code>. Its implementation still returns something, but is that something meaningful? State the precondition or add an explicit failure result. Then try specializing <code>minimum</code> for a record with no ordering; compare the compiler error with the contract you inferred.</p>
 <p><strong>Checkpoint.</strong> Explain the difference between <code>:=</code> and <code>::</code>. Name the type of every parameter in <code>clamp</code>. Predict all three return paths before running it.</p>
+<p><a id="dogfood-procedure-declarations"></a></p>
+<h3 id="named-results-and-runtime-defaults">Named results, <code>:=</code>, and runtime defaults<a class="headerlink" href="#named-results-and-runtime-defaults" title="Permanent link">&para;</a></h3>
+<p>Named results are local variables in the procedure body. That makes ordinary declaration rules important: this attempt directly shadows two named results and is rejected by the pinned compiler:</p>
+<div class="highlight"><pre><span></span><code>Direct shadowing of the named return value 'stdout' in this scope
+Direct shadowing of the named return value 'stderr' in this scope
+</code></pre></div>
+<p>The failing declaration was <code>state, stdout, stderr, process_err := os.process_exec(...)</code> inside a procedure returning <code>(stdout, stderr: []byte, err: string)</code>. The bundled <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin"><code>core/os/process.odin</code></a> confirms that <code>process_exec</code> returns state, stdout, stderr, and error in that order. Assign to named results with <code>=</code> after declaring the additional local:</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">I</span><span class="nc">nside</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">procedure</span><span class="w"> </span><span class="nc">that</span><span class="w"> </span><span class="nc">declares</span><span class="w"> </span><span class="nc">stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">and</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="nc">as</span><span class="w"> </span><span class="l">results:</span>
+<span class="l">state:</span><span class="p"> </span><span class="nc">int</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="err">U</span><span class="nc">se</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">actual</span><span class="w"> </span><span class="nc">state</span><span class="w"> </span><span class="nc">type</span><span class="w"> </span><span class="nc">returned</span><span class="w"> </span><span class="nc">by</span><span class="w"> </span><span class="nc">your</span><span class="w"> </span><span class="nc">call</span><span class="err">.</span>
+<span class="nc">state</span><span class="p">,</span><span class="w"> </span><span class="nc">stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">fake_process</span><span class="p">()</span>
+<span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">state</span>
+<span class="nc">return</span>
+</code></pre></div>
+<p>Or give the call's outputs distinct local names, then assign the wanted values to the results:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">state</span><span class="p">,</span><span class="w"> </span><span class="nc">child_stdout</span><span class="p">,</span><span class="w"> </span><span class="nc">child_stderr</span><span class="p">,</span><span class="w"> </span><span class="nc">process_err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">fake_process</span><span class="p">()</span>
+<span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">state</span>
+<span class="nc">stdout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">child_stdout</span>
+<span class="nc">stderr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">child_stderr</span>
+<span class="nc">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">process_err</span>
+<span class="nc">return</span>
+</code></pre></div>
+<p>The <a href="../examples/04-language-traps/language_traps.odin">companion</a> includes both compiling patterns using a stand-in with matching result types. Its byte slices are allocated, so their caller must release them.</p>
+<p><code>:=</code> introduces names in the current scope; it is not a mixture of declaration and reassignment. Every name on its left side must be new in that scope. After <code>code, out, err := first()</code>, this declaration fails:</p>
+<div class="highlight"><pre><span></span><code>Redeclaration of 'code' in this scope
+</code></pre></div>
+<p>That remains true even when another left-hand name (<code>status</code>) is new. Use <code>=</code> when all names already exist. A nested block is a new scope, so a declaration there can shadow an outer local:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">first</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">int, int, int</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="err">}</span>
+<span class="nc">second</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="p">(</span><span class="nc">int, int, int</span><span class="p">)</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="mi">6</span><span class="w"> </span><span class="err">}</span>
+
+<span class="nc">scope_example</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">code</span><span class="p">,</span><span class="w"> </span><span class="nc">out</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="nc">first</span><span class="p">()</span>
+<span class="w">    </span><span class="nc">code</span><span class="p">,</span><span class="w"> </span><span class="nc">out</span><span class="p">,</span><span class="w"> </span><span class="nc">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">second</span><span class="p">()</span><span class="w"> </span><span class="p">//</span><span class="w"> </span><span class="l">assignment:</span><span class="p"> </span><span class="nc">names</span><span class="w"> </span><span class="nc">already</span><span class="w"> </span><span class="nc">exist</span>
+<span class="w">    </span><span class="err">{</span>
+<span class="w">        </span><span class="nc">code</span><span class="w"> </span><span class="err">:</span><span class="o">=</span><span class="w"> </span><span class="mi">7</span><span class="w">              </span><span class="p">//</span><span class="w"> </span><span class="nc">new</span><span class="w"> </span><span class="nc">declaration</span><span class="w"> </span><span class="nc">in</span><span class="w"> </span><span class="nc">this</span><span class="w"> </span><span class="nc">inner</span><span class="w"> </span><span class="nc">scope</span>
+<span class="w">        </span><span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">code</span>
+<span class="w">    </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">out</span>
+<span class="w">    </span><span class="nc">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">err</span>
+<span class="err">}</span>
+</code></pre></div>
+<p>Do not infer Go's short-declaration rule from the punctuation. In this release, a single existing name in a same-scope <code>:=</code> is enough to make it a redeclaration error.</p>
+<p>A default parameter must be constant. This runtime expression was rejected:</p>
+<div class="highlight"><pre><span></span><code>Default parameter must be a constant, got time.now()
+</code></pre></div>
+<p><a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/time/time.odin"><code>time.now</code></a> returns the current <code>Time</code>; it cannot be evaluated as a default constant. Choose the API contract you need:</p>
+<div class="highlight"><pre><span></span><code><span class="p">//</span><span class="w"> </span><span class="err">C</span><span class="nc">aller</span><span class="w"> </span><span class="nc">chooses</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">time</span><span class="w"> </span><span class="nc">explicitly</span><span class="err">.</span>
+<span class="nc">at_time</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">now: time.Time</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">time</span><span class="err">.T</span><span class="nc">ime</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="nc">now</span><span class="w"> </span><span class="err">}</span>
+
+<span class="p">//</span><span class="w"> </span><span class="err">R</span><span class="nc">eserve</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">zero</span><span class="w"> </span><span class="nc">value</span><span class="w"> </span><span class="nc">to</span><span class="w"> </span><span class="nc">mean</span><span class="w"> </span><span class="s">"use now"</span><span class="err">.</span>
+<span class="nc">with_sentinel</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">(</span><span class="nc">now: time.Time = {}</span><span class="p">)</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">time</span><span class="err">.T</span><span class="nc">ime</span><span class="w"> </span><span class="err">{</span>
+<span class="w">    </span><span class="nc">if</span><span class="w"> </span><span class="nc">now</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="err">{}</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="nc">time</span><span class="err">.</span><span class="nc">now</span><span class="p">()</span><span class="w"> </span><span class="err">}</span>
+<span class="w">    </span><span class="nc">return</span><span class="w"> </span><span class="nc">now</span>
+<span class="err">}</span>
+
+<span class="p">//</span><span class="w"> </span><span class="err">K</span><span class="nc">eep</span><span class="w"> </span><span class="nc">the</span><span class="w"> </span><span class="nc">common</span><span class="w"> </span><span class="nc">call</span><span class="w"> </span><span class="nc">short</span><span class="w"> </span><span class="nc">with</span><span class="w"> </span><span class="nc">a</span><span class="w"> </span><span class="nc">runtime</span><span class="w"> </span><span class="nc">wrapper</span><span class="err">.</span>
+<span class="nc">current_time</span><span class="w"> </span><span class="err">::</span><span class="w"> </span><span class="nc">proc</span><span class="p">()</span><span class="w"> </span><span class="err">-</span><span class="p">&gt;</span><span class="w"> </span><span class="nc">time</span><span class="err">.T</span><span class="nc">ime</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="nc">return</span><span class="w"> </span><span class="nc">at_time</span><span class="p">(</span><span class="nc">time.now(</span><span class="p">)</span><span class="err">)</span><span class="w"> </span><span class="err">}</span>
+</code></pre></div>
+<p>A sentinel is only safe when that zero value is not also meaningful caller input. The explicit parameter has the clearest contract; a wrapper is a small way to offer both explicit and convenient calls. All three fixed patterns are exercised in the <a href="../examples/04-language-traps/language_traps_test.odin">tests</a>.</p>
 <p><a id="advanced-odin"></a></p>
 <p>Part I · An advanced foundation</p>
 <h2 id="interlude-compile-time-choices-data-layout-and-the-c-boundary">Interlude. Compile-time choices, data layout, and the C boundary<a class="headerlink" href="#interlude-compile-time-choices-data-layout-and-the-c-boundary" title="Permanent link">&para;</a></h2>
