@@ -10,9 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://weima.github.io/odin-in-practice/examples/index.html">
+        <link rel="canonical" href="https://weima.github.io/odin-in-practice/chapters/activity.html">
       
       
+        <link rel="prev" href="networking.html">
+      
+      
+        <link rel="next" href="containers.html">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>Runnable companions - Odin in Practice</title>
+        <title>Worker activity - Odin in Practice</title>
       
     
     
@@ -70,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#runnable-companions" class="md-skip">
+        <a href="#worker-activity-over-local-ipc" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Runnable companions
+              Worker activity
             
           </span>
         </div>
@@ -255,7 +259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/odin-foundations.html" class="md-nav__link">
+      <a href="odin-foundations.html" class="md-nav__link">
         
   
   
@@ -282,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/cli-linux.html" class="md-nav__link">
+      <a href="cli-linux.html" class="md-nav__link">
         
   
   
@@ -309,7 +313,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/pointers.html" class="md-nav__link">
+      <a href="pointers.html" class="md-nav__link">
         
   
   
@@ -336,7 +340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/memory-philosophy.html" class="md-nav__link">
+      <a href="memory-philosophy.html" class="md-nav__link">
         
   
   
@@ -363,7 +367,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/networking.html" class="md-nav__link">
+      <a href="networking.html" class="md-nav__link">
         
   
   
@@ -387,10 +391,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../chapters/activity.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Worker activity
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="activity.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -406,6 +437,76 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#17a-watch-worker-activity-without-confusing-it-for-liveness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17a. Watch worker activity without confusing it for liveness
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17a. Watch worker activity without confusing it for liveness">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-local-stream-socket-is-still-a-byte-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A local stream socket is still a byte stream
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bound-and-normalize-every-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bound and normalize every event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-snapshot-is-not-a-liveness-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A snapshot is not a liveness check
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -417,7 +518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/containers.html" class="md-nav__link">
+      <a href="containers.html" class="md-nav__link">
         
   
   
@@ -444,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/parallel-programming.html" class="md-nav__link">
+      <a href="parallel-programming.html" class="md-nav__link">
         
   
   
@@ -471,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/ffmpeg-libav.html" class="md-nav__link">
+      <a href="ffmpeg-libav.html" class="md-nav__link">
         
   
   
@@ -498,7 +599,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../chapters/workbook.html" class="md-nav__link">
+      <a href="workbook.html" class="md-nav__link">
         
   
   
@@ -545,46 +646,52 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#focused-tests" class="md-nav__link">
+  <a href="#17a-watch-worker-activity-without-confusing-it-for-liveness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Focused tests
+        17a. Watch worker activity without confusing it for liveness
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17a. Watch worker activity without confusing it for liveness">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-local-stream-socket-is-still-a-byte-stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A local stream socket is still a byte stream
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#http-and-cli-integration-lab" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#bound-and-normalize-every-event" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HTTP and CLI integration lab
+        Bound and normalize every event
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#docker-lab" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#a-snapshot-is-not-a-liveness-check" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docker lab
+        A snapshot is not a liveness check
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#verification-limits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verification limits
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -605,146 +712,30 @@
 
 
 
-<h1 id="runnable-companions">Runnable companions<a class="headerlink" href="#runnable-companions" title="Permanent link">&para;</a></h1>
-<p>Commands below run from the repository root, with the pinned Odin compiler on <code>PATH</code>. These sources are also included beside the offline HTML reader. Their directory labels are stable companion identifiers; some companions cover several chapters.</p>
-<table>
-<thead>
-<tr>
-<th>Companion</th>
-<th>Read or run</th>
-<th>Focus</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="05-packages/index.html">Packages and visibility</a></td>
-<td><code>odin run docs/examples/05-packages/cli -- Ada</code></td>
-<td>Multi-file CLI package, imported package API, private declarations, focused test</td>
-</tr>
-<tr>
-<td><a href="04-procedures/main.odin">Procedures</a></td>
-<td><code>odin run docs/examples/04-procedures</code></td>
-<td>Bare returns, deferred cleanup, independent types</td>
-</tr>
-<tr>
-<td><a href="10-pointers/aliases/main.odin">Pointers</a></td>
-<td>Programs under <code>10-pointers/</code>; tests under <code>10-pointers/tests/</code></td>
-<td>Aliases, record views, multi-pointers, owned results</td>
-</tr>
-<tr>
-<td><a href="11-memory-philosophy/arena-snapshot/main.odin">Memory</a></td>
-<td>Programs under <code>11-memory-philosophy/</code>; tests under <code>11-memory-philosophy/tests/</code></td>
-<td>Scratch/result lifetime, allocation failure, explicit errors</td>
-</tr>
-<tr>
-<td><a href="17-networking/tcp-loopback/main.odin">TCP</a> / <a href="17-networking/udp-loopback/main.odin">UDP</a></td>
-<td><code>odin run docs/examples/17-networking/tcp-loopback</code></td>
-<td>Loopback transport and bounded messages</td>
-</tr>
-<tr>
-<td><a href="17-networking/http-client/main.odin">HTTP adapter</a></td>
-<td>Build and run with a loopback port and fixture path</td>
-<td>Curl argument vector, response/body/deadline distinctions</td>
-</tr>
-<tr>
-<td><a href="17a-worker-activity/main.odin">Worker activity</a></td>
-<td><code>odin run docs/examples/17a-worker-activity</code></td>
-<td>Bounded JSON events for local worker-progress IPC</td>
-</tr>
-<tr>
-<td><a href="18-containers/main.odin">Docker inspection</a></td>
-<td><code>odin run docs/examples/18-containers</code></td>
-<td>Dry-run default; <code>--execute</code> opts into inspecting the named local lab</td>
-</tr>
-<tr>
-<td><a href="19-parallel/index.html">Parallel map</a></td>
-<td><code>odin run docs/examples/19-parallel</code></td>
-<td>Disjoint writes, stable descriptors, joining, errors and cancellation</td>
-</tr>
-<tr>
-<td><a href="21-capstone/run-pipeline/main.odin">CLI pipeline</a></td>
-<td>Build four stages as below</td>
-<td>NDJSON boundaries and all-stage success before publication</td>
-</tr>
-<tr>
-<td><a href="26-libav-decode/index.html">Native media</a></td>
-<td>Build narrow C bridge and Odin caller</td>
-<td>Decoder retries/drain, remux timestamps, staged output</td>
-</tr>
-<tr>
-<td><a href="04-language-traps/main.odin">Language traps</a></td>
-<td><code>odin run docs/examples/04-language-traps</code></td>
-<td>Byte offsets versus runes, named-result and <code>:=</code> scope rules, runtime defaults</td>
-</tr>
-<tr>
-<td><a href="09-ownership-traps/main.odin">Formatted-string ownership</a></td>
-<td><code>odin run docs/examples/09-ownership-traps</code></td>
-<td>Who owns <code>t</code>/<code>a</code>/<code>b</code>/<code>s</code> results, cloning into an owner, what a tracking allocator proves</td>
-</tr>
-<tr>
-<td><a href="12-durable-state/main.odin">Durable state</a></td>
-<td><code>odin run docs/examples/12-durable-state</code></td>
-<td>Directory creation, atomic replace, an event log plus a snapshot</td>
-</tr>
-<tr>
-<td><a href="15-supervision/main.odin">Supervising processes</a></td>
-<td><code>odin run docs/examples/15-supervision</code></td>
-<td>Process identity, zombies, confirmed cancellation (Linux only)</td>
-</tr>
-<tr>
-<td><a href="13a-text-processing/main.odin">Text processing</a></td>
-<td><code>odin run docs/examples/13a-text-processing -- check docs/examples/13a-text-processing</code></td>
-<td>Exact replacement, bounded streaming search, and syntax-aware checks with a masked copy</td>
-</tr>
-<tr>
-<td><a href="21-e2e-cli/cli.odin">CLI end-to-end test</a></td>
-<td>`TZ=UTC odin test docs/examples/21-e2e-cli</td>
-<td></td>
-</tr>
-<tr>
-<td>TZ=UTC odin test docs/examples/13a-text-processing<code>| Build the binary, a fake tool first on</code>PATH`, an explicit environment</td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h2 id="focused-tests">Focused tests<a class="headerlink" href="#focused-tests" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/05-packages/label
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/04-procedures
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/10-pointers/tests
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/11-memory-philosophy/tests
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/17-networking/http-client
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/17a-worker-activity
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/18-containers
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/19-parallel
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/21-capstone/records
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/04-language-traps
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/09-ownership-traps
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/12-durable-state
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/15-supervision
-<span class="nv">TZ</span><span class="o">=</span>UTC<span class="w"> </span>odin<span class="w"> </span><span class="nb">test</span><span class="w"> </span>docs/examples/21-e2e-cli
+<h1 id="worker-activity-over-local-ipc">Worker activity over local IPC<a class="headerlink" href="#worker-activity-over-local-ipc" title="Permanent link">&para;</a></h1>
+<p><a id="worker-activity"></a></p>
+<h2 id="17a-watch-worker-activity-without-confusing-it-for-liveness">17a. Watch worker activity without confusing it for liveness<a class="headerlink" href="#17a-watch-worker-activity-without-confusing-it-for-liveness" title="Permanent link">&para;</a></h2>
+<p>A Worker can report useful progress without sending its private conversation to the supervisor. In Coffee Shop, Pi emits JSON events; a Worker adapter translates only a small allowlist of those events into normalized activity messages. The supervisor validates each message, persists a bounded recent history, then derives a status snapshot alongside the authoritative process identity.</p>
+<div class="highlight"><pre><span></span><code>Pi JSON events -&gt; Worker adapter -&gt; bounded activity messages
+                                      | local Unix stream socket
+                                      v
+                         supervisor validation -&gt; persistence -&gt; status snapshot
 </code></pre></div>
-<h2 id="http-and-cli-integration-lab">HTTP and CLI integration lab<a class="headerlink" href="#http-and-cli-integration-lab" title="Permanent link">&para;</a></h2>
-<p>Needs Linux, Python's standard library, <code>/usr/bin/curl</code>, and <code>/usr/bin/timeout</code>. The harness creates its own loopback HTTP fixture and temporary files; it does not start Docker or contact a remote service.</p>
-<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>docs/examples/17-networking/http-client/.build
-odin<span class="w"> </span>build<span class="w"> </span>docs/examples/17-networking/http-client<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-out:docs/examples/17-networking/http-client/.build/http-client
-mkdir<span class="w"> </span>-p<span class="w"> </span>docs/examples/21-capstone/.build
-<span class="k">for</span><span class="w"> </span>stage<span class="w"> </span><span class="k">in</span><span class="w"> </span>inspect<span class="w"> </span><span class="k">select</span><span class="w"> </span>summarize<span class="w"> </span>run-pipeline<span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<span class="w">  </span>odin<span class="w"> </span>build<span class="w"> </span><span class="s2">"docs/examples/21-capstone/</span><span class="nv">$stage</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span><span class="s2">"-out:docs/examples/21-capstone/.build/</span><span class="nv">$stage</span><span class="s2">"</span>
-<span class="k">done</span>
-python3<span class="w"> </span>docs/examples/verify_systems.py
+<p>The adapter is a privacy and compatibility boundary, not a JSON-event forwarder. Keep prompts, tool arguments, tool results, generated output, credentials, and arbitrary exception text out of activity messages. Send only fixed classifications and small identifiers needed to associate progress with a Worker.</p>
+<h3 id="a-local-stream-socket-is-still-a-byte-stream">A local stream socket is still a byte stream<a class="headerlink" href="#a-local-stream-socket-is-still-a-byte-stream" title="Permanent link">&para;</a></h3>
+<p>On Linux, a Unix-domain stream socket connects local processes without a TCP port or UDP datagrams. It is local IPC, not a network listener, and it does not provide message boundaries. One newline-delimited JSON object is one application event; a <code>send</code> or <code>recv</code> can cover part of a line or several lines. Buffer bytes until <code>\n</code>, parse each complete line, and retain any bytes after the last delimiter for the next pass.</p>
+<p>Odin's <a href="https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/net"><code>core:net</code></a> is its TCP, UDP, and DNS API. For POSIX Unix-domain sockets, use <code>core:sys/posix</code>: <code>socket(.UNIX, .STREAM)</code>, <code>bind</code>, <code>listen</code>, <code>accept</code>, <code>connect</code>, <code>recv</code>, and <code>send</code> are declared in <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/sys_socket.odin"><code>sys_socket.odin</code></a>; the Linux <code>sockaddr_un</code> layout is in <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/sys_un.odin"><code>sys_un.odin</code></a>. These are OS-backed descriptors: close them on every path and manage the socket pathname's permissions, stale-file cleanup, and lifetime. This companion focuses on Linux and does not implement that socket lifecycle.</p>
+<p>Do not substitute <a href="https://github.com/odin-lang/Odin/tree/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/terminal"><code>core:terminal</code></a>: it handles terminal presentation and capability detection, not Herdr workspace or tab control. For ordinary workspace automation, prefer the <a href="https://herdr.dev/docs/cli-reference/">Herdr CLI</a>. Herdr's <a href="https://herdr.dev/docs/socket-api/">documented socket API</a> is separate: it uses a Unix-domain socket on Unix and a named pipe on Windows. Neither is the activity transport described here.</p>
+<h3 id="bound-and-normalize-every-event">Bound and normalize every event<a class="headerlink" href="#bound-and-normalize-every-event" title="Permanent link">&para;</a></h3>
+<p>The companion accepts a strict JSON object with exactly four fields:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"version"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="nt">"worker"</span><span class="p">:</span><span class="s2">"worker-7"</span><span class="p">,</span><span class="nt">"sequence"</span><span class="p">:</span><span class="mi">12</span><span class="p">,</span><span class="nt">"kind"</span><span class="p">:</span><span class="s2">"progress"</span><span class="p">}</span>
 </code></pre></div>
-<p>To use the runner yourself, pass the <strong>absolute trusted binary directory</strong>, a minimum byte count, and input files. Diagnostics use stderr; final stdout is published only after all stages succeed.</p>
-<div class="highlight"><pre><span></span><code>docs/examples/21-capstone/.build/run-pipeline<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s2">"</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/docs/examples/21-capstone/.build"</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>./README.md
-</code></pre></div>
-<p>Do not mistake this bounded example for a general process-tree supervisor. Its timeout/cleanup contract concerns its direct children. The chapter explains the small final-output budget and why wait-before-read is not safe for arbitrary output.</p>
-<h2 id="docker-lab">Docker lab<a class="headerlink" href="#docker-lab" title="Permanent link">&para;</a></h2>
-<p>The <a href="../chapters/containers.html">Docker chapter</a> explains how to run the supplied <a href="18-containers/compose.yaml">Compose fixture</a>, inspect your local context, connect peers, open shells, and expose host folders. These are exercises for an owned local daemon, not a build prerequisite. The Compose and container recipes were not executed during authoring verification.</p>
-<h2 id="verification-limits">Verification limits<a class="headerlink" href="#verification-limits" title="Permanent link">&para;</a></h2>
-<p>A passing test demonstrates the listed input/behavior on the pinned Linux environment, not arbitrary inputs or every platform. Generated binaries, native archives and fixtures belong in ignored <code>.build/</code> or <code>.fixtures/</code> directories and are excluded from the reader. Rebuild with your installed compiler rather than downloading an executable of unknown provenance.</p>
+<p>A line is at most 512 bytes, excluding its newline. The parser uses Odin's pinned <a href="https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/parser.odin"><code>core:encoding/json</code> parser</a> in strict <code>.JSON</code> mode and explicitly rejects tokens after the object. Version must be <code>1</code>; <code>worker</code> must contain 1–48 ASCII letters, digits, <code>_</code>, <code>-</code>, or <code>.</code>; <code>sequence</code> must be a positive integer; and <code>kind</code> must be one of <code>started</code>, <code>progress</code>, <code>blocked</code>, <code>completed</code>, or <code>failed</code>. Unknown fields, values, kinds, malformed JSON, and oversized lines are rejected. These limits bound parser input and keep event content from becoming a covert channel for arbitrary logs. The example validates one already-framed line; its caller still has to enforce the limit while accumulating bytes, before an unbounded buffer can grow.</p>
+<p>Give each event a monotonically increasing sequence within its Worker identity. The supervisor can reject duplicates or stale updates and detect gaps. Keep any queue and persisted history bounded too. A disconnected client, EOF halfway through a line, invalid event, or slow reader must not stall Worker execution: discard an incomplete final line, close or quarantine a bad client, and use a bounded best-effort queue that can drop activity when full. A missing activity event means only that no event was observed; it is not a failed operation. If delivery or persistence must be guaranteed, add an explicit acknowledgement/replay contract rather than pretending a successful local <code>send</code> proves supervisor receipt.</p>
+<h3 id="a-snapshot-is-not-a-liveness-check">A snapshot is not a liveness check<a class="headerlink" href="#a-snapshot-is-not-a-liveness-check" title="Permanent link">&para;</a></h3>
+<p>The latest accepted event is useful context, not proof that the Worker still exists or has completed. A process can crash after sending <code>progress</code>, or send <code>completed</code> before exiting; the event can also be delayed, dropped, or left in a buffer. Build a status snapshot from both sources: show the validated recent activity, but determine liveness and completion from the supervisor's process handle and verified process identity. A PID alone can be reused; pair it with the identity evidence described in <a href="cli-linux.html#dogfood-supervision">Chapter 15</a>. If the identity cannot be verified, report unknown rather than promoting stale activity to “alive.”</p>
+<p>This boundary is the same whether you watch a Pi Worker, a test subprocess, or another local child. It keeps progress observable while leaving process control and lifecycle truth with the supervisor.</p>
+<p>The small <a href="../examples/17a-worker-activity/activity.odin">companion package</a> tests the bounded parser and allowlist with <code>core:testing</code>. It does <strong>not</strong> create a socket, implement stream buffering, persist snapshots, or prove delivery; those operational paths still need integration tests before production use.</p>
 
 
 

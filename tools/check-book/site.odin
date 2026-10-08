@@ -16,13 +16,14 @@ Report :: struct {
 
 NO_PAGES_MESSAGE :: "No generated HTML found; build the book first"
 
-// Chapters 1-31 are stable identifiers; 13a was inserted later without renumbering.
+// Chapters 1-31 are stable identifiers; 13a and 17a were inserted later without renumbering.
 expected_chapters :: proc() -> []string {
     chapters: [dynamic]string
     for number in 1 ..= 31 {
         append(&chapters, fmt.aprintf("%d", number))
     }
     append(&chapters, "13a")
+    append(&chapters, "17a")
     return chapters[:]
 }
 
@@ -134,7 +135,7 @@ check_chapters :: proc(report: ^Report, site: string, files: []string, pages: ma
         strings.write_string(&listing, "]")
         add_error(
             report,
-            "chapter headings are not exactly 1–31 plus 13a: %s",
+            "chapter headings are not exactly 1–31 plus 13a and 17a: %s",
             strings.to_string(listing),
         )
     }

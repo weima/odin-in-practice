@@ -6,7 +6,7 @@ import "core:strings"
 import "core:testing"
 
 PREFIX :: "/book/"
-CHAPTER_ERROR :: "chapter headings are not exactly 1–31 plus 13a:"
+CHAPTER_ERROR :: "chapter headings are not exactly 1–31 plus 13a and 17a:"
 
 // Each test builds its own small book in a fresh temporary directory.
 temp_root :: proc(t: ^testing.T, name: string) -> string {
@@ -23,8 +23,8 @@ write :: proc(root, relative, content: string) {
     _ = os.write_entire_file(path, content)
 }
 
-// A book that passes every check: chapters 1-31 plus 13a, an index with an anchor, a
-// 404 page, a legacy anchor and a well-formed SVG. Tests then break one thing.
+// A passing book has chapters 1-31 plus 13a and 17a, an index with an anchor, a 404 page,
+// a legacy anchor, and a well-formed SVG. Tests then break one thing.
 valid_book :: proc(t: ^testing.T, name: string) -> string {
     root := temp_root(t, name)
     chapters := strings.builder_make(context.temp_allocator)
@@ -32,6 +32,7 @@ valid_book :: proc(t: ^testing.T, name: string) -> string {
         fmt.sbprintf(&chapters, `<h2 id="c%d">%d. Chapter</h2>`, number, number)
     }
     strings.write_string(&chapters, `<h2 id="c13a">13a. Inserted chapter</h2>`)
+    strings.write_string(&chapters, `<h2 id="c17a">17a. Inserted chapter</h2>`)
     write(root, "html/chapters/all.html", strings.to_string(chapters))
     write(root, "html/index.html", `<h1 id="top">Top</h1><a href="chapters/all.html#c5">five</a>`)
     write(root, "html/404.html", `<a href="/book/index.html#top">home</a>`)
@@ -163,8 +164,18 @@ test_chapter_headings_must_be_exactly_the_expected_set :: proc(t: ^testing.T) {
         name, replace, with: string,
     } {
         {"missing-13a", `<h2 id="c13a">13a. Inserted chapter</h2>`, ``},
+        {"missing-17a", `<h2 id="c17a">17a. Inserted chapter</h2>`, ``},
         {"extra-13b", `13a. Inserted`, `13b. Inserted`},
-        {"duplicate", `<h2 id="c13a">13a. Inserted chapter</h2>`, `<h2>13a. A</h2><h2>13a. B</h2>`},
+        {
+            "extra-17b",
+            `<h2 id="c17a">17a. Inserted chapter</h2>`,
+            `<h2>17b. Surplus chapter</h2><h2 id="c17a">17a. Inserted chapter</h2>`,
+        },
+        {
+            "duplicate",
+            `<h2 id="c13a">13a. Inserted chapter</h2>`,
+            `<h2>13a. A</h2><h2>13a. B</h2>`,
+        },
         {"missing-1", `<h2 id="c1">1. Chapter</h2>`, ``},
         {"extra-32", `<h2 id="c13a">`, `<h2>32. Surplus</h2><h2 id="c13a">`},
         // Same number of headings, wrong set: 7 is missing and 8 appears twice.

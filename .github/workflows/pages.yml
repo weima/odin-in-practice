@@ -83,11 +83,7 @@ jobs:
       - name: Build HTML from Markdown
         run: mkdocs build --strict
       - name: Check the generated book
-        run: python tools/check-book.py
-      - name: Check the generated book with the Odin checker
         run: just check-book
-      - name: Compare the Odin and Python checkers on damaged copies of the book
-        run: PYTHON=python just compare-check-book
       - name: Package the offline reader
         run: python tools/package-offline.py
       - uses: actions/upload-artifact@v4

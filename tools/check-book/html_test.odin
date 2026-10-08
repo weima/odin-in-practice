@@ -88,16 +88,17 @@ test_chapter_numbers_come_from_the_start_of_each_h2 :: proc(t: ^testing.T) {
     page := parse_page(
         `<h2 id="a">5. The contract<a class="headerlink" href="#a">&para;</a></h2>` +
         `<h2>13a. Text processing</h2>` +
+        `<h2>17a. Worker activity</h2>` +
         `<h2>  <span>7.</span> Nested</h2>` +
         `<h2>Contents</h2>` +
         `<h2>12 no dot</h2>` +
         `<h2>5.5 section</h2>` +
         `<h2>&#49;&#48;. Entities</h2>` +
-        `<h2>13b. Only the letter a is allowed after the digits</h2>` +
+        `<h2>13b. Unsupported suffix must stay visible to the exact-set check</h2>` +
         `<h3>9. a level-3 heading</h3>` +
         `</h2><p>9. outside</p>`,
     )
-    want := []string{"5", "13a", "7", "5", "10"}
+    want := []string{"5", "13a", "17a", "7", "5", "10", "13b"}
     testing.expect_value(t, len(page.chapters), len(want))
     for item, index in want {
         if index < len(page.chapters) {
@@ -131,7 +132,7 @@ test_truncated_input_ends_cleanly :: proc(t: ^testing.T) {
     context.allocator = context.temp_allocator
     defer free_all(context.temp_allocator)
 
-    inputs := []string{
+    inputs := []string {
         ``,
         `<`,
         `<a`,

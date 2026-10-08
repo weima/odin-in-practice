@@ -10,6 +10,7 @@ Commands below run from the repository root, with the pinned Odin compiler on `P
 | [Memory](11-memory-philosophy/arena-snapshot/main.odin) | Programs under `11-memory-philosophy/`; tests under `11-memory-philosophy/tests/` | Scratch/result lifetime, allocation failure, explicit errors |
 | [TCP](17-networking/tcp-loopback/main.odin) / [UDP](17-networking/udp-loopback/main.odin) | `odin run docs/examples/17-networking/tcp-loopback` | Loopback transport and bounded messages |
 | [HTTP adapter](17-networking/http-client/main.odin) | Build and run with a loopback port and fixture path | Curl argument vector, response/body/deadline distinctions |
+| [Worker activity](17a-worker-activity/main.odin) | `odin run docs/examples/17a-worker-activity` | Bounded JSON events for local worker-progress IPC |
 | [Docker inspection](18-containers/main.odin) | `odin run docs/examples/18-containers` | Dry-run default; `--execute` opts into inspecting the named local lab |
 | [Parallel map](19-parallel/README.md) | `odin run docs/examples/19-parallel` | Disjoint writes, stable descriptors, joining, errors and cancellation |
 | [CLI pipeline](21-capstone/run-pipeline/main.odin) | Build four stages as below | NDJSON boundaries and all-stage success before publication |
@@ -30,6 +31,7 @@ TZ=UTC odin test docs/examples/04-procedures
 TZ=UTC odin test docs/examples/10-pointers/tests
 TZ=UTC odin test docs/examples/11-memory-philosophy/tests
 TZ=UTC odin test docs/examples/17-networking/http-client
+TZ=UTC odin test docs/examples/17a-worker-activity
 TZ=UTC odin test docs/examples/18-containers
 TZ=UTC odin test docs/examples/19-parallel
 TZ=UTC odin test docs/examples/21-capstone/records
