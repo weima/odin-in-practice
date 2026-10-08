@@ -204,6 +204,25 @@ The practical question is not merely “what is the type?” It is “what does 
 
 **Subtle watch-out:** a slice such as `three[:]` is a view, not a copy or owner. If the original storage goes out of scope or is resized, the slice may no longer be valid.
 
+<a id="dogfood-string-byte-offsets"></a>
+
+### A string range gives runes and byte offsets
+
+A string range decodes each rune, but its index is the rune's starting byte offset. Test with `"Aé🙂"` on the pinned compiler:
+
+```text
+len(s) = 7
+rune U+41 at byte offset 0; s[0] = 65
+rune U+E9 at byte offset 1; s[1] = 195
+rune U+1F642 at byte offset 3; s[3] = 240
+```
+
+`len(s)` counts bytes, and `s[i]` reads one `u8`; neither is a character lookup. `for rune, byte_offset in s` is rune-aware iteration. Do not use that byte offset as an index into a rune-count-sized array: offsets can skip values. If you need sequential rune positions, keep a separate counter. A rune is a Unicode code point, not necessarily a user-perceived character; combining marks can still form one visible grapheme.
+
+Bytewise iteration is the right, smaller tool when the grammar is explicitly ASCII. Coffee Shop's `valid_shot_id` checks length and ASCII byte ranges directly; a non-ASCII UTF-8 sequence cannot masquerade as one allowed ASCII byte. For text that permits Unicode letters or digits, iterate runes and use the character properties in [core/unicode/letter.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/letter.odin). For lower-level decoding and validation, inspect [core/unicode/utf8/utf8.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/unicode/utf8/utf8.odin). These choices do not validate UTF-8 merely because a value has type `string`.
+
+The [companion](../examples/04-language-traps/main.odin) prints the rune values, byte offsets, and bytes, and contrasts a bytewise ASCII identifier with a rune-aware identifier. Its tests assert the offsets and policies.
+
 <a id="procedures"></a>
 
 Chapter 4 · Computation
@@ -361,6 +380,90 @@ For a record that a procedure must update, pass a pointer and make the mutation 
 **Experiment.** Supply `low > high` to `clamp`. Its implementation still returns something, but is that something meaningful? State the precondition or add an explicit failure result. Then try specializing `minimum` for a record with no ordering; compare the compiler error with the contract you inferred.
 
 **Checkpoint.** Explain the difference between `:=` and `::`. Name the type of every parameter in `clamp`. Predict all three return paths before running it.
+
+<a id="dogfood-procedure-declarations"></a>
+
+### Named results, `:=`, and runtime defaults
+
+Named results are local variables in the procedure body. That makes ordinary declaration rules important: this attempt directly shadows two named results and is rejected by the pinned compiler:
+
+```text
+Direct shadowing of the named return value 'stdout' in this scope
+Direct shadowing of the named return value 'stderr' in this scope
+```
+
+The failing declaration was `state, stdout, stderr, process_err := os.process_exec(...)` inside a procedure returning `(stdout, stderr: []byte, err: string)`. The bundled [`core/os/process.odin`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) confirms that `process_exec` returns state, stdout, stderr, and error in that order. Assign to named results with `=` after declaring the additional local:
+
+```odin
+// Inside the procedure that declares stdout, stderr, and err as results:
+state: int // Use the actual state type returned by your call.
+state, stdout, stderr, err = fake_process()
+_ = state
+return
+```
+
+Or give the call's outputs distinct local names, then assign the wanted values to the results:
+
+```odin
+state, child_stdout, child_stderr, process_err := fake_process()
+_ = state
+stdout = child_stdout
+stderr = child_stderr
+err = process_err
+return
+```
+
+The [companion](../examples/04-language-traps/language_traps.odin) includes both compiling patterns using a stand-in with matching result types. Its byte slices are allocated, so their caller must release them.
+
+`:=` introduces names in the current scope; it is not a mixture of declaration and reassignment. Every name on its left side must be new in that scope. After `code, out, err := first()`, this declaration fails:
+
+```text
+Redeclaration of 'code' in this scope
+```
+
+That remains true even when another left-hand name (`status`) is new. Use `=` when all names already exist. A nested block is a new scope, so a declaration there can shadow an outer local:
+
+```odin
+first :: proc() -> (int, int, int) { return 1, 2, 3 }
+second :: proc() -> (int, int, int) { return 4, 5, 6 }
+
+scope_example :: proc() {
+    code, out, err := first()
+    code, out, err = second() // assignment: names already exist
+    {
+        code := 7              // new declaration in this inner scope
+        _ = code
+    }
+    _ = out
+    _ = err
+}
+```
+
+Do not infer Go's short-declaration rule from the punctuation. In this release, a single existing name in a same-scope `:=` is enough to make it a redeclaration error.
+
+A default parameter must be constant. This runtime expression was rejected:
+
+```text
+Default parameter must be a constant, got time.now()
+```
+
+[`time.now`](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/time/time.odin) returns the current `Time`; it cannot be evaluated as a default constant. Choose the API contract you need:
+
+```odin
+// Caller chooses the time explicitly.
+at_time :: proc(now: time.Time) -> time.Time { return now }
+
+// Reserve the zero value to mean "use now".
+with_sentinel :: proc(now: time.Time = {}) -> time.Time {
+    if now == {} { return time.now() }
+    return now
+}
+
+// Keep the common call short with a runtime wrapper.
+current_time :: proc() -> time.Time { return at_time(time.now()) }
+```
+
+A sentinel is only safe when that zero value is not also meaningful caller input. The explicit parameter has the clearest contract; a wrapper is a small way to offer both explicit and convenient calls. All three fixed patterns are exercised in the [tests](../examples/04-language-traps/language_traps_test.odin).
 
 <a id="advanced-odin"></a>
 
