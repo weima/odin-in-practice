@@ -932,6 +932,59 @@ These are package-level tests. For observable process behavior—stdout, stderr,
 
 **Subtle watch-out:** an assertion that the compiler removes is not a test result. Use `core:testing` expectations for test outcomes, and check the test command’s exit status in automation.
 
+### Black-box tests for a command-line tool
+
+A package test cannot prove what a user sees at the process boundary. Build the real executable from the test, start it as a separate process for each scenario, then assert stdout, stderr, and the exit code independently. This keeps the test honest: a command in a later step cannot accidentally use state that only existed in an earlier process. The small [e2e test source](../examples/21-e2e-cli/e2e_test.odin) package demonstrates the shape.
+
+The test builds with `odin build . -out:<temporary-path>` and sets `working_dir` to the example directory. It then runs the built binary directly. A fake `uppercase-tool` script lives in a temporary `bin` directory at the front of the child PATH. It writes every argument to a fixture file, prints canned output, and exits unsuccessfully when `FAKE_TOOL_DOWN` is set. The test passes `two words` and `say \"hi\"` as separate argv entries and compares the complete recording; neither the spaces nor the quote are reparsed by a shell. Run the test on Linux: its fake executable uses a POSIX shell script.
+
+`Process_Desc.env` is the **full** environment, not a set of additions. The descriptor comment in [core/os/process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) says so; the companion test exercises a child with an explicitly constructed environment. Start from `os.environ`, remove keys you will override, then append replacements. Passing only `PATH=...` also discards variables the child may need. A nil environment inherits the current environment, but then the test cannot control its PATH or fake-tool switches.
+
+```odin
+inherited, err := os.environ(context.temp_allocator)
+if err != nil { return }
+env := make([]string, len(inherited)+1, context.temp_allocator)
+n := 0
+for entry in inherited {
+    if strings.has_prefix(entry, "PATH=") { continue }
+    env[n] = entry
+    n += 1
+}
+env[n] = fmt.tprintf("PATH=%s:/usr/bin:/bin", fake_bin)
+```
+
+This fragment leaves room for any other explicit overrides. Use the same replacement rule for each override key. Linux executable lookup for a command without a slash uses the parent’s PATH in this Odin revision, so use an absolute executable path when you need the child’s PATH to choose the program; the fixture’s CLI invokes `uppercase-tool` after it has started and therefore uses that explicit child PATH.
+
+`process_exec` is convenient for short, bounded commands: it captures both streams and waits, but has no timeout parameter. For a command that may hang, use `process_start`, redirect stdout and stderr to owned files or pipes, and poll `process_wait` with a finite timeout until a wall-clock deadline. Do not replace the deadline with a fixed sleep: a sleep neither proves completion nor bounds a slow child. On timeout or any assertion/setup failure, kill and wait for a still-live child before returning; defer closing handles and removing the fixture directory at the scope that acquired them. The test uses a single fixture root under `/tmp/e2e-testing`, truncates its files at setup, and defers recursive removal.
+
+A useful outcome table keeps the contract explicit:
+
+| Child outcome | CLI status | CLI stdout | CLI stderr |
+| --- | ---: | --- | --- |
+| Tool succeeds | 0 | Tool output | Empty |
+| Tool starts and fails | 1 | Empty | Failure diagnosis |
+| Tool cannot be started | 2 | Empty | Start diagnosis |
+
+Keep assertions separate for these channels. A matching error message alone does not prove that the status is correct, and a nonzero status does not prove that diagnostics stayed off stdout.
+
+### Expectation messages are a different API
+
+In this compiler release, `testing.expect_value` takes optional source-location and expression arguments after the expected value, not a message string. Passing a string in the fourth position fails compilation. A direct experiment with `testing.expect_value(t, 1, 2, "message")` produced:
+
+```text
+Error: Cannot convert untyped value '"message"' to 'Source_Code_Location' from 'untyped string'
+```
+
+The signature in [core/testing/testing.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/testing/testing.odin) confirms it. Use `testing.expect` when a custom diagnosis helps, or follow a value comparison with a separate message-bearing condition:
+
+```odin
+testing.expect(t, exit_code == 0, "CLI should succeed")
+```
+
+The companion tests intentionally check individual output channels and values, using the standard runner. To keep these tests deterministic, give every run its own fresh temporary directory (`os.make_directory_temp`) and remove it afterwards, replace the external executable with a local script, use fixed canned output and exit statuses, and avoid network, clock-based expectations, or shared mutable state. If you add a timing-sensitive child, poll with a deadline, clean it up on every path, and run the suite repeatedly; three consecutive clean runs are a useful flakiness check, not proof that timing bugs are impossible.
+
+**Exercise 21.2.** Make the fake record a JSON line or another unambiguous argument encoding. Add a second user argument containing an empty string, and verify the recording distinguishes it from no argument at all.
+
 <a id="capstone"></a>
 
 Part VII · Put the pieces together
