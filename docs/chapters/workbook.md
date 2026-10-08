@@ -177,6 +177,36 @@ Solution sketch
 
 Give each run a fresh temporary directory and remove it after the child and its files are cleaned up. Replace external dependencies with a local fake executable and fixed outputs. Poll process state with a finite deadline, then kill and wait on timeout rather than assuming a delay means completion. `Process_Desc.env` is the full child environment, not a set of additions; supplying only `PATH` discards all other variables. Start from `os.environ`, remove each key being overridden, then append controlled replacements. The pinned black-box example constructs this environment and asserts stdout, stderr, and exit status separately.
 
+<a id="dogfood-exercise-p"></a>
+
+### Exercise P · A correct count of the wrong thing
+
+A file contains the three lines `count`, `account` and `count`. A tool is asked to replace `count` with `total`, expecting exactly 2 occurrences. Predict what it does. Then it is run again with the expectation corrected to 3: predict the file. What should the author have changed instead of the number?
+
+**Subtle watch-out:** an exact count guards against *surprises*, not against a search text that is not specific enough. A count that matches by accident still produces a wrong file.
+
+Solution sketch
+
+The first run is refused: `textproc: refused: found 3 occurrence(s), expected 2; f.txt is unchanged`, with exit status 1. The count was the signal that the assumption was wrong, and the file is untouched. Raising the expectation to 3 is the wrong response, because `count` also occurs inside `account`; the replacement succeeds and leaves `total`, `actotal`, `total`. The fix is to make the search text unique: search for the whole three-line block, `count`, `account`, `count`, which occurs once. The lesson is that the count and the specificity of the text work together.
+
+<a id="dogfood-exercise-q"></a>
+
+### Exercise Q · Which semicolons separate statements?
+
+For each line below, say which `;` characters separate two statements, what a plain search for `;` would report, and what a masked copy of line 2 looks like. Then say why the masked copy must keep the original length.
+
+```odin
+a := 1; b := 2
+s := "x; y"
+for i := 0; i < 3; i += 1 {
+```
+
+**Subtle watch-out:** a `;` is not a separator merely because it is a `;`. Context decides, and a flat search cannot see context.
+
+Solution sketch
+
+Only the first line has a separator. The `;` in line 2 is inside a string, and the two in line 3 belong to a `for` header, where they separate the initializer, the condition and the step. A plain search reports four `;` characters, three of them wrong. The masked copy of line 2 is `s := "    "`: the quotes stay, the contents become spaces. Keeping the length and the newlines means that every offset and line number found in the masked copy points at the same place in the original, so the tool can report `file:line:column` or edit the original text at the offsets it found.
+
 **Completion test.** Explain one result from each source trail without quoting the function body. Then write the smallest experiment that could disprove your explanation. If your test cannot fail for a plausible wrong implementation, strengthen the oracle rather than simply adding more cases.
 
 <a id="glossary"></a>
@@ -217,6 +247,9 @@ A glossary is useful when it keeps adjacent concepts apart. “String,” “own
 | Process group | A set of related processes that can receive a group signal together. Signaling a child PID alone does not signal its descendants. |
 | Black-box test | A test that invokes the built executable as a separate process and checks its externally visible behavior. It complements, rather than replaces, package tests. |
 | Fake executable | A controlled local program or script substituted for an external dependency during a test. It makes arguments, output, and failure status reproducible without depending on the real tool. |
+| Exact-count replacement | A text replacement that states how many occurrences it expects and refuses when the count differs. It guards against surprises, but the search text must also be specific enough. |
+| Masked copy | A copy of source text in which the contents of comments, strings and raw strings are blanked, keeping the length and the newlines, so a plain search sees only code and every offset still matches the original. |
+| Bounded streaming | Processing input through a fixed-size buffer so that memory depends on limits the program chose, such as line length and result count, and not on the size of the input. |
 | Demuxer / muxer | A demuxer separates container input into streams and packets; a muxer packages output streams and packets. |
 | Packet / frame | A packet carries compressed stream data; a frame carries decoded audio samples or video pixels. |
 | Time base | A rational unit that gives meaning to integer media timestamps. |
@@ -264,6 +297,8 @@ This is library and runtime source evidence, not a claim to have audited the ent
 | `core/sys/posix/unistd.odin` · `setsid`; `core/sys/posix/signal.odin` · `killpg` | How can Linux process-group cancellation reach descendants, and what does it affect? | 15 |
 | `core/os/temp_file.odin` · `make_directory_temp`; `core/os/env.odin` · `environ` | How can tests isolate paths and construct a controlled child environment? | 21 |
 | `core/testing/testing.odin` · `expect_value`, `expect` | Which arguments are source/expression metadata, and how do you provide a custom expectation message? | 21 |
+| `core/bufio/reader.odin` · `reader_init`, `reader_read_slice` | Whose memory is a returned line, and what happens when a line is longer than the buffer? | 32 |
+| `core/text/regex/regex.odin` · `create`, `match`, `destroy` | How is a pattern compiled once, what does a capture hold, and who frees it? | 32 |
 
 To reproduce a reading, run `odin root`, open the local path, find the symbol, and compare the relevant branch with the pinned link. Do not call runtime-private helpers from application code merely because this book uses them to explain behavior. The public operation remains the intended interface.
 
@@ -303,6 +338,8 @@ To reproduce a reading, run `odin root`, open the local path, find the symbol, a
 - [Linux process source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin) — Linux process startup, wait, and signaling paths.
 - [POSIX session source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin) and [POSIX signal source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin) — `setsid` and process-group signaling.
 - [Temporary-directory source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/temp_file.odin) — isolated temporary directories for tests.
+- [Buffered reader source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/bufio/reader.odin) — fixed-size buffering, `reader_read_slice` and `Buffer_Full`.
+- [Regular-expression source](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/text/regex/regex.odin) — compiling patterns, matching, and capture ownership.
 - [Creator’s explanation of the name](https://forum.odin-lang.org/t/origin-of-the-name-odin/794) — a mythological project codename that stuck.
 - [FFmpeg documentation](https://ffmpeg.org/documentation.html) — official user and developer documentation index.
 - [ffmpeg command documentation](https://ffmpeg.org/ffmpeg.html) — options, stream selection, streamcopy, transcoding and filtering.
