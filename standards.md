@@ -28,6 +28,7 @@ These standards apply to every change to the book: chapters, companion code and 
 - Tests use `core:testing`, pass under `TZ=UTC odin test <dir>`, show no memory-leak warnings, touch nothing outside a temporary directory, and need no network.
 - Code that is meant to fail to compile is never committed as a compiling package. Show it as a verified transcript in the chapter.
 - Keep it small and readable; the example is for teaching.
+- Format Odin code with `odinfmt` and the repository's `odinfmt.json`: 4 spaces, 100 columns, LF line endings. `odinfmt` defaults to CRLF, so always pass the config. Put one statement on each line; `odinfmt` does not split statements chained with `;`, so split them first. The existing examples use 4-space indentation and stay within about 110 columns.
 
 ## Verification
 
