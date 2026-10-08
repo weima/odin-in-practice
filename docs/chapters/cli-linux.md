@@ -287,6 +287,82 @@ The scope-local context makes a cross-cutting choice available to nested Odin ca
 
 **Subtle watch-out:** a short process may appear to “work” without freeing memory because the OS reclaims it at exit. That does not make the ownership correct for a long-running CLI or service. Also, a `defer` runs at its lexical scope exit; check which scope contains it.
 
+<a id="dogfood-formatted-ownership"></a>
+### Formatted strings have owners too
+
+A formatted string is still an allocation—or a view into one. Its type does not tell you who must keep the bytes alive or release them. Read the contract for the specific formatter in [core/fmt/fmt.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/fmt/fmt.odin):
+
+| Family | Examples | Result storage | Who manages it? |
+| --- | --- | --- | --- |
+| `t` | `tprintf`, `tprintfln` | `context.temp_allocator` | Borrow it only until temporary storage is reset. Do not `delete` it. |
+| `a` | `aprintf`, `aprintfln` | The supplied allocator, default `context.allocator` | Caller must `delete` with that same allocator. |
+| `b` | `bprintf`, `bprintfln` | The supplied byte buffer | The result is a view into the buffer. Keep the buffer alive; do not delete the view. |
+| `s` | `sbprintf`, `sbprintfln` | The supplied `strings.Builder` | The builder owns its buffer; keep it alive and call `strings.builder_destroy` when done. |
+
+The paired non-formatting procedures (`tprint`, `aprint`, `bprint`, `sbprint`, and their newline forms) use the corresponding storage rule. `a` procedures let you select an allocator; the allocator defaults do not make the returned bytes caller-independent. See [core/strings/builder.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/strings/builder.odin) for the builder lifecycle.
+
+**A `t` result is borrowed scratch.** In an isolated dev-2026-10 experiment, calling `delete` on a `fmt.tprintf` result produced no error and did not crash:
+
+```odin
+value := fmt.tprintf("delete me")
+delete(value)
+fmt.println("after delete")
+```
+
+```text
+after delete
+exit=0
+```
+
+That silent success does not make deletion valid: the result belongs to the temporary allocator, not the caller, and passing it to `delete` is undefined behaviour. It may crash, corrupt the heap, or appear to work. The same mistake crashed a larger program with a segfault in the free path (Coffee Shop, on its second Herdr tab), yet this small isolated program survived it. Surviving once proves nothing. A temporary result also becomes unusable after its allocator is reset. This experiment printed twelve zero bytes from a saved `tprintf` result after `mem.free_all(context.temp_allocator)`, while an independent clone still printed `survives? yes`:
+
+```text
+after free_all: doomed=[ <12 NUL bytes> ] saved=[ survives? yes ]
+```
+
+Clone when the value must outlive scratch, and make the owner’s destruction explicit. Here is the complete ownership flow; `runtime` is `base:runtime`, and the example package includes the matching `Owner` type and procedures:
+
+```odin
+use_order :: proc() -> runtime.Allocator_Error {
+    borrowed := fmt.tprintf("order=%d", 7)
+    owner, err := owner_make(borrowed, context.allocator)
+    if err != nil {
+        return err
+    }
+    defer owner_destroy(&owner)
+    return nil
+}
+```
+
+`owner_make` clones the bytes into the allocator the owner retains. `owner_destroy` deletes them through that allocator. The owner must not be copied into multiple independent owners. When a procedure returns a string, document whether its result is borrowed, which storage it borrows, how long it remains valid, or which allocator owns it and how the caller releases it. `temp_format`, `allocated_format`, `buffer_format`, and `builder_format` in the example package show those four contracts in their comments and signatures.
+
+**A format string is not a JSON template.** `fmt` interprets braces as format syntax. With `x == "7"`, this exact call:
+
+```odin
+fmt.tprintf("{\"order\":%s}", x)
+```
+
+returned the exact string `%!(MISSING CLOSE BRACE)order\":7}` in the dev-2026-10 experiment. Double literal braces to emit braces:
+
+```odin
+fmt.tprintf("{{\"order\":%s}}", x) // {"order":7}
+```
+
+For hand-built fixed fragments, `strings.concatenate([]string{"{\"order\":", x, "}"})` avoids the format language; the caller owns and deletes its allocated result. For actual JSON, marshal a typed value instead. `json.marshal` returned `{"order":"7"}` for a struct with an `order: string` field, and returns bytes plus an error; the caller deletes the returned bytes:
+
+```odin
+import json "core:encoding/json"
+Order :: struct { order: string }
+data, err := json.marshal(Order{"7"})
+if err == nil {
+    defer delete(data)
+}
+```
+
+See [core/encoding/json/marshal.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/encoding/json/marshal.odin). Encoding also handles quotes, backslashes, and control characters in values; interpolation does not.
+
+**A leak report has a boundary.** The test runner’s per-test `mem.Tracking_Allocator` tracks allocations routed through its allocator, which is used as `context.allocator`. A direct experiment added one forgotten `fmt.aprintf` result and observed `tracked allocations=1`; making a `fmt.tprintf` call afterward left that count at `1`. The example tests verify the matching rule by freeing an `a` result and the owned clone, while checking that a `t` result does not appear in that separate allocator’s map. This proves only what that tracker observed: it does not prove the temporary result is unallocated, valid indefinitely, or leak-free under another lifetime. Tracking is evidence about an allocator boundary, not a universal ownership checker. The APIs are defined in [core/mem/tracking_allocator.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/mem/tracking_allocator.odin).
+
 <a id="files"></a>
 
 Part IV · The operating system
