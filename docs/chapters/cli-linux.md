@@ -437,6 +437,42 @@ The fallback also treats `Broken_Pipe` as completion in this revision. Do not si
 
 **Subtle watch-out:** a successful read call may return fewer bytes than requested without reaching EOF. Streaming code must process the returned count and continue; a fixed buffer is not a promise of a full read.
 
+<a id="dogfood-durable-directory"></a>
+
+### Durable state starts with a directory race
+
+A directory that already exists is not necessarily an error. On the pinned Linux compiler, `os.make_directory_all` returns `nil` when it creates at least one path component, but returns `.Exist` when the requested directory already exists. The behavior follows `make_directory_all` in [core/os/path.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path.odin) and its Linux implementation in [core/os/path_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/path_linux.odin).
+
+Running the call twice against a new path returned `nil`, then `Exist`. Launching 24 processes together against one absent path produced one `nil` and 23 `Exist` results. A caller that treats every non-`nil` result as fatal can therefore lose work even though the directory is ready. Coffee Shop hit this while Workers saved reports into a shared directory; `dispatch.odin` now creates shared directories before starting Workers, and `filter.odin` accepts an existing directory only after checking `os.is_dir`.
+
+```odin
+ensure_directory :: proc(path: string) -> bool {
+    if os.is_dir(path) { return true }
+    err := os.make_directory_all(path)
+    return err == nil || (err == .Exist && os.is_dir(path))
+}
+```
+
+Prefer creating shared directories once before launching concurrent work. If callers can race, check that `.Exist` names a directory rather than assuming it does; another process could have created a regular file at that path. The example package `docs/examples/12-durable-state/` tests the repeated-call case. It uses the check-after-error form; the process race above is a Linux observation, not a promise that every platform returns the same error.
+
+<a id="dogfood-atomic-replacement"></a>
+
+### Replace a state file without exposing a half-write
+
+To replace a small state file, write its complete new contents to a temporary sibling, flush and sync that file, close it, then rename it over the target. The sibling matters: a rename across filesystems fails rather than becoming an atomic copy-and-delete. On the pinned Linux compiler, renaming within `/tmp` returned `nil`; renaming from `/tmp` to `/dev/shm` (a different filesystem) returned `EXDEV`. Keep the temporary file in the target directory.
+
+The companion package's `atomic_write` is the complete checked example: it writes the sibling, checks `os.flush`, `os.sync`, and close, then renames and removes the temporary on failure. Its fixed `.tmp` name is intentionally for a single writer; concurrent writers need distinct temporary names or serialization. In the Coffee Shop implementation, `write_register_atomic` serializes the Register, writes a sibling temporary file through `write_all_to_file`, and renames it into place. That helper checks write, `os.sync`, and close errors. The standard library exposes `flush`, `sync`, and `rename` in [core/os/file.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file.odin); its Linux sync and POSIX rename paths are in [core/os/file_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_linux.odin) and [core/os/file_posix.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/file_posix.odin).
+
+A successful rename replaces the visible name in one operation on the tested Linux filesystem, so readers opening the target do not observe the temporary file being written in pieces. A failed write or rename should leave the old target untouched; the companion test forces a temporary-file open failure and verifies the old bytes remain. This does not make a multi-file update transactional, prevent concurrent writers from clobbering one another, or prove that the renamed directory entry survives sudden power loss. Syncing the file does not sync its containing directory. Stronger power-loss durability needs a platform-appropriate directory sync and a carefully documented filesystem contract; this teaching example does not claim that guarantee.
+
+<a id="dogfood-event-log"></a>
+
+### Keep an event log and a snapshot in agreement
+
+A snapshot makes startup fast; an append-only newline-delimited JSON log explains how it reached that state. Give each event a strictly increasing sequence number and validate every transition during replay. The companion `state` package keeps one small item so you can inspect the whole path: `transition` validates, appends and syncs the event, then atomically replaces the snapshot. The append comes first. If the process stops before the snapshot replacement, the log is ahead; the next load detects a sequence or status conflict instead of silently rewriting either record. Coffee Shop follows this Register/Receipt pattern in `state.odin` (`append_receipt_event`, `validate_receipt`, and `write_register_atomic`).
+
+A final line without `\n` is not a complete record. The validator reports it as a partial line and includes its one-based line number. Do not quietly drop it or pretend the preceding snapshot proves what the missing event said. Likewise, if replay and snapshot disagree, report a conflict and require an explicit recovery decision. The example tests a two-line log whose unfinished final line is reported as line 2, a snapshot/log sequence disagreement, a round trip, and a rejected transition that leaves the state unchanged.
+
 <a id="streams"></a>
 
 ## 13. Streams, pipes, and bounded work
@@ -546,6 +582,31 @@ For the no-CRT Linux implementation in [env\_linux.odin](https://github.com/odin
 That file also contains a warning about synchronizing the no-CRT environment implementation with third-party code linked to libc. We should not turn one platform branch into a universal claim about environment mutation across all foreign libraries. Prefer stable startup configuration when possible, and isolate environment-changing tests from concurrent consumers.
 
 **Exercise 14.1 · Explain the difference.** Design three results for a configuration key: absent, present but empty, and present with text. Then choose deliberately which results trigger a default. Run both shell cases above rather than simulating absence with an empty string.
+
+<a id="dogfood-state-location"></a>
+
+### Choose a state root once, then pass it in
+
+A CLI can accept an absolute `TOOL_STATE_DIR` override and otherwise use the user's state directory. Linux's `os.user_state_dir` follows `XDG_STATE_HOME` when set and otherwise uses `~/.local/state` on Linux, under `HOME`. Its contract is documented in [core/os/user.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/user.odin); environment lookup is in [core/os/env.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/env.odin), and `filepath.is_abs` is declared in [core/path/filepath/path.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/path/filepath/path.odin).
+
+```odin
+state_root :: proc(allocator: runtime.Allocator) -> (string, os.Error) {
+    override, found := os.lookup_env("TOOL_STATE_DIR", allocator)
+    if found {
+        if !filepath.is_abs(override) { delete(override, allocator); return "", .Invalid_Argument }
+        return override, nil // caller owns the allocated string
+    }
+    delete(override, allocator)
+    base, err := os.user_state_dir(allocator)
+    if err != nil { return "", err }
+    path, join_err := filepath.join({base, "tool-name"}, allocator)
+    delete(base, allocator)
+    if join_err != nil { return "", .Invalid_Argument }
+    return path, nil
+}
+```
+
+The fragment requires `core:os`, `core:path/filepath`, and the `runtime` allocator type in scope. Check the override before using it; `TOOL_STATE_DIR=relative` was found but `filepath.is_abs` returned false in the pinned build. The caller owns whichever allocated path is returned and must free it. In tests, pass a temporary root directly to the state functions instead of mutating process environment: that keeps each test isolated and makes its filesystem effects explicit. The companion package follows that rule and never reads the environment.
 
 <a id="child-process"></a>
 
