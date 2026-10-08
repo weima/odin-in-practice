@@ -673,6 +673,53 @@ For a controlled service, an approved absolute executable path is clearer than r
 
 Do not treat `process_exec` as a timeout mechanism. Its synchronous capture waits for completion. Choose lower-level supervision when cancellation or an output budget is a requirement, and drain both output channels while the child is running.
 
+<a id="dogfood-supervision"></a>
+
+### Supervise, cancel, and confirm (Linux)
+
+Use `os.process_start` when you need a live handle instead of waiting for captured output. A start error means no child handle was obtained; once start succeeds, the child can still fail. In the observed Linux run, a missing executable returned `Not_Exist`, while `sh -c 'exit 7'` started, then `process_wait` returned `exited=true`, `exit_code=7`, and `success=false`.
+
+```odin
+package main
+import "core:os"
+import "core:time"
+
+wait_briefly :: proc(process: os.Process) -> (os.Process_State, os.Error) {
+    state, err := os.process_wait(process, timeout=100*time.Millisecond)
+    if err == .Timeout {
+        // This example chooses forced cancellation after the deadline.
+        _ = os.process_kill(process)
+        return os.process_wait(process) // No timeout: wait until reaped.
+    }
+    return state, err
+}
+
+main :: proc() {
+    process, err := os.process_start(os.Process_Desc{command = []string{"sleep", "30"}})
+    if err != nil { return } // Launch failure: no child handle exists.
+    _, _ = wait_briefly(process)
+}
+```
+
+`process_wait` reports `.Timeout` when its deadline expires; other errors leave the state undetermined. `process_terminate` requests termination (SIGTERM on this Linux implementation) and can be ignored. `process_kill` forces termination. After either signal, wait for the handle: the observed `process_kill` followed by an unbounded wait returned `exited=true` and `exit_code=9`. A handle is a resource; wait it on every path, including after a timeout. See [process.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process.odin) and the Linux implementation in [process\_linux.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/os/process_linux.odin).
+
+A PID by itself is not durable identity: Linux can reuse it after a process exits. Pair it with field 22 (`starttime`) from `/proc/<pid>/stat`. The command name (`comm`) is parenthesized and may itself contain spaces or parentheses, so find the **last** `)` before splitting the remaining fields. From that suffix, field 3 (`state`) is token zero and field 22 (`starttime`) is token 19. Compare both PID and start time before acting on a saved identity. This detects a different start time; the example test simulates reuse by changing the saved start time, rather than waiting for the kernel to recycle a PID.
+
+A zombie has already exited; it only remains for its parent to collect its status. Treat state `Z` as gone, not as a live process. The companion package `docs/examples/15-supervision/` implements `Process_Identity`, `identity_alive`, and `parse_proc_stat`; its tests cover the current process, a deliberately wrong start time, a zombie, and a synthetic command name containing `)`. The `/proc` interface and this parser are Linux-specific. Coffee Shop's `src/process.odin` implements `read_proc_stat` and `identity_alive`; those are application helpers, not part of Odin's library. The companion shows the same parsing rule.
+
+Killing a process does not kill its descendants. In a reproduced shell run, killing a `setsid sh` child left its `sleep` grandchild in state `S`. The practical workaround here is to start a separate session with the external Linux `setsid` utility, then signal the process group (negative group ID):
+
+```sh
+setsid sh -c 'sleep 30 & wait' &
+pid=$!                         # setsid session/process-group leader
+kill -s TERM -- -"$pid"       # signal every member of that process group
+wait "$pid"
+```
+
+The reproduced group signal left the grandchild absent from `/proc`. Odin's `os.Process_Desc` has no session/process-group option or pre-exec callback. `core:sys/posix` provides `setsid` and `kill`/`killpg`, but `setsid` changes the *calling* process; calling it in the supervisor would change the supervisor, not the already-execed child. Launching the external `setsid` utility is the practical workaround when starting an ordinary `Process_Desc` child. See [unistd.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/unistd.odin) and [signal.odin](https://github.com/odin-lang/Odin/blob/84bc3fc2100b0f7880a3af37f71bccdcda41c6f9/core/sys/posix/signal.odin). Keep unrelated work out of that process group: a group signal reaches every member.
+
+Cancellation is a protocol, not a successful signal call. Record the request, send a cooperative signal, then wait for confirmed exit within a deadline. Only confirmed exit supports a cancelled result; if the process remains live or its state cannot be established by the deadline, record `Interrupted` (unknown), not success. If it was already gone before the request, report `Already_Gone`. The companion's `cancel` procedure uses this result model. Coffee Shop's settle path follows the same evidence rule: a cancellation request is followed by an identity check or a recorded result; failure to confirm exit becomes interrupted rather than completed. A timed-out child still needs later cleanup, and its descendants need separate group handling.
+
 <a id="linux"></a>
 
 Part V · Linux systems thinking
